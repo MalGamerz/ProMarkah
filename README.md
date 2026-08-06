@@ -1,0 +1,130 @@
+# ProMarkah
+
+ProMarkah is a scoring and attendance management system for silat (martial
+arts) competitions — judges score students on live rubric criteria, PICs
+(persons-in-charge) configure the competition structure and review results,
+and attendance is taken by scanning a QR code, with no login required for
+that part of the flow.
+
+This README is a living map of the codebase for a new maintainer. It's being
+filled in phase-by-phase as the app is documented and reorganized for
+readability — it does not yet cover every file, but everything it does
+describe should be accurate.
+
+## Tech stack
+
+Plain PHP (mysqli, no framework) + vanilla JS + hand-written CSS. One
+Composer dependency, `firebase/php-jwt`, used only to verify Google/Apple
+OAuth ID tokens (see `oauth_helpers.php`). Deployed on Hostinger shared
+hosting.
+
+## Two constraints every change must respect
+
+**Top-level `.php` filenames are load-bearing URLs — never rename them.**
+Several are referenced from outside this repo and renaming breaks things
+silently:
+- `oauth_apple_callback.php` and `oauth_google_callback.php` are registered
+  as fixed redirect URIs in the Google/Apple OAuth app consoles. Rename
+  either one and login breaks until those external configs are updated too.
+- Every AJAX endpoint (`keepalive.php`, `check_notifications.php`,
+  `save_attendance.php`, `save_scores.php`, …) is called by exact filename
+  from `fetch()`/form actions scattered across the app.
+
+Refactoring for readability should split a file's *internals* (functions,
+variables, or new `require`d/`include`d helper files) — not its top-level
+name or URL.
+
+**Public attendance pages have no login by design — this is a client
+requirement, not an oversight.** `attendance.php`, `save_attendance.php`,
+`attendance_toggle.php`, `attendance_student.php`, the `export_attendance_*`
+and `attendance_view_*` files must all stay usable by an anonymous visitor
+scanning a QR code. `auth_check.php`'s idle-timeout logic is a harmless
+no-op for a session that never logged in (`$_SESSION['last_activity']` is
+never set for one), which is why these pages can safely include it without
+gaining a login requirement. The only page in this family that legitimately
+requires login is `manage_attendance.php` (PIC role) — the internal
+management view, as opposed to the public scan-in flow.
+
+## Request bootstrap & load order
+
+Most authenticated pages start the same way:
+
+```php
+session_start();
+require __DIR__ . '/auth_check.php';   // idle-timeout guard (see below)
+include 'db.php';                       // pulls in security_bootstrap.php
+```
+
+- **`security_bootstrap.php`** is the entry point for error handling and
+  secret loading. It's a thin orchestrator (idempotent — safe to load twice)
+  that sets the timezone, then requires, in this exact order:
+  1. `bootstrap_secrets.php` — loads `secrets.php` from outside the web
+     root and points PHP's error log at the configured path.
+  2. `bootstrap_error_handling.php` — Telegram alerting, the central error
+     reporter, the branded error page, and the error/exception/shutdown
+     handler registrations. This has to come second because its Telegram
+     alerter reads the secrets the first file just loaded.
+
+  See `SECURITY_ERROR_HANDLING.md` for the full deployment write-up
+  (Hostinger setup steps, what visitors vs. you see on an error, the
+  Telegram alert rate-limiting rules).
+
+- **`db.php`** requires `security_bootstrap.php`, then defines `getDB()` —
+  a singleton mysqli connection. If secrets never loaded (no `secrets.php`
+  found), it fails closed with an HTTP 503 rather than falling back to any
+  built-in credential.
+
+- **`auth_check.php`** is included after `session_start()` on every
+  authenticated page. It enforces a 15-minute idle timeout: AJAX callers get
+  a `401 {"error":"session_expired"}` JSON response (see `layout.php`'s
+  `pmFetch()` wrapper, which every same-origin `fetch()` call should use so
+  that response is handled instead of silently treated as real data);
+  normal navigation gets redirected to `login.php`.
+
+- **`layout.php`** is included by every dashboard page to render the shared
+  `<head>`, header, and sidebar (the page then closes
+  `</main></body></html>` itself). It pulls in `layout_icons.php` (the
+  static SVG icon lookup table behind `pm_icon()`) and `layout.js` (the
+  static parts of what used to be one large inline `<script>` block:
+  `pmFetch`, idle keep-alive, theme toggle, sidebar, dropdowns, and alert
+  auto-dismiss). The PIC-only notification/toast script is still inline in
+  `layout.php` itself — it embeds the CSRF token directly, which blocks
+  moving it to a static file for now.
+
+## Secrets
+
+Real credentials (DB, the QR-signing HMAC key, Telegram bot token) live in
+`secrets.php`, one directory **above** `public_html` — never web-reachable,
+even if PHP itself stopped executing. `secrets.sample.php` (safe to keep in
+the web root — no real values) documents every key and the exact deployment
+steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
+`SETUP_GOOGLE_APPLE_LOGIN.md` for the OAuth-specific configuration.
+
+## Map of the codebase
+
+- **Shared/core** (used by nearly every page): `db.php`, `auth_check.php`,
+  `security_bootstrap.php` (+ `bootstrap_secrets.php`,
+  `bootstrap_error_handling.php`), `layout.php` (+ `layout_icons.php`,
+  `layout.js`), `attendance_helpers.php` (+ `expired_qr_page.php`),
+  `oauth_helpers.php`, `oauth_config.php`, `error_page.php`.
+- **Public attendance flow** (no login — see constraint above):
+  `attendance.php`, `save_attendance.php`, `attendance_toggle.php`,
+  `attendance_student.php`, `attendance_view_*.php`,
+  `export_attendance_*.php`.
+- **Judge scoring**: `judge.php` (the largest file in the app — the judge's
+  entire scoring workflow: session/group selection, the marking table,
+  draft autosave, and a handful of its own internal AJAX endpoints),
+  `judge_view_marks.php`, `judge_settings.php`, `silibus.php`.
+- **PIC management**: the `pic_*.php` family — competition structure
+  (`pic_levels.php`, `pic_tests.php`, `pic_criteria.php`, `pic_sessions.php`,
+  `pic_siri.php`, `pic_schools.php`, `pic_judges.php`, `pic_groups.php`),
+  data (`pic_students.php`, `pic_directory.php`, `pic_master_list.php`,
+  `pic_roster_check.php`), and results
+  (`pic_manual_marks.php`, `pic_view_marks.php`, `pic_medal_settings.php`,
+  `pic_cawangan_summary.php`, `manage_attendance.php`).
+- **Admin**: `admin.php`, `admin_data.php`, `admin_logs.php`.
+- **Login**: `login.php`, `oauth_apple_start.php`,
+  `oauth_apple_callback.php`, `oauth_google_callback.php`.
+
+*(This map will grow as later refactor phases document the judge, PIC, and
+attendance-flow files in more depth.)*
