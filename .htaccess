@@ -1,0 +1,74 @@
+# ── Compression ──────────────────────────────────────────────────────────
+# Shrinks text-based responses (HTML/CSS/JS/JSON) before sending over the
+# wire — dashboard.css/output.css compress to a fraction of their raw size.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE application/json application/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ── Browser caching for static assets ───────────────────────────────────
+# Safe here because layout.php/login.php already cache-bust CSS via a
+# filemtime()-based ?v= query string — when a file changes, its URL changes,
+# so a long cache lifetime never serves a stale version.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css                "access plus 1 month"
+    ExpiresByType application/javascript  "access plus 1 month"
+    ExpiresByType image/png               "access plus 1 month"
+    ExpiresByType image/jpeg              "access plus 1 month"
+    ExpiresByType image/webp              "access plus 1 month"
+    ExpiresByType image/svg+xml           "access plus 1 month"
+    ExpiresByType image/x-icon            "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|png|jpe?g|webp|svg|ico)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+</IfModule>
+
+# ── Never cache PHP responses ───────────────────────────────────────────
+# The app already sets its own no-store/no-cache headers for auth-gated
+# pages; this is just a safety net so a proxy/browser never caches a
+# dynamic, session-specific response.
+<IfModule mod_headers.c>
+    <FilesMatch "\.php$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+# ── Block direct download of sensitive files ─────────────────────────────
+# Defense-in-depth: even though real secrets live OUTSIDE public_html, this
+# guarantees that if any dump / log / secret / backup ever lands in the web
+# root by mistake, it still can't be fetched over HTTP. Covers dotfiles
+# (.htaccess, .user.ini, .git*), database dumps, logs, backups, and the
+# *.sample templates.
+<IfModule mod_authz_core.c>
+    <FilesMatch "(^\.|^error_log$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock)$|secrets.*\.php$)">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "(^\.|^error_log$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock)$|secrets.*\.php$)">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+
+# ── Block direct requests to include-only PHP files ──────────────────────
+# These are only ever pulled in via include/require from other scripts; there
+# is no reason for a browser to hit them directly, so refuse it. (Does not
+# affect internal includes, which happen at the filesystem level.)
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(security_bootstrap|error_page|db|auth_check|attendance_helpers|oauth_config|cawangan_report_data)\.php$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "^(security_bootstrap|error_page|db|auth_check|attendance_helpers|oauth_config|cawangan_report_data)\.php$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>

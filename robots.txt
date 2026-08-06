@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /$
+Allow: /sitemap.xml
+Disallow: /
+
+Sitemap: https://www.prosilat.net/sitemap.xml

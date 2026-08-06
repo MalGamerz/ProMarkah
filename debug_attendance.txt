@@ -1,0 +1,48 @@
+Array
+(
+    [student_id] => 1
+    [session_id] => 1
+    [level_id] => 7
+    [group_id] => 165
+    [status] => Present
+)
+Array
+(
+    [student_id] => 2
+    [session_id] => 1
+    [level_id] => 7
+    [group_id] => 165
+    [status] => Present
+)
+Array
+(
+    [student_id] => 1
+    [session_id] => 1
+    [level_id] => 7
+    [group_id] => 165
+    [status] => Present
+)
+Array
+(
+    [student_id] => 2
+    [session_id] => 1
+    [level_id] => 7
+    [group_id] => 165
+    [status] => Present
+)
+Array
+(
+    [student_id] => 1
+    [session_id] => 1
+    [level_id] => 7
+    [group_id] => 165
+    [status] => Present
+)
+Array
+(
+    [student_id] => 2
+    [session_id] => 1
+    [level_id] => 7
+    [group_id] => 165
+    [status] => Present
+)

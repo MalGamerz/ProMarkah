@@ -1,0 +1,45 @@
+# ── Force HTTPS at the server level, before PHP even boots ───────────────
+# Was previously done inside login.php (header() redirect) which meant any
+# entry point hitting it over http first cost TWO redirects: the app-level
+# bounce to login.php, then login.php's own http->https redirect. Doing it
+# here is a single 301 that Apache serves without ever starting PHP — fixes
+# both "avoid multiple redirects" and document request latency.
+# Skipped for localhost/.test/.local Laragon hosts so local dev (no SSL) keeps working.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:[0-9]+)?$
+    RewriteCond %{HTTP_HOST} !\.(test|local)$
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# ── Performance: long cache lifetimes for static assets ──────────────────
+# PHP pages are never cached (they're dynamic/session-based); only the
+# truly static files below get long-lived caching headers.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css                "access plus 1 year"
+    ExpiresByType application/javascript  "access plus 1 year"
+    ExpiresByType text/javascript         "access plus 1 year"
+    ExpiresByType image/webp              "access plus 1 year"
+    ExpiresByType image/png               "access plus 1 year"
+    ExpiresByType image/jpeg              "access plus 1 year"
+    ExpiresByType image/svg+xml           "access plus 1 year"
+    ExpiresByType image/x-icon            "access plus 1 year"
+    ExpiresByType font/woff2              "access plus 1 year"
+    ExpiresByType font/woff               "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|webp|png|jpe?g|svg|ico|woff2?)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# ── Performance: text compression (reduces document/asset transfer size) ─
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+    AddOutputFilterByType DEFLATE application/javascript text/javascript
+    AddOutputFilterByType DEFLATE application/json application/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>

@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors from login.php & layout.php */
+  --color-pmRed: #D62828;
+  --color-pmDarkGray: #1A1A1A;
+  --color-pm-red: #D62828;
+  --color-pm-dark: #0A0A0A;
+  
+  /* Fonts from layout.php */
+  --font-sans: "DM Sans", "Barlow", system-ui, sans-serif;
+  --font-display: "Bebas Neue", sans-serif;
+  --font-mono: "DM Mono", monospace;
+}
