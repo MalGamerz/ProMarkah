@@ -40,6 +40,10 @@ function oauth_login_judge_by_email(mysqli $conn, string $verified_email): bool
     unset($_SESSION['step']);
 
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    // Self-healing: creates audit_log on first use so login works even before
+    // that table's migration has run against a given environment. Deliberately
+    // duplicated here rather than centralized — low-frequency, idempotent
+    // (CREATE TABLE IF NOT EXISTS), and login must not depend on migration order.
     $conn->query("CREATE TABLE IF NOT EXISTS audit_log (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,

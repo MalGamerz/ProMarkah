@@ -25,8 +25,10 @@
  *
  * security_bootstrap.php loads this file and hands the values to db.php,
  * attendance_helpers.php, and the Telegram alerter. If the file is missing,
- * the app still runs (Telegram alerts simply stay off and db.php falls back
- * to its built-in values) — so a bad deploy never takes the site down.
+ * Telegram alerts simply stay off, but db.php now fails closed (HTTP 503)
+ * rather than falling back to any built-in credential — so a missing
+ * secrets.php takes the DB-backed parts of the site down loudly instead of
+ * silently using a stale/wrong credential.
  */
 
 return [

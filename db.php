@@ -9,14 +9,15 @@ require_once __DIR__ . '/security_bootstrap.php';
 // this file, so nothing sensitive lives inside public_html. If secrets.php is
 // missing, getDB() fails cleanly with a 503 below — it never falls back to a
 // hardcoded credential. (DB_HOST / DB_CHARSET defaults are not secrets.)
-$__s = $GLOBALS['__PROMARKAH_SECRETS'] ?? [];
-define('DB_HOST',    $__s['DB_HOST']    ?? 'localhost');
-define('DB_USER',    $__s['DB_USER']    ?? '');
-define('DB_PASS',    $__s['DB_PASS']    ?? '');
-define('DB_NAME',    $__s['DB_NAME']    ?? '');
-define('DB_CHARSET', $__s['DB_CHARSET'] ?? 'utf8mb4');
-unset($__s);
+$secrets = $GLOBALS['__PROMARKAH_SECRETS'] ?? [];
+define('DB_HOST',    $secrets['DB_HOST']    ?? 'localhost');
+define('DB_USER',    $secrets['DB_USER']    ?? '');
+define('DB_PASS',    $secrets['DB_PASS']    ?? '');
+define('DB_NAME',    $secrets['DB_NAME']    ?? '');
+define('DB_CHARSET', $secrets['DB_CHARSET'] ?? 'utf8mb4');
+unset($secrets);
 
+// Singleton: one mysqli connection per request, created on first use.
 function getDB(): mysqli {
     static $conn = null;
 

@@ -4,6 +4,17 @@
  * Include immediately after session_start() on every authenticated page.
  * (Previously this logic only lived in login.php and never ran again
  * after a user was authenticated, so sessions never actually expired.)
+ *
+ * No-op for anonymous/guest sessions: $_SESSION['last_activity'] is only
+ * ever set by this file (see the bottom), so on a session that never
+ * logged in, the isset() check below never trips and nothing happens.
+ * This is why the public attendance pages (attendance.php and friends —
+ * see the "no login by design" note in README.md) can safely include this
+ * file without gaining a login requirement.
+ *
+ * AJAX callers depend on the exact 401 {"error":"session_expired"} contract
+ * below (see layout.php's pmFetch()) — don't change its shape without
+ * updating every caller.
  */
 
 $idle_timeout = 900; // 15 minutes
