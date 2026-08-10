@@ -1,68 +1,96 @@
 # ProMarkah
 
-ProMarkah is a scoring and attendance management system for silat competitions. This repository contains the application code only; all sensitive files were removed during import.
+[![Repo Status](https://img.shields.io/badge/status-sanitized-orange)](https://github.com/MalGamerz/ProMarkah)
+[![License](https://img.shields.io/badge/license-unlicensed-lightgrey)]
 
-Status
+Table of Contents
 
-- Repository state: sanitized import. Secrets and server configuration have been removed and must be provided at deployment time.
+- [Overview](#overview)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Quickstart](#quickstart)
+- [Configuration](#configuration)
+- [File structure](#file-structure)
+- [Security](#security)
+- [Contributing](#contributing)
+- [License](#license)
+- [Maintainer](#maintainer)
 
-Key features
+## Overview
+
+ProMarkah is a scoring and attendance management system for silat competitions. This repository contains the application code only; all sensitive files were removed during import. The repository is ready for review and deployment once secrets are provisioned on the target server.
+
+## Features
 
 - Judge scoring workflow with draft autosaves and locking
-- Public QR-based attendance (no login required for scanning)
-- PIC (person-in-charge) admin for competition structure and results
-- Exports: CSV and PDF
-- Minimal runtime dependencies: PHP (mysqli), vanilla JavaScript, CSS
+- Public QR-based attendance (anonymous scanning)
+- PIC (person-in-charge) admin pages for competition setup and results
+- Export functionality (CSV, PDF)
+- Minimal dependencies: PHP, vanilla JS, CSS
 
-Requirements
+## Requirements
 
-- PHP 7.4 or newer (mysqli extension)
-- Composer (for optional dependency management)
-- A web server or PHP built-in server for local testing
+- PHP 7.4+ with mysqli
+- Composer (optional for dependency installation)
+- A web server (Apache, Nginx) or PHP built-in server for local testing
+- MySQL/MariaDB for production use
 
-Quickstart (development)
+## Quickstart
 
-1. Clone the repository:
-   git clone https://github.com/MalGamerz/ProMarkah.git
-2. Install dependencies:
-   composer install
-3. Provision secrets (mandatory):
-   - Copy `secrets.sample.php` to a file outside the web root (example: `../secrets.php`).
-   - Edit `../secrets.php` with production credentials (DB, QR HMAC key, Telegram token).
-   - Ensure the secrets file is not web-accessible and set file permissions to restrict access (chmod 600).
-4. Start a local dev server (from repo root):
-   php -S localhost:8000 -t public_html
-5. Open http://localhost:8000 in a browser to test the public pages.
+Clone and run locally:
 
-Deployment checklist
+```bash
+git clone https://github.com/MalGamerz/ProMarkah.git
+cd ProMarkah
+composer install
+# Provision secrets as described below
+php -S localhost:8000 -t public_html
+```
 
-- Place `secrets.php` outside the web root (one directory above `public_html`) and do not commit it.
-- Confirm `security_bootstrap.php` can load `bootstrap_secrets.php`.
-- Disable display_errors in production; log errors to a secure, non-web-accessible path.
-- Set correct file ownership and permissions for the web server user.
+Open http://localhost:8000 to test the public pages.
 
-Security
+## Configuration
 
-- No secrets or credentials are stored in this repository.
-- Do not commit any file that contains passwords, private keys, tokens, or credentials.
-- The repository has been sanitized to remove sensitive files; if any secret remains, report it immediately.
+Secrets must never be committed. Provision them outside the web root:
 
-Code map (high level)
+1. Copy `secrets.sample.php` to a path outside the web root (example: `../secrets.php`).
+2. Edit `../secrets.php` with production credentials (DB host/user/password, QR HMAC key, Telegram bot token, etc.).
+3. Ensure the secrets file is readable only by the web server user (chmod 600).
+4. Confirm `security_bootstrap.php` can load `bootstrap_secrets.php` which references the external secrets file.
 
-- Shared/core: `db.php`, `auth_check.php`, `security_bootstrap.php`, `layout.php`, `layout.js`
-- Attendance: `attendance.php`, `save_attendance.php`, `attendance_student.php`, export pages
-- Judge: `judge.php`, `judge_ajax.php`, `judge_marking.js`, judge assets
-- PIC/admin: `pic_*.php`, `admin.php`, `admin_data.php`
+## File structure
 
-Contributing
+Top-level load-bearing PHP filenames (do not rename):
 
-- Open issues or PRs for bug fixes, security reports, or refactors.
-- Do not add secrets to commits. Use `secrets.sample.php` as a template and never commit the real secrets file.
+- `index.php`, `judge.php`, `attendance.php`, `save_attendance.php`, `login.php`, `admin.php`, `pic_*.php`, etc.
 
-License
+Core support files:
 
-- No LICENSE file is included. This project is unlicensed. Do not reuse, redistribute, or modify the code without explicit permission from the maintainer.
+- `db.php` — database connection and `getDB()`
+- `security_bootstrap.php`, `bootstrap_secrets.php`, `bootstrap_error_handling.php` — error handling and secret loading
+- `layout.php`, `layout.js`, `layout_icons.php` — shared UI and client helpers
 
-Maintainer
+Static assets live under `img/`, CSS/JS files are next to their pages or in top-level asset files.
 
-- MalGamerz (contact via the repository owner account)
+## Security
+
+- No credentials or private keys are stored in this repository.
+- Do not commit any files that contain passwords, private keys, tokens, or other secrets.
+- On production, disable `display_errors` and log to a secure file outside the web root.
+- Verify file permissions: secrets should be readable only by the web server user.
+- If any secret is discovered in the repository, rotate credentials immediately and contact the maintainer.
+
+## Contributing
+
+- Open issues for bugs, security reports, or enhancement requests.
+- Create pull requests against `main` for code changes.
+- Do not include secrets in commits. Use `secrets.sample.php` as a non-sensitive template.
+
+## License
+
+This project is unlicensed. Do not reuse, redistribute, or modify the code without explicit permission from the maintainer.
+
+## Maintainer
+
+MalGamerz — contact via the GitHub account: https://github.com/MalGamerz
+
