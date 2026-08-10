@@ -1,0 +1,337 @@
+/* attendance_view_school.css — admin table of one school's students for a
+   session (attendance_view_school.php). Split out of that file's inline
+   <style> block, which had nothing to do with the PHP rendering logic
+   around it (and was oddly placed after the <script> block in the
+   original file). */
+
+/* fitAvsCardHeight()'s math assumes the card's bottom edge lands exactly
+   `24px` above the viewport bottom — .pm-main's own bottom padding
+   (var(--sp-10), shared across every page) would otherwise add its own gap
+   on top of that, since it renders below the card inside the same wrapper.
+   Zeroed out here, scoped to this page only. */
+#pm-main { padding-bottom: 0; }
+@media (max-width: 640px) {
+    #pm-main { padding-bottom: var(--sp-5); } /* restore normal spacing when the card reverts to natural (auto) height on mobile */
+}
+
+/* ── Topbar ───────────────────────────────────────────────────────── */
+.avs-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.avs-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--c-border, #e5e7eb);
+    background: var(--c-surface-1, #fff);
+    color: var(--c-text-muted, #4b5563);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color .15s, color .15s;
+    white-space: nowrap;
+}
+.avs-back-btn:hover { border-color: var(--c-red, #b30000); color: var(--c-red, #b30000); }
+.avs-school-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: .04em;
+    color: var(--c-text, #111827);
+}
+.avs-school-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--c-red, #b30000);
+    flex-shrink: 0;
+}
+
+/* ── Stats bar ────────────────────────────────────────────────────── */
+.avs-stats-bar {
+    display: flex;
+    align-items: center;
+    background: var(--c-surface-1, #fff);
+    border: 1px solid var(--c-border, #e5e7eb);
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.avs-stat { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+.avs-stat-num {
+    font-size: 2rem; font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums; transition: color .3s;
+}
+.avs-stat-lbl { font-size: 0.72rem; color: var(--c-text-muted, #6b7280); margin-top: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.avs-stat-present .avs-stat-num { color: #16a34a; }
+.avs-stat-absent  .avs-stat-num { color: var(--c-text-muted, #9ca3af); }
+.avs-stat-divider { width: 1px; height: 36px; background: var(--c-border, #e5e7eb); align-self: center; }
+.avs-progress-wrap { flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px; margin-left: 8px; }
+.avs-progress-track { height: 8px; background: var(--c-surface-3, #f3f4f6); border-radius: 4px; overflow: hidden; }
+.avs-progress-fill { height: 100%; background: linear-gradient(90deg, #16a34a, #4ade80); border-radius: 4px; transition: width .4s cubic-bezier(.16,1,.3,1); }
+.avs-progress-label { font-size: 0.75rem; color: var(--c-text-muted, #6b7280); font-weight: 500; }
+
+/* ── Toolbar ──────────────────────────────────────────────────────── */
+.avs-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.avs-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+/* ── Combo search + Dropdown Integrated ───────────────────────────── */
+/* 1. LOCK THE WRAPPER HEIGHT */
+.avs-combo-wrap {
+    position: relative;
+    flex: 1 1 200px;
+    min-width: 180px;
+    max-width: 340px;
+    display: flex; 
+    align-items: center;
+    /* Force the container to be exactly 38px tall, no exceptions */
+    height: 38px !important; 
+    min-height: 38px !important;
+    max-height: 38px !important;
+}
+
+/* 2. FORCE THE INPUT TO OBEY THE WRAPPER */
+.avs-search {
+    width: 100%;
+    height: 100% !important; /* Take up exactly the 38px of the wrapper */
+    margin: 0 !important;
+    /* The !important below destroys global top/bottom padding */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 36px !important;
+    padding-right: 36px !important;
+    border: 1px solid var(--c-border, #e5e7eb);
+    border-radius: 8px;
+    background: var(--c-surface-1, #fff);
+    color: var(--c-text, #111827);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color .15s;
+    box-sizing: border-box !important;
+    line-height: 1 !important; /* Stops weird text alignment issues */
+    -webkit-appearance: none; /* Stops iOS Safari from adding weird form styles */
+}
+.avs-search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--c-text-faint, #9ca3af); pointer-events: none;
+    z-index: 2;
+}
+
+.avs-search:focus { border-color: var(--c-red, #b30000); box-shadow: 0 0 0 3px rgba(179,0,0,.08); }
+.avs-search-clear {
+    position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--c-text-faint, #9ca3af);
+    font-size: 0.8rem; cursor: pointer; display: none; align-items: center; padding: 2px 4px;
+    z-index: 2;
+}
+.avs-search-clear:hover { color: var(--c-red, #b30000); }
+
+.avs-chevron-icon {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--c-text-faint, #9ca3af); pointer-events: auto; cursor: pointer;
+    transition: transform .2s ease;
+    z-index: 2;
+}
+.avs-combo-wrap.is-open .avs-chevron-icon {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* Dropdown suggestions */
+.avs-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--c-surface-1, #fff);
+    border: 1px solid var(--c-border, #e5e7eb);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    z-index: 100;
+    overflow: hidden;
+    max-height: 260px;
+    overflow-y: auto;
+}
+.avs-dd-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    font-size: 0.875rem;
+    color: var(--c-text, #111827);
+    cursor: pointer;
+    gap: 10px;
+    transition: background .1s;
+}
+.avs-dd-item:hover { background: var(--c-surface-2, #f9fafb); }
+.avs-dd-item mark { background: rgba(179,0,0,.15); color: var(--c-red, #b30000); border-radius: 2px; padding: 0 1px; }
+.avs-dd-badge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+.avs-dd-badge-present { background: #dcfce7; color: #15803d; }
+.avs-dd-badge-absent  { background: var(--c-surface-3, #f3f4f6); color: var(--c-text-faint, #9ca3af); }
+
+/* ── Filter pills ─────────────────────────────────────────────────── */
+.avs-filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.avs-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 20px;
+    border: 1px solid var(--c-border, #e5e7eb);
+    background: var(--c-surface-1, #fff);
+    color: var(--c-text-muted, #4b5563);
+    font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.avs-pill:hover { border-color: var(--c-red, #b30000); color: var(--c-red, #b30000); }
+.avs-pill-active { background: var(--c-text, #111827); border-color: var(--c-text, #111827); color: #fff; }
+.avs-pill-active:hover { background: var(--c-red, #b30000); border-color: var(--c-red, #b30000); color: #fff; }
+.avs-pill-count { background: rgba(255,255,255,.2); border-radius: 10px; padding: 1px 7px; font-size: 0.75rem; font-weight: 700; }
+.avs-pill:not(.avs-pill-active) .avs-pill-count { background: var(--c-surface-3, #f3f4f6); color: var(--c-text-muted); }
+.avs-pill-count-green { color: #16a34a !important; }
+.avs-pill-count-red   { color: #dc2626 !important; }
+
+/* ── Student list card ────────────────────────────────────────────── */
+.avs-card {
+    background: var(--c-surface-1, #fff);
+    border: 1px solid var(--c-border, #e5e7eb);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* Height is set dynamically in JS (fitAvsCardHeight) so it always leaves
+       room for the pagination bar below it instead of a static
+       calc(100vh - Npx) that goes stale whenever the filter pills above the
+       card wrap to more rows. */
+}
+@media (max-width: 640px) {
+    .avs-card { height: auto !important; }
+}
+.avs-list { 
+    overflow-x: hidden; 
+    overflow-y: auto; 
+    flex: 1; /* Automatically takes up all remaining space inside the card */
+    -webkit-overflow-scrolling: touch; 
+}
+
+.avs-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--c-border, #f3f4f6);
+    transition: background .15s;
+}
+.avs-row:last-child { border-bottom: none; }
+.avs-row:hover { background: var(--c-surface-2, #f9fafb); }
+
+.avs-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--c-surface-3, #f3f4f6);
+    border: 2px solid var(--c-border, #e5e7eb);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 800;
+    color: var(--c-text-muted, #6b7280);
+    flex-shrink: 0; transition: all .2s;
+}
+.avs-avatar-present { background: #dcfce7; border-color: #86efac; color: #15803d; }
+.avs-info { flex: 1; min-width: 0; }
+.avs-name { font-weight: 600; font-size: 0.9rem; color: var(--c-text, #111827); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avs-meta { font-size: 0.75rem; color: var(--c-text-faint, #9ca3af); margin-top: 1px; }
+
+.avs-status-badge { font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; white-space: nowrap; flex-shrink: 0; }
+.avs-badge-present { background: #dcfce7; color: #15803d; }
+.avs-badge-absent  { background: var(--c-surface-3, #f3f4f6); color: var(--c-text-faint, #9ca3af); }
+
+.avs-toggle-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 14px; border-radius: 8px; border: 1px solid transparent;
+    font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 700;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all .15s;
+}
+.avs-toggle-mark { background: var(--c-red, #b30000); color: #fff; border-color: var(--c-red, #b30000); }
+.avs-toggle-mark:hover { background: #900000; border-color: #900000; }
+.avs-toggle-undo { background: var(--c-surface-1, #fff); color: var(--c-text-muted, #6b7280); border-color: var(--c-border, #e5e7eb); }
+.avs-toggle-undo:hover { border-color: #dc2626; color: #dc2626; }
+
+.avs-empty { text-align: center; color: var(--c-text-muted, #6b7280); padding: 48px 24px; font-size: 0.9rem; }
+
+/* ── Pagination — identical markup/classes to pic_view_marks.php /
+   pic_master_list.php's .vm-pagination system, so every paginated page in
+   the app looks and behaves identically. ── */
+.vm-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px;
+    background: var(--c-surface-2, #f9fafb);
+    border-top: 1px solid var(--c-border, #e5e7eb);
+}
+.vm-page-info {
+    font-size: 0.8rem;
+    color: var(--c-text-faint);
+    font-weight: 500;
+}
+.vm-page-btns { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.vm-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--c-text-muted);
+    background: var(--c-surface-2, #f3f4f6);
+    border: 1px solid var(--c-border-strong, #d1d5db);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.vm-page-btn:hover:not(:disabled) { color: #fff; border-color: var(--c-red, #b30000); background: var(--c-red-dim, #b30000); }
+.vm-page-btn.vm-page-active { background: var(--c-red, #b30000); border-color: var(--c-red, #b30000); color: #fff; cursor: default; pointer-events: none; }
+.vm-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.vm-page-ellipsis { display: inline-flex; align-items: center; height: 34px; color: var(--c-text-faint, #9ca3af); font-size: 0.85rem; padding: 0 4px; }
+
+html.pm-light .vm-page-info { color: #6b7280; }
+html.pm-light .vm-page-btn { background: #ffffff; border-color: #d1d5db; color: #374151; }
+html.pm-light .vm-page-btn:hover:not(:disabled) { background: #fee2e2; border-color: #e2581e; color: #b91c1c; }
+html.pm-light .vm-page-btn.vm-page-active { background: #e2581e; border-color: #e2581e; color: #ffffff; }
+html.pm-light .vm-page-ellipsis { color: #9ca3af; }
+html.pm-light .vm-pagination { border-top-color: #e5e7eb; }
+
+/* ── Mobile ───────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .avs-stats-bar   { padding: 14px 16px; gap: 12px; }
+    .avs-stat-num    { font-size: 1.6rem; }
+    .avs-row         { padding: 11px 14px; gap: 10px; }
+    .avs-status-badge { display: none; }
+    .avs-toolbar { flex-direction: column; align-items: stretch; gap: 16px; }
+    .avs-combo-wrap { max-width: 100%; width: 100%; }
+    .avs-toolbar-right { justify-content: flex-end; }
+    .vm-pagination { flex-direction: column; justify-content: center; text-align: center; }
+    .vm-page-btns { width: 100%; justify-content: center; }
+    .avs-toggle-btn  { padding: 6px 10px; font-size: 0.78rem; }
+}

@@ -1,0 +1,7 @@
+{
+    "name": "promarkah/promarkah",
+    "type": "project",
+    "require": {
+        "firebase/php-jwt": "^7.1"
+    }
+}
