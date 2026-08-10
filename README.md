@@ -2,10 +2,12 @@
 
 [![License](https://img.shields.io/github/license/MalGamerz/ProMarkah?cacheSeconds=60)](https://github.com/MalGamerz/ProMarkah)
 [![Last Commit](https://img.shields.io/github/last-commit/MalGamerz/ProMarkah?cacheSeconds=60)](https://github.com/MalGamerz/ProMarkah/commits/main)
-[![Repo Size](https://img.shields.io/github/repo-size/MalGamerz/ProMarkah?cacheSeconds=60)](https://github.com/MalGamerz/ProMarkah)
+[![Repo Size](https://img.shields.io/badge/Repo%20size-4.00%20MB-blue)](https://github.com/MalGamerz/ProMarkah)
 [![Top Language](https://img.shields.io/github/languages/top/MalGamerz/ProMarkah?cacheSeconds=60)](https://github.com/MalGamerz/ProMarkah)
 [![Open Issues](https://img.shields.io/github/issues/MalGamerz/ProMarkah?cacheSeconds=60)](https://github.com/MalGamerz/ProMarkah/issues)
 [![Stars](https://img.shields.io/github/stars/MalGamerz/ProMarkah?style=social&cacheSeconds=60)](https://github.com/MalGamerz/ProMarkah)
+
+[![Star history](https://api.star-history.com/svg?repos=MalGamerz/ProMarkah&type=timeline)](https://star-history.com/#MalGamerz/ProMarkah)
 
 Table of Contents
 
