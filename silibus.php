@@ -10,9 +10,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'judge') {
     exit();
 }
 
+require_once __DIR__ . '/pagination_helpers.php';
 function silibus_page_url(int $p, array $extra): string {
-    $params = array_merge($extra, ['page' => $p]);
-    return '?' . http_build_query($params);
+    return pm_page_url($p, $extra);
 }
 
 // ── FILTER INPUTS — six independent filters, each usable on its own ──

@@ -14,9 +14,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'pic') {
 $pm_page = 'view_marks';
 include 'layout.php';
 
+require_once __DIR__ . '/pagination_helpers.php';
 function page_url(int $p, array $extra): string {
-    $params = array_merge($extra, ['page' => $p]);
-    return '?' . http_build_query($params);
+    return pm_page_url($p, $extra);
 }
 
 /* FILTER DATA — scoped to "Siri Aktif" */

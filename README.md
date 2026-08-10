@@ -128,10 +128,56 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   data (`pic_students.php`, `pic_directory.php`, `pic_master_list.php`,
   `pic_roster_check.php`), and results
   (`pic_manual_marks.php`, `pic_view_marks.php`, `pic_medal_settings.php`,
-  `pic_cawangan_summary.php`, `manage_attendance.php`).
+  `pic_cawangan_summary.php`, `manage_attendance.php`). Each page still
+  follows its own long-standing shape (auth/role check → query/POST-handling
+  block → inline HTML → inline `<script>` at the bottom) — see the
+  cross-file duplication note below before splitting any one of them
+  further.
 - **Admin**: `admin.php`, `admin_data.php`, `admin_logs.php`.
 - **Login**: `login.php`, `oauth_apple_start.php`,
   `oauth_apple_callback.php`, `oauth_google_callback.php`.
+
+### Cross-file duplication in the `pic_*.php` family
+
+A survey found several patterns hand-duplicated across many `pic_*.php`
+files rather than shared. One has been consolidated so far:
+
+- **`pagination_helpers.php`** — `pic_view_marks.php`'s `page_url()` and
+  `silibus.php`'s `silibus_page_url()` were byte-identical; both are now
+  thin wrappers around one `pm_page_url()`.
+
+**Identified but deliberately deferred** (verified in more depth than the
+one-line summary below suggests — each turned out to have real per-file
+differences that make a blanket consolidation riskier than it first looked,
+so they're left alone until each can get its own careful pass):
+- The searchable-dropdown JS trio (`ddToggle`/`ddFilter`/`ddSelect`, or
+  renamed variants) is reimplemented in ~14 files. `ddToggle` bodies are
+  identical; `ddFilter`/`ddSelect` and especially the single-field variants
+  in `pic_schools.php`/`pic_roster_check.php` are not pure copies.
+- The server-side dropdown-option renderers (`renderMedalDD`, `renderMMDD`,
+  `renderVMDD`, `renderDirDD`, `renderMasterDD`, `renderSilibusDD` — 6
+  files) look like two signature shapes, but `renderMMDD` (the
+  disabled-capable shape) skips rendering the "clear selection" empty-option
+  row entirely, unlike the others — a real functional difference, not just
+  an optional parameter.
+- The `updateXPagination()`/`xGoToPage()` JS pair is duplicated across 9
+  files. Most are plain top-level functions with parallel logic (differing
+  only in element-id prefixes and a label noun), but at least two
+  (`pic_master_list.php`, `pic_medal_settings.php`) assign theirs as
+  `window.xGoToPage = function(){}` inside a different scoping structure —
+  consolidating safely needs each file's surrounding structure checked
+  individually, not assumed identical.
+- The self-healing `SHOW COLUMNS` / `ALTER TABLE ADD COLUMN` migration
+  boilerplate appears in 6+ places with a different table/column/session-flag
+  each time; `pic_judges.php`'s version has no session-flag gate at all and
+  wraps the query in its own try/catch/fallback-message, so it doesn't fit
+  the same shape as the other five.
+- The CSRF check-and-reject block (`hash_equals(...)` + reject) is
+  near-identical in the check itself, but what happens on failure varies
+  per file (JSON+exit, set-`$error`-and-continue-rendering,
+  `http_response_code`+JSON, reading the token from a JSON body instead of
+  `$_POST`) — a shared helper needs to return a bool rather than perform the
+  reject itself.
 
 *(This map will grow as later refactor phases document the judge, PIC, and
 attendance-flow files in more depth.)*
