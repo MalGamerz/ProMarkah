@@ -1,55 +1,68 @@
 # ProMarkah
 
-ProMarkah is a lightweight scoring and attendance management system for silat competitions. It provides judge scoring, public QR-based attendance, PIC (person-in-charge) management, and admin tools for results and exports.
+ProMarkah is a scoring and attendance management system for silat competitions. This repository contains the application code only; all sensitive files were removed during import.
 
-Status: Imported (sanitized). Secrets and server configuration must be supplied during deployment.
+Status
 
-## Key features
+- Repository state: sanitized import. Secrets and server configuration have been removed and must be provided at deployment time.
+
+Key features
 
 - Judge scoring workflow with draft autosaves and locking
-- QR-based public attendance (no login required for scanning)
-- PIC admin pages for competition structure and results
-- Export attendance and results (CSV/PDF)
-- Minimal dependencies: plain PHP + vanilla JS; Composer used only for OAuth token verification
+- Public QR-based attendance (no login required for scanning)
+- PIC (person-in-charge) admin for competition structure and results
+- Exports: CSV and PDF
+- Minimal runtime dependencies: PHP (mysqli), vanilla JavaScript, CSS
 
-## Quickstart (development)
+Requirements
 
-1. Clone the repo:
+- PHP 7.4 or newer (mysqli extension)
+- Composer (for optional dependency management)
+- A web server or PHP built-in server for local testing
+
+Quickstart (development)
+
+1. Clone the repository:
    git clone https://github.com/MalGamerz/ProMarkah.git
-2. Install PHP dependencies (if required):
+2. Install dependencies:
    composer install
-3. Configure secrets outside the web root (see "Secrets and deployment")
-4. Serve with PHP built-in server for local testing:
+3. Provision secrets (mandatory):
+   - Copy `secrets.sample.php` to a file outside the web root (example: `../secrets.php`).
+   - Edit `../secrets.php` with production credentials (DB, QR HMAC key, Telegram token).
+   - Ensure the secrets file is not web-accessible and set file permissions to restrict access (chmod 600).
+4. Start a local dev server (from repo root):
    php -S localhost:8000 -t public_html
+5. Open http://localhost:8000 in a browser to test the public pages.
 
-## Deployment notes
+Deployment checklist
 
-- Secrets (DB credentials, QR HMAC key, Telegram bot token) must live outside the web root and never be committed. See `secrets.sample.php` for required keys.
-- `security_bootstrap.php` must be able to load `bootstrap_secrets.php` to configure error reporting and alerting.
-- Top-level filenames (e.g., `judge.php`, `attendance.php`, `save_attendance.php`) are load-bearing URLs and should not be renamed.
-- Ensure file permissions prevent web access to any secrets stored on disk.
+- Place `secrets.php` outside the web root (one directory above `public_html`) and do not commit it.
+- Confirm `security_bootstrap.php` can load `bootstrap_secrets.php`.
+- Disable display_errors in production; log errors to a secure, non-web-accessible path.
+- Set correct file ownership and permissions for the web server user.
 
-## What was sanitized
+Security
 
-This repository was imported with sensitive files removed. If you need the original README or other docs restored, provide confirmation and the exact files to restore.
+- No secrets or credentials are stored in this repository.
+- Do not commit any file that contains passwords, private keys, tokens, or credentials.
+- The repository has been sanitized to remove sensitive files; if any secret remains, report it immediately.
 
-## Code map (high level)
+Code map (high level)
 
 - Shared/core: `db.php`, `auth_check.php`, `security_bootstrap.php`, `layout.php`, `layout.js`
 - Attendance: `attendance.php`, `save_attendance.php`, `attendance_student.php`, export pages
-- Judge: `judge.php`, `judge_ajax.php`, `judge_marking.js`
+- Judge: `judge.php`, `judge_ajax.php`, `judge_marking.js`, judge assets
 - PIC/admin: `pic_*.php`, `admin.php`, `admin_data.php`
 
-## Contributing
+Contributing
 
-- Open issues or PRs for bug fixes and refactors.
-- Avoid committing secrets. Use `secrets.sample.php` as a template.
+- Open issues or PRs for bug fixes, security reports, or refactors.
+- Do not add secrets to commits. Use `secrets.sample.php` as a template and never commit the real secrets file.
 
-## License
+License
 
-No LICENSE file is included in this repository. This project is currently unlicensed — do not assume permission to reuse, redistribute, or modify the code until a proper license is added. To add a license or request reuse permissions, contact the maintainer: MalGamerz.
+- No LICENSE file is included. This project is unlicensed. Do not reuse, redistribute, or modify the code without explicit permission from the maintainer.
 
----
+Maintainer
 
-Maintainer: MalGamerz
-
+- MalGamerz (contact via the repository owner account)
