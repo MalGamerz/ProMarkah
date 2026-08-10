@@ -1,0 +1,320 @@
+/* attendance_student.css — the public QR self-registration page
+   (attendance_student.php). Split out of that file's inline <style>
+   block since it has nothing to do with the PHP rendering logic. */
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --red:          #b30000;
+            --red-dark:     #800000;
+            --red-dim:      rgba(179,0,0,.08);
+            --red-border:   rgba(179,0,0,.2);
+            --surface:      #f0f2f5;
+            --surface-1:    #ffffff;
+            --surface-2:    #f9fafb;
+            --border:       #e5e7eb;
+            --border-focus: #b30000;
+            --text:         #111827;
+            --muted:        #4b5563;
+            --faint:        #9ca3af;
+            --radius:       12px;
+            --ease:         cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            background: var(--surface);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 40px 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Card ───────────────────────────────────────────────── */
+        .form-card {
+            width: 100%;
+            max-width: 540px;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-top: 8px solid var(--red);
+            border-radius: 8px;
+            padding: 40px 32px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.05);
+            animation: slideUp .4s var(--ease) both;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Branding ───────────────────────────────────────────── */
+        .form-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+        .form-brand-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--red);
+            flex-shrink: 0;
+        }
+        .form-brand-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: .06em;
+            color: var(--text);
+        }
+        .form-brand-sub {
+            font-size: 0.72rem;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--red);
+            font-weight: 700;
+            margin-left: auto;
+        }
+
+        /* ── Headings & Badges ──────────────────────────────────── */
+        .form-heading {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.4rem;
+            letter-spacing: .02em;
+            line-height: 1.1;
+            margin-bottom: 10px;
+        }
+        .form-subheading {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 32px;
+        }
+        .form-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .form-badge {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .form-badge-red {
+            background: var(--red-dim);
+            border-color: var(--red-border);
+            color: var(--red);
+        }
+
+        /* ── Form Controls ──────────────────────────────────────── */
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .form-select-wrap {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        .form-select {
+            width: 100%;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            padding: 14px 42px 14px 16px;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            cursor: pointer;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .form-select:focus {
+            border-color: var(--border-focus);
+            background: #fff;
+            box-shadow: 0 0 0 3px var(--red-dim);
+        }
+        .form-select option { background: #fff; color: var(--text); }
+        .form-select-arrow {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--muted);
+        }
+
+        /* ── Searchable combobox ─────────────────────────────────── */
+        .combo-wrap { position: relative; margin-bottom: 24px; }
+        .combo-input { padding-right: 42px; }
+        .combo-input:disabled { cursor: not-allowed; opacity: .6; }
+        .combo-list {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            max-height: 240px;
+            overflow-y: auto;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,.1);
+            z-index: 20;
+        }
+        .combo-list.open { display: block; }
+        .combo-item {
+            padding: 11px 16px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .combo-item:hover, .combo-item.active { background: var(--red-dim); }
+        .combo-item-present { font-size: 0.72rem; color: #10b981; font-weight: 700; text-transform: uppercase; }
+        .combo-empty { padding: 14px 16px; font-size: 0.88rem; color: var(--muted); text-align: center; }
+        /* School name takes the available width; count pill sits at the END */
+        .school-item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* Student count as a uniform pill so every row lines up neatly */
+        .combo-item-count {
+            flex: none;
+            min-width: 54px;
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            color: var(--text);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 3px 10px;
+        }
+        .combo-item-count.is-full  { color: #047857; background: #ecfdf5; border-color: #a7f3d0; }
+        .combo-item-count.is-empty { opacity: .5; }
+        /* Div acting as the select trigger for the custom school dropdown */
+        #schoolTrigger { display: flex; align-items: center; }
+        #schoolTrigger .school-trigger-placeholder { color: var(--muted); }
+
+        /* ── Confirm Box ────────────────────────────────────────── */
+        .confirm-box {
+            display: none;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+            align-items: center;
+            gap: 14px;
+            animation: fadeIn .2s ease both;
+        }
+        .confirm-box.visible { display: flex; }
+        .confirm-avatar {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: #fff;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .confirm-name  { font-weight: 700; font-size: 1rem; margin-bottom: 2px; }
+        .confirm-school { font-size: 0.85rem; color: var(--muted); }
+
+        /* ── Already Present Notice ─────────────────────────────── */
+        .already-present {
+            display: none;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            padding: 16px 20px;
+            color: #065f46;
+            font-weight: 600;
+            font-size: 0.95rem;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .already-present.visible { display: flex; }
+
+        /* ── Submit Button ──────────────────────────────────────── */
+        .btn-submit {
+            width: 100%;
+            background: var(--red);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: .02em;
+            padding: 16px;
+            cursor: pointer;
+            transition: background .15s, transform .1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-submit:hover    { background: var(--red-dark); }
+        .btn-submit:active   { transform: scale(.98); }
+        .btn-submit:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+
+        /* ── Success State ──────────────────────────────────────── */
+        .success-state {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 14px;
+            padding: 20px 0;
+        }
+        .success-state.visible { display: flex; }
+        .success-checkmark {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            background: #10b981;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        .success-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: .03em; }
+        .success-sub   { font-size: 0.95rem; color: var(--muted); line-height: 1.6; }
+
+        /* ── Footer ─────────────────────────────────────────────── */
+        .form-divider { border: none; border-top: 1px solid var(--border); margin: 28px 0 20px; }
+        .form-note    { font-size: 0.82rem; color: var(--faint); line-height: 1.6; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(.97); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 480px) {
+            .form-card    { padding: 28px 20px; }
+            .form-heading { font-size: 2rem; }
+        }

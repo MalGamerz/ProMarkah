@@ -109,8 +109,32 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   `oauth_helpers.php`, `oauth_config.php`, `error_page.php`.
 - **Public attendance flow** (no login — see constraint above):
   `attendance.php`, `save_attendance.php`, `attendance_toggle.php`,
-  `attendance_student.php`, `attendance_view_*.php`,
-  `export_attendance_*.php`.
+  `attendance_student.php` (+ `attendance_student.css/.js`),
+  `attendance_view_all.php`, `attendance_view_dashboard.php`,
+  `attendance_view_session.php` (+ `attendance_view_session.css/.js`),
+  `attendance_view_school.php` (+ `attendance_view_school.css/.js`),
+  `export_attendance_*.php`. `manage_attendance.php` is the one exception —
+  correctly PIC-login-gated (internal management view, not the public flow).
+
+  **Flagged, not fixed** (surfaced during the Phase 4 split, worth a
+  deliberate decision rather than a silent change):
+  - `attendance_toggle.php` looks like an orphaned duplicate of
+    `save_attendance.php` — it rolls its own `INSERT ... ON DUPLICATE KEY
+    UPDATE` upsert instead of reusing the canonical endpoint, has no
+    `auth_check.php` include at all, and a looser status whitelist (anything
+    that isn't exactly `'Present'` silently becomes `'Absent'` instead of
+    being rejected). Nothing in the front-end calls it — only
+    `test_suite.php` does. Left alone pending a decision on whether it's
+    still needed for something outside this repo.
+  - `attendance_view_dashboard.php` interpolates `$active_siri_id` directly
+    into a raw SQL string rather than a prepared statement, unlike every
+    other file in this family. Low risk in practice (the value is cast
+    `(int)` first), but inconsistent with the rest of the codebase's
+    `bind_param` convention.
+  - `attendance_view_all.php`, `export_attendance_excel.php`, and
+    `export_attendance_pdf.php` each hand-duplicate the same ~50-line
+    UNION/COALESCE filter query rather than sharing it — a real
+    consolidation candidate for a future pass.
 - **Judge scoring**: `judge.php` — the judge's scoring workflow (session/
   group selection, the marking table, submit/lock rules), split into:
   `judge_ajax.php` (the small-form-dropdown AJAX endpoints, required
