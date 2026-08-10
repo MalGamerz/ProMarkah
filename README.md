@@ -47,7 +47,7 @@ This repository was imported with sensitive files removed. If you need the origi
 
 ## License
 
-See LICENSE file in repository (if present).
+No LICENSE file is included in this repository. This project is currently unlicensed — do not assume permission to reuse, redistribute, or modify the code until a proper license is added. To add a license or request reuse permissions, contact the maintainer: MalGamerz.
 
 ---
 
