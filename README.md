@@ -156,7 +156,12 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   follows its own long-standing shape (auth/role check → query/POST-handling
   block → inline HTML → inline `<script>` at the bottom) — see the
   cross-file duplication note below before splitting any one of them
-  further.
+  further. `upload_students.php` (+ `upload_students.css/.js`) is the
+  student-roster import wizard (Excel/PDF → upload → select_sheets →
+  review → process) — its ~900 lines of multi-stage import/matching logic
+  are left untouched (data-import correctness is not something to risk in
+  a readability pass); only the inline CSS/JS were extracted, same pattern
+  as judge.php.
 - **Admin**: `admin.php`, `admin_data.php`, `admin_logs.php`.
 - **Login**: `login.php`, `oauth_apple_start.php`,
   `oauth_apple_callback.php`, `oauth_google_callback.php`.
