@@ -148,7 +148,13 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   `judge_view_marks.php`, `judge_settings.php`, `silibus.php`.
 - **PIC management**: the `pic_*.php` family — competition structure
   (`pic_levels.php`, `pic_tests.php`, `pic_criteria.php`, `pic_sessions.php`,
-  `pic_siri.php`, `pic_schools.php`, `pic_judges.php`, `pic_groups.php`),
+  `pic_siri.php`, `pic_schools.php`, `pic_judges.php`, `pic_groups.php` (+
+  `pic_groups.css/.js` — its one PHP-interpolated value, the CSRF token,
+  is exposed as a plain `const PM_GROUPS_CSRF` in a bootstrap `<script>`
+  right before the `<script src>` tag, relying on top-level `let`/`const`
+  sharing one lexical scope across sequential classic `<script>` tags —
+  same mechanism already used for `criteriaByTest` between
+  judge_dashboard.js/judge_marking.js)),
   data (`pic_students.php`, `pic_directory.php`, `pic_master_list.php`,
   `pic_roster_check.php`), and results
   (`pic_manual_marks.php`, `pic_view_marks.php`, `pic_medal_settings.php`,

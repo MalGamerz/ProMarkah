@@ -1,0 +1,595 @@
+/* pic_groups.css — the PIC "Kumpulan Juri" (judge group) management page
+   (pic_groups.php). Split out of that file's inline <style> block, which
+   had nothing to do with the PHP rendering logic around it. */
+
+    .accordion-card {
+         background:var(--c-surface-1);
+         border:1px solid var(--c-border);
+         border-radius:10px;
+         margin-bottom:12px;
+         overflow:hidden;
+    }
+     .school-header {
+         display:flex;
+         align-items:center;
+         gap:10px;
+         padding:12px 16px;
+         background:var(--c-surface-1);
+         border:1px solid var(--c-border);
+         border-radius:8px;
+         cursor:pointer;
+         color:var(--c-white);
+         font-weight:600;
+         font-size:0.92rem;
+         text-decoration:none !important;
+         user-select:none;
+    }
+     .school-header:hover { text-decoration:none !important; }
+     .school-header .arrow {
+         color:var(--c-red);
+         font-size:0.9rem;
+         display:inline-block;
+         transition:transform .2s ease;
+         text-decoration:none !important;
+    }
+     .school-header .siri-tag,
+     .accordion-sub-header .siri-tag {
+         font-size:0.7rem;
+         font-weight:600;
+         text-transform:uppercase;
+         letter-spacing:0.05em;
+         color:var(--c-text-faint);
+         background:rgba(214, 40, 40, 0.08);
+         border:1px solid var(--c-red-border);
+         padding:2px 8px;
+         border-radius:10px;
+         white-space:nowrap;
+    }
+     .school-header .siri-tag { margin-left:auto; }
+     html.pm-light .school-header .siri-tag,
+     html.pm-light .accordion-sub-header .siri-tag {
+         background:#fdecec;
+         color:var(--c-red-700);
+         border-color:var(--c-red-300);
+    }
+     .accordion-sub-card {
+         background:var(--c-surface-0);
+         border:1px solid var(--c-border);
+         border-left:3px solid var(--c-red);
+         border-radius:8px;
+         margin-bottom:12px;
+         /* No `overflow:hidden` here — a sticky descendant (the peringkat
+            header) computes its "stuck" offset relative to the nearest
+            ancestor whose overflow isn't `visible`, so clipping this box
+            was silently turning it into that reference frame instead of
+            the page, breaking the sticky positioning and clipping/garbling
+            the header against the table underneath it. */
+    }
+    .accordion-sub-header {
+         display:flex;
+         align-items:center;
+         gap:10px;
+         padding:10px 14px;
+         cursor:pointer;
+         color:var(--c-white);
+         font-weight:600;
+         font-size:0.88rem;
+         transition:background .15s;
+         user-select:none;
+         flex-wrap:wrap;
+         text-decoration:none !important;
+         /* Stays pinned under the fixed page header while its student list
+            scrolls underneath, so the Simpan button (and which peringkat
+            you're editing) is always in view instead of scrolling away. */
+         position:sticky;
+         top:var(--header-h);
+         z-index:20;
+         background:var(--c-surface-0);
+    }
+     @media (max-width: 600px) {
+         .accordion-sub-header { gap:6px; padding:8px 10px; }
+         .accordion-sub-header > div[style*='margin-left:auto'] { margin-left:0 !important; width:100%; justify-content:flex-end; }
+     }
+     .accordion-sub-header:hover {
+         background:var(--c-surface-1);
+         text-decoration:none !important;
+    }
+     .accordion-sub-header .arrow {
+         color:var(--c-red);
+         font-size:0.8rem;
+         display:inline-block;
+         transition:transform .2s ease;
+         text-decoration:none !important;
+    }
+     .filter-select {
+         background:var(--c-surface-2);
+         border:1px solid var(--c-border-strong);
+         color:var(--c-white);
+         border-radius:6px;
+         padding:8px 10px;
+         font-size:0.875rem;
+         outline:none;
+         width:100%;
+         box-sizing:border-box;
+         cursor:pointer;
+         transition:border-color .2s;
+    }
+     .filter-select:focus {
+         border-color:var(--c-red);
+    }
+     .filter-select option {
+         background:var(--c-surface-2);
+         color:var(--c-white);
+    }
+     /* Nama Pelajar search box — matches the dd-trigger dropdowns' REAL
+        rendered box model. dashboard.css's shared .dd-trigger rule sets
+        height:32px !important / padding:0 10px !important / font-size:.8rem
+        !important, which beats this page's own local .dd-trigger{height:38px}
+        rule outright (an !important rule always wins over a non-important
+        one regardless of specificity or source order) — so 32px, not 38px,
+        is the actual live height every dropdown renders at. This rule needs
+        !important too, otherwise it loses the same way; #f_search's higher
+        specificity (ID vs class) then wins the tie inside the !important tier. */
+     #f_search {
+         -webkit-appearance:none !important;
+         appearance:none !important;
+         margin:0 !important;
+         height:32px !important;
+         line-height:normal !important;
+         padding:0 10px !important;
+         font-size:.8rem !important;
+         font-family:inherit !important;
+         cursor:text !important;
+         display:block !important;
+    }
+     #f_search:focus {
+         border-color:var(--c-red) !important;
+         box-shadow:0 0 0 3px var(--c-red-dim) !important;
+    }
+     .filter-label {
+         display:block;
+         font-size:0.75rem;
+         font-weight:600;
+         text-transform:uppercase;
+         color:var(--c-text-faint);
+         margin-bottom:4px;
+    }
+     .filter-grid {
+         display:grid;
+         grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+         gap:12px;
+         align-items:end;
+    }
+     .filter-card {
+         background:var(--c-surface-1);
+         border:1px solid var(--c-border-strong);
+         border-radius:12px;
+         padding:20px;
+         margin-bottom:24px;
+         box-shadow:0 4px 12px rgba(0,0,0,.08);
+    }
+     .filter-card-title {
+         font-size:.72rem;
+         font-weight:700;
+         text-transform:uppercase;
+         letter-spacing:.12em;
+         color:var(--c-text-faint);
+         margin-bottom:16px;
+    }
+     html.pm-light .filter-card {
+         background: #fff;
+         border-color: var(--c-gray-200);
+         box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+     html.pm-light .filter-card-title {
+         color: #888;
+    }
+    /* ── Light mode fixes ── */
+     html.pm-light .pic-section-header h2 {
+         color: #111;
+    }
+     html.pm-light .pic-section-sub {
+         color: #555;
+    }
+     html.pm-light .card {
+         background: #fff;
+         border-color: var(--c-gray-200) !important;
+    }
+     html.pm-light .filter-label {
+         color: #555;
+    }
+     html.pm-light .filter-select {
+         background: var(--c-gray-50);
+         border-color: var(--c-gray-300);
+         color: #111;
+    }
+     html.pm-light .filter-select option {
+         background: #fff;
+         color: #111;
+    }
+     html.pm-light .accordion-card {
+         background: #fff;
+         border-color: var(--c-gray-200);
+    }
+     html.pm-light .school-header {
+         background: var(--c-gray-50);
+         border-color: var(--c-gray-200);
+         color: #111;
+    }
+     html.pm-light .accordion-sub-card {
+         background: #fff;
+         border-color: var(--c-gray-200);
+    }
+     html.pm-light .accordion-sub-header {
+         color: #111;
+         background: #fff;
+    }
+     html.pm-light .accordion-sub-header:hover {
+         background: var(--c-gray-100);
+    }
+    @media (max-width: 600px) {
+         .school-header { font-size:0.82rem; padding:10px 12px; }
+         .accordion-card > div[style*='padding:12px'] { padding:8px !important; }
+         .accordion-sub-card { margin-bottom:8px; }
+         .pic-section-header { gap:8px; }
+         .pic-section-header h2 { font-size:1.4rem; }
+         .filter-grid { grid-template-columns:1fr; }
+     }
+
+    /* ── PAGINATION (matches pic_view_marks.php exactly) ── */
+    .vm-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 16px;
+        border-top: 1px solid var(--c-border);
+    }
+    .vm-page-info {
+        font-size: 0.8rem;
+        color: var(--c-text-faint);
+        font-weight: 500;
+    }
+    .vm-page-btns {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+    .vm-page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--c-text-muted);
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+    .vm-page-btn:hover:not(:disabled) {
+        color: #fff;
+        border-color: var(--c-red);
+        background: var(--c-red-dim);
+    }
+    .vm-page-btn.vm-page-active {
+        background: var(--c-red);
+        border-color: var(--c-red);
+        color: #fff;
+        cursor: default;
+        pointer-events: none;
+    }
+    .vm-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .vm-page-ellipsis {
+        display: inline-flex;
+        align-items: center;
+        height: 34px;
+        color: var(--c-text-faint);
+        font-size: 0.85rem;
+        padding: 0 4px;
+    }
+    html.pm-light .vm-page-info { color: var(--c-gray-500); }
+    html.pm-light .vm-page-btn { background: #ffffff; border-color: var(--c-gray-300); color: var(--c-gray-700); }
+    html.pm-light .vm-page-btn:hover:not(:disabled) { background: var(--c-red-100); border-color: var(--c-orange-accent); color: var(--c-red-700); }
+    html.pm-light .vm-page-btn.vm-page-active { background: var(--c-orange-accent); border-color: var(--c-orange-accent); color: #ffffff; }
+    html.pm-light .vm-page-ellipsis { color: var(--c-gray-400); }
+    html.pm-light .vm-pagination { border-top-color: var(--c-gray-200); }
+    @media (max-width: 640px) {
+        .vm-pagination { flex-direction: column; align-items: flex-start; }
+        .vm-page-btns { width: 100%; }
+    }
+
+    /* ── Searchable dropdown (avoids native <select> popup — Chromium/GPU
+       renders the OS listbox solid black for a moment before painting) ── */
+    .dd-wrap { position: relative; }
+    .dd-trigger{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        height:38px;
+        box-sizing:border-box;
+        width:100%;
+        padding:0 10px;
+        background:var(--c-surface-2);
+        border:1px solid var(--c-border-strong);
+        border-radius:6px;
+        color:var(--c-white);
+        font-size:.875rem;
+        cursor:pointer;
+        user-select:none;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    .dd-trigger:hover{ border-color:var(--c-red); }
+    .dd-trigger.open{ border-color:var(--c-red); box-shadow:0 0 0 3px var(--c-red-dim); }
+    .dd-trigger .dd-arrow { color: var(--c-text-faint); font-size: 0.7rem; transition: transform .2s; }
+    .dd-trigger.open .dd-arrow { transform: rotate(180deg); }
+
+    .dd-panel{
+        display:none;
+        position:absolute;
+        top:calc(100% + 6px);
+        left:0;
+        right:0;
+        background:var(--c-surface-2);
+        border:1px solid var(--c-red);
+        border-radius:8px;
+        overflow:hidden;
+        z-index:999;
+        box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .dd-panel.open{ display:block; }
+    .dd-search-box { padding: 8px; border-bottom: 1px solid var(--c-border-strong); }
+    .dd-search-box input {
+        width: 100%; background: var(--c-surface-0); border: 1px solid var(--c-border-strong);
+        color: var(--c-white); border-radius: 4px; padding: 6px 8px; font-size: 0.8rem;
+        outline: none; box-sizing: border-box; transition: border-color .2s;
+    }
+    .dd-search-box input:focus { border-color: var(--c-red); }
+    .dd-search-box input::placeholder { color: var(--c-text-faint); }
+    .dd-options { max-height: 220px; overflow-y: auto; scrollbar-width: thin; }
+    .dd-opt { padding: 9px 12px; font-size: 0.875rem; color: var(--c-white); cursor: pointer; transition: background .1s; }
+    .dd-opt:hover { background: var(--c-surface-3); }
+    .dd-opt.selected { color: var(--c-red); font-weight: 600; }
+    .dd-opt.hidden { display: none; }
+    .dd-empty { padding: 10px 12px; color: var(--c-text-faint); font-size: 0.82rem; display: none; text-align: center; }
+
+    html.pm-light .dd-trigger { background: var(--c-gray-50); border-color: var(--c-gray-300); color: #111; }
+    html.pm-light .dd-panel { background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    html.pm-light .dd-search-box { border-bottom-color: var(--c-gray-200); }
+    html.pm-light .dd-search-box input { background: var(--c-gray-50); border-color: var(--c-gray-300); color: #111; }
+    html.pm-light .dd-opt { color: #111; }
+    html.pm-light .dd-opt:hover { background: var(--c-gray-100); }
+
+    /* ── Kanban board (Kumpulan Juri assignment) ──
+       Columns = kumpulan (+ a permanent "Belum Diagihkan" pool and a
+       trailing "+ Kumpulan Baharu" tile); cards = students. Dragging a
+       card between columns IS the assign action, saved the instant it's
+       dropped — no separate save button anywhere on this board. */
+    .kanban-board {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 14px;
+        align-items: flex-start;
+        scrollbar-width: thin;
+    }
+    .kanban-col {
+        flex: 0 0 240px;
+        width: 240px;
+        background: var(--c-surface-1);
+        border: 1px solid var(--c-border-strong);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        max-height: 480px;
+    }
+    .kanban-col-unassigned { border-style: dashed; }
+    .kanban-col-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 10px 6px;
+    }
+    .kanban-col-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--c-text-muted);
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .kanban-col-count {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--c-text-faint);
+        background: var(--c-surface-0);
+        border-radius: 10px;
+        padding: 1px 8px;
+    }
+    .kanban-group-name {
+        flex: 1;
+        min-width: 0;
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--c-white);
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 4px 6px;
+        border-radius: 5px;
+        outline: none;
+    }
+    .kanban-group-name:hover { border-color: var(--c-border-strong); }
+    .kanban-group-name:focus { border-color: var(--c-red); background: var(--c-surface-0); }
+    /* A bare trash-emoji icon (even boxed) still read as decorative and
+       got missed twice — a red-outlined text label is what this app
+       already uses for every other destructive action (.pm-btn-danger:
+       red text/border at rest, not just revealed on hover), so this
+       matches that instead of inventing a quieter one-off. */
+    .kanban-col-delete {
+        background: transparent;
+        border: 1px solid var(--c-red-border);
+        color: var(--c-red);
+        cursor: pointer;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 6px 9px;
+        border-radius: 6px;
+        line-height: 1;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    .kanban-col-delete:hover { background: var(--c-red-dim); border-color: var(--c-red); }
+    /* A distinct tinted band (small uppercase label + red-tinted
+       background, matching the app's .grp-manage-title label language) so
+       the judge picker reads as a clearly different kind of control from
+       the plain student cards below it, instead of blending into the list
+       as if it were just another card. */
+    .kanban-col-judge {
+        padding: 6px 10px 8px;
+        background: var(--c-red-dim);
+        border-bottom: 1px solid var(--c-border);
+    }
+    .kanban-judge-label {
+        display: block;
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--c-red);
+        margin-bottom: 4px;
+    }
+    /* Matches the site's established native-<select> benchmark (32px /
+       6px radius / .8rem — same one .pm-select and the dd-wrap filters use)
+       instead of a bespoke cramped size, plus a custom chevron since the
+       bare OS arrow reads as noticeably unpolished at this size. */
+    .kanban-judge-select {
+        width: 100%;
+        height: 32px;
+        box-sizing: border-box;
+        background: var(--c-surface-0);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-text);
+        border-radius: 6px;
+        padding: 0 22px 0 8px;
+        font-size: 0.78rem;
+        font-family: inherit;
+        outline: none;
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 7px center;
+        background-size: 9px 6px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .kanban-judge-select:hover { border-color: var(--c-red); }
+    .kanban-judge-select:focus { border-color: var(--c-red); box-shadow: 0 0 0 3px var(--c-red-dim); }
+    .kanban-judge-select option { background: var(--c-surface-2); color: var(--c-text); }
+    .kanban-col-body {
+        flex: 1;
+        min-height: 60px;
+        overflow-y: auto;
+        padding: 4px 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        scrollbar-width: thin;
+    }
+    .kanban-col-body.kanban-drag-over { background: var(--c-red-dim); border-radius: 6px; }
+    .kanban-card {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--c-white);
+        cursor: grab;
+        user-select: none;
+        transition: opacity .15s, box-shadow .15s;
+    }
+    .kanban-card:hover { border-color: var(--c-red); }
+    .kanban-card.kanban-dragging { opacity: 0.35; }
+    .kanban-card.kanban-saving { opacity: 0.55; cursor: wait; }
+    .kanban-card.kanban-error { border-color: var(--c-red); box-shadow: 0 0 0 2px var(--c-red-dim); }
+    /* Quiet per-card "this move actually saved" confirmation — a brief
+       pulse rather than a color (this app's palette repurposes green to
+       grayscale, so a color change alone wouldn't read as "success"). */
+    .kanban-card.kanban-saved { animation: kanban-saved-pulse .9s ease; }
+    @keyframes kanban-saved-pulse {
+        0%   { box-shadow: 0 0 0 2px var(--c-red-dim); }
+        100% { box-shadow: 0 0 0 2px transparent; }
+    }
+    .kanban-empty-hint {
+        font-size: 0.74rem;
+        color: var(--c-text-faint);
+        text-align: center;
+        padding: 14px 6px;
+        border: 1px dashed var(--c-border-strong);
+        border-radius: 6px;
+    }
+    .kanban-col-add {
+        background: transparent;
+        border: 1px dashed var(--c-border-strong);
+        align-items: stretch;
+        justify-content: flex-start;
+        padding: 10px;
+    }
+    /* Dropping a student card here is a valid action (creates the group
+       and assigns them in one go) — the same red highlight the real
+       columns use on dragover, so it reads as an equally valid target
+       instead of looking like the drag has nowhere to go. */
+    .kanban-col-add.kanban-drag-over { background: var(--c-red-dim); border-color: var(--c-red); }
+    .kanban-add-pending-hint {
+        font-size: 0.7rem;
+        color: var(--c-red);
+        font-weight: 600;
+    }
+    .kanban-add-pending-hint:empty { display: none; }
+    .kanban-add-btn {
+        background: transparent;
+        border: none;
+        color: var(--c-text-faint);
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 6px;
+        text-align: left;
+    }
+    .kanban-add-btn:hover { color: var(--c-red); background: var(--c-red-dim); }
+    .kanban-add-form { display: flex; flex-direction: column; gap: 8px; }
+    .kanban-add-form input, .kanban-add-form select {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-white);
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 0.8rem;
+        outline: none;
+    }
+    .kanban-add-form input:focus, .kanban-add-form select:focus { border-color: var(--c-red); }
+    .kanban-add-form-btns { display: flex; gap: 6px; }
+
+    /* No separate html.pm-light overrides needed here — every kanban rule
+       above uses the semantic --c-surface-*/--c-text*/--c-border* tokens,
+       which html.pm-light already redefines site-wide (see dashboard.css),
+       so light mode falls out automatically. */
+
+    @media (max-width: 600px) {
+        .kanban-col { flex-basis: 200px; width: 200px; max-height: 380px; }
+        .kanban-board { padding: 10px; gap: 8px; }
+    }
