@@ -1,37 +1,55 @@
 # ProMarkah
 
-ProMarkah is a scoring and attendance management system for silat competitions. This README maps the codebase for new maintainers.
+ProMarkah is a lightweight scoring and attendance management system for silat competitions. It provides judge scoring, public QR-based attendance, PIC (person-in-charge) management, and admin tools for results and exports.
 
-## Tech stack
+Status: Imported (sanitized). Secrets and server configuration must be supplied during deployment.
 
-Plain PHP (mysqli) + vanilla JS + CSS. One Composer dependency is used for OAuth token verification.
+## Key features
 
-## Important constraints
+- Judge scoring workflow with draft autosaves and locking
+- QR-based public attendance (no login required for scanning)
+- PIC admin pages for competition structure and results
+- Export attendance and results (CSV/PDF)
+- Minimal dependencies: plain PHP + vanilla JS; Composer used only for OAuth token verification
 
-- Top-level PHP filenames are load-bearing URLs — do not rename them.
-- Public attendance pages are intentionally accessible without login.
+## Quickstart (development)
 
-## Request/bootstrap order
+1. Clone the repo:
+   git clone https://github.com/MalGamerz/ProMarkah.git
+2. Install PHP dependencies (if required):
+   composer install
+3. Configure secrets outside the web root (see "Secrets and deployment")
+4. Serve with PHP built-in server for local testing:
+   php -S localhost:8000 -t public_html
 
-Most authenticated pages follow:
+## Deployment notes
 
-```php
-session_start();
-require __DIR__ . '/auth_check.php';
-include 'db.php';
-```
+- Secrets (DB credentials, QR HMAC key, Telegram bot token) must live outside the web root and never be committed. See `secrets.sample.php` for required keys.
+- `security_bootstrap.php` must be able to load `bootstrap_secrets.php` to configure error reporting and alerting.
+- Top-level filenames (e.g., `judge.php`, `attendance.php`, `save_attendance.php`) are load-bearing URLs and should not be renamed.
+- Ensure file permissions prevent web access to any secrets stored on disk.
 
-`security_bootstrap.php` orchestrates error handling and secret loading; secrets are not included in this repository and must be supplied securely on the server.
+## What was sanitized
 
-## Map of the codebase
+This repository was imported with sensitive files removed. If you need the original README or other docs restored, provide confirmation and the exact files to restore.
 
-- Shared/core: `db.php`, `auth_check.php`, `security_bootstrap.php`, `layout.php`, `layout.js`, `attendance_helpers.php`, `oauth_helpers.php`.
-- Public attendance flow: `attendance.php`, `save_attendance.php`, export pages, and related view files.
-- Judge scoring: `judge.php`, `judge_ajax.php`, `judge_marking.js`, and related assets.
-- PIC management: `pic_*.php` family for competition structure and data.
-- Admin and login: `admin.php`, `admin_data.php`, `login.php`, `oauth_*` files.
+## Code map (high level)
 
-## Secrets and deployment
+- Shared/core: `db.php`, `auth_check.php`, `security_bootstrap.php`, `layout.php`, `layout.js`
+- Attendance: `attendance.php`, `save_attendance.php`, `attendance_student.php`, export pages
+- Judge: `judge.php`, `judge_ajax.php`, `judge_marking.js`
+- PIC/admin: `pic_*.php`, `admin.php`, `admin_data.php`
 
-Real credentials are NOT included in this repository. Follow the deployment docs for secure secret provisioning.
+## Contributing
+
+- Open issues or PRs for bug fixes and refactors.
+- Avoid committing secrets. Use `secrets.sample.php` as a template.
+
+## License
+
+See LICENSE file in repository (if present).
+
+---
+
+Maintainer: MalGamerz
 
