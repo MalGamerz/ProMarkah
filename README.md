@@ -111,9 +111,16 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   `attendance.php`, `save_attendance.php`, `attendance_toggle.php`,
   `attendance_student.php`, `attendance_view_*.php`,
   `export_attendance_*.php`.
-- **Judge scoring**: `judge.php` (the largest file in the app — the judge's
-  entire scoring workflow: session/group selection, the marking table,
-  draft autosave, and a handful of its own internal AJAX endpoints),
+- **Judge scoring**: `judge.php` — the judge's scoring workflow (session/
+  group selection, the marking table, submit/lock rules), split into:
+  `judge_ajax.php` (the small-form-dropdown AJAX endpoints, required
+  inline — same URL, `judge.php?ajax_levels=1&...`), `judge.css` (page
+  styles), `judge_dashboard.js` (session-selection screen: cascade
+  dropdowns, accordion summary, live clock), and `judge_marking.js`
+  (marking-table screen: draft autosave, keypad UI, add-ujian modal,
+  missing-marks validation — reads its few required PHP values off
+  `window.pmJudgeMarkingData`, set by a small inline bootstrap snippet,
+  rather than interpolating PHP directly into the file).
   `judge_view_marks.php`, `judge_settings.php`, `silibus.php`.
 - **PIC management**: the `pic_*.php` family — competition structure
   (`pic_levels.php`, `pic_tests.php`, `pic_criteria.php`, `pic_sessions.php`,
