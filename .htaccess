@@ -62,12 +62,12 @@
 # is no reason for a browser to hit them directly, so refuse it. (Does not
 # affect internal includes, which happen at the filesystem level.)
 <IfModule mod_authz_core.c>
-    <FilesMatch "^(security_bootstrap|error_page|db|auth_check|attendance_helpers|oauth_config|cawangan_report_data)\.php$">
+    <FilesMatch "^(security_bootstrap|bootstrap_secrets|bootstrap_error_handling|error_page|db|auth_check|attendance_helpers|expired_qr_page|layout_icons|judge_ajax|oauth_config|cawangan_report_data)\.php$">
         Require all denied
     </FilesMatch>
 </IfModule>
 <IfModule !mod_authz_core.c>
-    <FilesMatch "^(security_bootstrap|error_page|db|auth_check|attendance_helpers|oauth_config|cawangan_report_data)\.php$">
+    <FilesMatch "^(security_bootstrap|bootstrap_secrets|bootstrap_error_handling|error_page|db|auth_check|attendance_helpers|expired_qr_page|layout_icons|judge_ajax|oauth_config|cawangan_report_data)\.php$">
         Order allow,deny
         Deny from all
     </FilesMatch>
