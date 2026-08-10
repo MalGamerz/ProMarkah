@@ -386,60 +386,18 @@ $main_stmt->close();
     font-style: italic;
 }
 
-/* ── PAGINATION ── */
-.pagination-container {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    background: var(--c-surface-2);
-    border-top: 1px solid var(--c-border);
-    gap: 16px;
-}
+/* ── PAGINATION: shared .vm-pagination styles now live once in
+   dashboard.css (loaded by layout.php), used by every paginated page.
+   .pagination-left is page-specific: it groups this page's unique
+   rows-per-page picker together with the shared .vm-page-info label. ── */
 .pagination-left {
     display: flex;
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
 }
-.pagination-info {
-    font-size: 0.85rem;
-    color: var(--c-text-muted);
-    font-weight: 600;
-}
-.pagination-controls {
-    display: flex;
-    gap: 6px;
-}
-.page-btn {
-    padding: 4px 12px;
-    font-size: 0.85rem;
-    border: 1px solid var(--c-border-strong);
-    background: var(--c-surface-1);
-    color: var(--c-text);
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s ease;
-}
-.page-btn:hover:not(:disabled) {
-    background: var(--c-surface-3);
-    border-color: var(--c-text-muted);
-}
-.page-btn.active {
-    background: var(--c-red);
-    color: #fff;
-    border-color: var(--c-red);
-}
-.page-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
 @media (max-width: 600px) {
-    .pagination-container { flex-direction: column; justify-content: center; text-align: center; }
     .pagination-left { justify-content: center; }
-    .pagination-controls { width: 100%; justify-content: center; flex-wrap: wrap; }
     .jvm-table-scroll { max-height: none !important; overflow-y: visible !important; }
 }
 </style>
@@ -632,7 +590,7 @@ $main_stmt->close();
     </div>
 
     <!-- Pagination Footer -->
-    <div class="pagination-container" id="paginationWrapper">
+    <div class="vm-pagination" id="paginationWrapper">
         <div class="pagination-left">
             <select id="rowsPerPageSelect" class="pm-select" style="padding: 4px 8px; height: auto; width: auto; font-size: 0.8rem;">
                 <option value="10">10 / mukasurat</option>
@@ -641,9 +599,9 @@ $main_stmt->close();
                 <option value="50">50 / mukasurat</option>
                 <option value="100">100 / mukasurat</option>
             </select>
-            <div class="pagination-info" id="pageInfo">Memaparkan 0 rekod</div>
+            <div class="vm-page-info" id="pageInfo">Memaparkan 0 rekod</div>
         </div>
-        <div class="pagination-controls" id="paginationButtons"></div>
+        <div class="vm-page-btns" id="paginationButtons"></div>
     </div>
 
 </div>
@@ -710,27 +668,7 @@ $(document).ready(function() {
         const endText   = Math.min(end, totalGroups);
         pageInfo.innerHTML = `Memaparkan <b>${startText} – ${endText}</b> daripada <b>${totalGroups}</b> pelajar`;
 
-        let html = '';
-        html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">«</button>`;
-
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage   = Math.min(totalPages, startPage + 4);
-        if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
-
-        if (startPage > 1) {
-            html += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
-            if (startPage > 2) html += `<span style="color:var(--c-text-faint);margin:0 2px;align-self:end;">…</span>`;
-        }
-        for (let i = startPage; i <= endPage; i++) {
-            html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-        }
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) html += `<span style="color:var(--c-text-faint);margin:0 2px;align-self:end;">…</span>`;
-            html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-        }
-        html += `<button class="page-btn" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">»</button>`;
-
-        paginationButtons.innerHTML = html;
+        pmRenderPagination(paginationButtons, currentPage, totalPages, goToPage);
     }
 
     window.goToPage = function(page) {

@@ -53,27 +53,7 @@ function renderPagination(totalPages) {
     const endNum   = Math.min(currentPage * rowsPerPage, filteredRows.length);
     info.innerHTML = `Memaparkan <b>${startNum}–${endNum}</b> daripada <b>${filteredRows.length}</b> rekod`;
 
-    let html = '';
-    html += `<button class="vm-page-btn" ${currentPage===1?'disabled':''} onclick="goToPage(${currentPage-1})">&laquo;</button>`;
-
-    let sp = Math.max(1, currentPage - 2);
-    let ep = Math.min(totalPages, sp + 4);
-    if (ep - sp < 4) sp = Math.max(1, ep - 4);
-
-    if (sp > 1) {
-        html += `<button class="vm-page-btn" onclick="goToPage(1)">1</button>`;
-        if (sp > 2) html += `<span class="vm-page-ellipsis">&hellip;</span>`;
-    }
-    for (let i = sp; i <= ep; i++) {
-        html += `<button class="vm-page-btn ${i===currentPage?'vm-page-active':''}" onclick="goToPage(${i})">${i}</button>`;
-    }
-    if (ep < totalPages) {
-        if (ep < totalPages - 1) html += `<span class="vm-page-ellipsis">&hellip;</span>`;
-        html += `<button class="vm-page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-    }
-    html += `<button class="vm-page-btn" ${currentPage===totalPages||totalPages===0?'disabled':''} onclick="goToPage(${currentPage+1})">&raquo;</button>`;
-
-    btnWrap.innerHTML = html;
+    pmRenderPagination(btnWrap, currentPage, totalPages, goToPage);
 }
 
 window.goToPage = function(p) {

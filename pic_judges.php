@@ -614,77 +614,8 @@ if ($code_query && $code_query->num_rows > 0) {
         .juri-table-scroll { max-height: none !important; overflow-y: visible !important; }
     }
 
-    /* ── PAGINATION (matches pic_view_marks.php exactly) ── */
-    .vm-pagination {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 0;
-        padding: 16px;
-        border-top: 1px solid var(--c-border);
-    }
-    .vm-page-info {
-        font-size: 0.8rem;
-        color: var(--c-text-faint);
-        font-weight: 500;
-    }
-    .vm-page-btns {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex-wrap: wrap;
-    }
-    .vm-page-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 34px;
-        height: 34px;
-        padding: 0 10px;
-        border-radius: 6px;
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: var(--c-text-muted);
-        background: var(--c-surface-2);
-        border: 1px solid var(--c-border-strong);
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.15s;
-        white-space: nowrap;
-    }
-    .vm-page-btn:hover:not(:disabled) {
-        color: #fff;
-        border-color: var(--c-red);
-        background: var(--c-red-dim);
-    }
-    .vm-page-btn.vm-page-active {
-        background: var(--c-red);
-        border-color: var(--c-red);
-        color: #fff;
-        cursor: default;
-        pointer-events: none;
-    }
-    .vm-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .vm-page-ellipsis {
-        display: inline-flex;
-        align-items: center;
-        height: 34px;
-        color: var(--c-text-faint);
-        font-size: 0.85rem;
-        padding: 0 4px;
-    }
-    html.pm-light .vm-page-info { color: #6b7280; }
-    html.pm-light .vm-page-btn { background: #ffffff; border-color: #d1d5db; color: #374151; }
-    html.pm-light .vm-page-btn:hover:not(:disabled) { background: #fee2e2; border-color: #e2581e; color: #b91c1c; }
-    html.pm-light .vm-page-btn.vm-page-active { background: #e2581e; border-color: #e2581e; color: #ffffff; }
-    html.pm-light .vm-page-ellipsis { color: #9ca3af; }
-    html.pm-light .vm-pagination { border-top-color: #e5e7eb; }
-    @media (max-width: 640px) {
-        .vm-pagination { flex-direction: column; align-items: flex-start; }
-        .vm-page-btns { width: 100%; }
-    }
+    /* ── PAGINATION: shared .vm-pagination styles now live once in
+       dashboard.css (loaded by layout.php), used by every paginated page. ── */
 
     /* ── MODALS ── */
     .pm-modal-overlay {
@@ -1124,24 +1055,7 @@ function juriUpdatePagination() {
     document.getElementById('juriPageInfo').innerHTML =
         `Memaparkan <b>${s}–${e}</b> daripada <b>${total}</b> juri`;
 
-    // Build buttons
-    let html = `<button class="vm-page-btn" ${juriCurrentPage === 1 ? 'disabled' : ''} onclick="juriGoTo(${juriCurrentPage - 1})">&laquo;</button>`;
-    let sp = Math.max(1, juriCurrentPage - 2);
-    let ep = Math.min(totalPages, sp + 4);
-    if (ep - sp < 4) sp = Math.max(1, ep - 4);
-    if (sp > 1) {
-        html += `<button class="vm-page-btn" onclick="juriGoTo(1)">1</button>`;
-        if (sp > 2) html += `<span class="vm-page-ellipsis">&hellip;</span>`;
-    }
-    for (let i = sp; i <= ep; i++) {
-        html += `<button class="vm-page-btn ${i === juriCurrentPage ? 'vm-page-active' : ''}" onclick="juriGoTo(${i})">${i}</button>`;
-    }
-    if (ep < totalPages) {
-        if (ep < totalPages - 1) html += `<span class="vm-page-ellipsis">&hellip;</span>`;
-        html += `<button class="vm-page-btn" onclick="juriGoTo(${totalPages})">${totalPages}</button>`;
-    }
-    html += `<button class="vm-page-btn" ${juriCurrentPage === totalPages ? 'disabled' : ''} onclick="juriGoTo(${juriCurrentPage + 1})">&raquo;</button>`;
-    document.getElementById('juriPaginationButtons').innerHTML = html;
+    pmRenderPagination(document.getElementById('juriPaginationButtons'), juriCurrentPage, totalPages, juriGoTo);
 }
 
 window.juriGoTo = function(page) {

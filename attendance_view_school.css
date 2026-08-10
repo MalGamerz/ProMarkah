@@ -273,54 +273,8 @@
 
 .avs-empty { text-align: center; color: var(--c-text-muted, #6b7280); padding: 48px 24px; font-size: 0.9rem; }
 
-/* ── Pagination — identical markup/classes to pic_view_marks.php /
-   pic_master_list.php's .vm-pagination system, so every paginated page in
-   the app looks and behaves identically. ── */
-.vm-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 16px;
-    background: var(--c-surface-2, #f9fafb);
-    border-top: 1px solid var(--c-border, #e5e7eb);
-}
-.vm-page-info {
-    font-size: 0.8rem;
-    color: var(--c-text-faint);
-    font-weight: 500;
-}
-.vm-page-btns { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.vm-page-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 10px;
-    border-radius: 6px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--c-text-muted);
-    background: var(--c-surface-2, #f3f4f6);
-    border: 1px solid var(--c-border-strong, #d1d5db);
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-}
-.vm-page-btn:hover:not(:disabled) { color: #fff; border-color: var(--c-red, #b30000); background: var(--c-red-dim, #b30000); }
-.vm-page-btn.vm-page-active { background: var(--c-red, #b30000); border-color: var(--c-red, #b30000); color: #fff; cursor: default; pointer-events: none; }
-.vm-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.vm-page-ellipsis { display: inline-flex; align-items: center; height: 34px; color: var(--c-text-faint, #9ca3af); font-size: 0.85rem; padding: 0 4px; }
-
-html.pm-light .vm-page-info { color: #6b7280; }
-html.pm-light .vm-page-btn { background: #ffffff; border-color: #d1d5db; color: #374151; }
-html.pm-light .vm-page-btn:hover:not(:disabled) { background: #fee2e2; border-color: #e2581e; color: #b91c1c; }
-html.pm-light .vm-page-btn.vm-page-active { background: #e2581e; border-color: #e2581e; color: #ffffff; }
-html.pm-light .vm-page-ellipsis { color: #9ca3af; }
-html.pm-light .vm-pagination { border-top-color: #e5e7eb; }
+/* ── Pagination: shared .vm-pagination styles now live once in
+   dashboard.css (loaded by layout.php), used by every paginated page. ── */
 
 /* ── Mobile ───────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
@@ -331,7 +285,5 @@ html.pm-light .vm-pagination { border-top-color: #e5e7eb; }
     .avs-toolbar { flex-direction: column; align-items: stretch; gap: 16px; }
     .avs-combo-wrap { max-width: 100%; width: 100%; }
     .avs-toolbar-right { justify-content: flex-end; }
-    .vm-pagination { flex-direction: column; justify-content: center; text-align: center; }
-    .vm-page-btns { width: 100%; justify-content: center; }
     .avs-toggle-btn  { padding: 6px 10px; font-size: 0.78rem; }
 }

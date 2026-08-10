@@ -601,90 +601,11 @@ function renderMedalDD(string $fieldName, string $ddName, string $emptyLabel, ar
 
 
 
-    /* ── PAGINATION (matches pic_view_marks.php exactly) ── */
-    .vm-pagination {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 16px;
-        border-top: 1px solid var(--c-border);
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .vm-page-info {
-        font-size: 0.8rem;
-        color: var(--c-text-faint);
-        font-weight: 500;
-    }
-
-    .vm-page-btns {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex-wrap: wrap;
-    }
-
-    .vm-page-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 34px;
-        height: 34px;
-        padding: 0 10px;
-        border-radius: 6px;
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: var(--c-text-muted);
-        background: var(--c-surface-2);
-        border: 1px solid var(--c-border-strong);
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.15s;
-        white-space: nowrap;
-    }
-
-    .vm-page-btn:hover:not(:disabled) {
-        color: #fff;
-        border-color: var(--c-red);
-        background: var(--c-red-dim);
-    }
-
-    .vm-page-btn.vm-page-active {
-        background: var(--c-red);
-        border-color: var(--c-red);
-        color: #fff;
-        cursor: default;
-        pointer-events: none;
-    }
-
-    .vm-page-btn:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-
-    .vm-page-ellipsis {
-        display: inline-flex;
-        align-items: center;
-        height: 34px;
-        color: var(--c-text-faint);
-        font-size: 0.85rem;
-        padding: 0 4px;
-    }
-
-    html.pm-light .vm-page-info { color: var(--c-gray-500); }
-    html.pm-light .vm-page-btn { background: #ffffff; border-color: var(--c-gray-300); color: var(--c-gray-700); }
-    html.pm-light .vm-page-btn:hover:not(:disabled) { background: var(--c-red-100); border-color: var(--c-orange-accent); color: var(--c-red-700); }
-    html.pm-light .vm-page-btn.vm-page-active { background: var(--c-orange-accent); border-color: var(--c-orange-accent); color: #ffffff; }
-    html.pm-light .vm-page-ellipsis { color: var(--c-gray-400); }
-    html.pm-light .vm-pagination { border-top-color: var(--c-gray-200); }
+    /* ── PAGINATION: shared .vm-pagination styles now live once in
+       dashboard.css (loaded by layout.php), used by every paginated page. ── */
 
     @media (max-width: 640px) {
         .scope-tab { padding: 8px 5px; font-size: 0.75rem; flex-direction: column; gap: 2px; }
-        .vm-pagination { flex-direction: column; justify-content: center; text-align: center; }
-        .vm-page-btns { width: 100%; justify-content: center; flex-wrap: wrap; }
     }
 
     /* ── Scroll Wrapper (Hugs Content & Fits Screen) ──
@@ -1598,43 +1519,7 @@ endif;
         const startDisplay = totalRows === 0 ? 0 : start + 1;
         infoText.innerHTML = `Memaparkan <b>${startDisplay} - ${endDisplay}</b> daripada <b>${totalRows}</b> rekod`;
 
-        // Render Buttons
-        let html = '';
-
-        // Prev Button
-        html += `<button type="button" class="vm-page-btn" ${pmCurrentPage === 1 ? 'disabled' : ''} onclick="changeMedalPage(-1)">&laquo;</button>`;
-
-        // Logic to show max of 5 page numbers
-        let startPage = Math.max(1, pmCurrentPage - 2);
-        let endPage = Math.min(totalPages, startPage + 4);
-        if (endPage - startPage < 4) {
-            startPage = Math.max(1, endPage - 4);
-        }
-
-        if (startPage > 1) {
-            html += `<button type="button" class="vm-page-btn" onclick="goToMedalPage(1)">1</button>`;
-            if (startPage > 2) html += `<span class="vm-page-ellipsis">&hellip;</span>`;
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            html += `<button type="button" class="vm-page-btn ${i === pmCurrentPage ? 'vm-page-active' : ''}" onclick="goToMedalPage(${i})">${i}</button>`;
-        }
-
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) html += `<span class="vm-page-ellipsis">&hellip;</span>`;
-            html += `<button type="button" class="vm-page-btn" onclick="goToMedalPage(${totalPages})">${totalPages}</button>`;
-        }
-
-        // Next Button
-        html += `<button type="button" class="vm-page-btn" ${pmCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="changeMedalPage(1)">&raquo;</button>`;
-
-        btnContainer.innerHTML = html;
-    }
-
-    function changeMedalPage(dir) {
-        if (dir === -1) pmCurrentPage--;
-        else if (dir === 1) pmCurrentPage++;
-        goToMedalPage(pmCurrentPage);
+        pmRenderPagination(btnContainer, pmCurrentPage, totalPages, goToMedalPage);
     }
 
     function goToMedalPage(page) {

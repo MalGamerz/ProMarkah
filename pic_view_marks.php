@@ -262,81 +262,8 @@ foreach ($page_pairs as [$grp, $stu]) {
 ?>
 
 <style>
-/* ── PAGINATION (matches pic_judges.php / pic_students.php etc.) ── */
-.vm-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 0;
-    padding: 16px;
-    border-top: 1px solid var(--c-border);
-}
-.vm-page-info {
-    font-size: 0.8rem;
-    color: var(--c-text-faint);
-    font-weight: 500;
-}
-.vm-page-btns {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-.vm-page-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 10px;
-    border-radius: 6px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--c-text-muted);
-    background: var(--c-surface-2);
-    border: 1px solid var(--c-border-strong);
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-}
-.vm-page-btn:hover:not(.vm-page-disabled) {
-    color: #fff;
-    border-color: var(--c-red);
-    background: var(--c-red-dim);
-}
-.vm-page-btn.vm-page-active {
-    background: var(--c-red);
-    border-color: var(--c-red);
-    color: #fff;
-    cursor: default;
-    pointer-events: none;
-}
-.vm-page-btn.vm-page-disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-.vm-page-ellipsis {
-    display: inline-flex;
-    align-items: center;
-    height: 34px;
-    color: var(--c-text-faint);
-    font-size: 0.85rem;
-    padding: 0 4px;
-}
-html.pm-light .vm-page-info { color: #6b7280; }
-html.pm-light .vm-page-btn { background: #ffffff; border-color: #d1d5db; color: #374151; }
-html.pm-light .vm-page-btn:hover:not(.vm-page-disabled) { background: #fee2e2; border-color: #e2581e; color: #b91c1c; }
-html.pm-light .vm-page-btn.vm-page-active { background: #e2581e; border-color: #e2581e; color: #ffffff; }
-html.pm-light .vm-page-ellipsis { color: #9ca3af; }
-html.pm-light .vm-pagination { border-top-color: #e5e7eb; }
-@media (max-width: 640px) {
-    .vm-pagination { flex-direction: column; align-items: center; text-align: center; }
-    .vm-page-btns { width: 100%; justify-content: center; }
-}
+/* ── PAGINATION: shared .vm-pagination styles now live once in
+   dashboard.css (loaded by layout.php), used by every paginated page. ── */
 
 /* ── LAYOUT ── */
 .filter-grid {
@@ -894,47 +821,7 @@ html.pm-light .status-badge-success {
         <?php endif; ?>
     </div><!-- end .marks-list -->
 
-    <?php if ($total_pages > 1):
-        $sp_ = max(1, $page - 2);
-        $ep_ = min($total_pages, $sp_ + 4);
-        if ($ep_ - $sp_ < 4) $sp_ = max(1, $ep_ - 4);
-        $start_num_ = $total_students === 0 ? 0 : (($page - 1) * $per_page) + 1;
-        $end_num_   = min($page * $per_page, $total_students);
-    ?>
-    <div class="vm-pagination">
-        <span class="vm-page-info">
-            Memaparkan <b><?= $start_num_ ?>–<?= $end_num_ ?></b> daripada <b><?= $total_students ?></b> pesilat
-        </span>
-        <div class="vm-page-btns">
-            <?php if ($page > 1): ?>
-            <a href="<?= page_url($page - 1, $filter_params) ?>" class="vm-page-btn">&laquo;</a>
-            <?php else: ?>
-            <span class="vm-page-btn vm-page-disabled">&laquo;</span>
-            <?php endif; ?>
-
-            <?php if ($sp_ > 1): ?>
-            <a href="<?= page_url(1, $filter_params) ?>" class="vm-page-btn">1</a>
-            <?php if ($sp_ > 2): ?><span class="vm-page-ellipsis">&hellip;</span><?php endif; ?>
-            <?php endif; ?>
-
-            <?php for ($i = $sp_; $i <= $ep_; $i++): ?>
-            <a href="<?= page_url($i, $filter_params) ?>"
-               class="vm-page-btn <?= $i === $page ? 'vm-page-active' : '' ?>"><?= $i ?></a>
-            <?php endfor; ?>
-
-            <?php if ($ep_ < $total_pages): ?>
-            <?php if ($ep_ < $total_pages - 1): ?><span class="vm-page-ellipsis">&hellip;</span><?php endif; ?>
-            <a href="<?= page_url($total_pages, $filter_params) ?>" class="vm-page-btn"><?= $total_pages ?></a>
-            <?php endif; ?>
-
-            <?php if ($page < $total_pages): ?>
-            <a href="<?= page_url($page + 1, $filter_params) ?>" class="vm-page-btn">&raquo;</a>
-            <?php else: ?>
-            <span class="vm-page-btn vm-page-disabled">&raquo;</span>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
+    <?php pm_render_pagination($page, $total_pages, $total_students, $per_page, 'pesilat', fn($p) => page_url($p, $filter_params)); ?>
 </div>
 
 <script>

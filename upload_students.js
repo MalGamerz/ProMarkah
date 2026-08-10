@@ -288,29 +288,27 @@ document.querySelectorAll('.fast-group-dropdown').forEach(function(sel){
         var cur = 1;
 
         var bar = document.createElement('div');
-        bar.className = 'pm-pagination';
+        bar.className = 'vm-pagination';
+        bar.innerHTML = '<span class="vm-page-info"></span><div class="vm-page-btns"></div>';
         table.closest('.pm-table-wrap').insertAdjacentElement('afterend', bar);
+        var info = bar.querySelector('.vm-page-info');
+        var btns = bar.querySelector('.vm-page-btns');
+
+        function goToPage(p) { cur = p; render(); }
 
         function render(){
             var start = (cur-1)*ROWS_PER_PAGE;
             var end   = Math.min(start + ROWS_PER_PAGE + BUFFER_ROWS, rows.length);
             var displayStart = start;
             var displayEnd = Math.min(start + ROWS_PER_PAGE, rows.length);
-            
+
             // Show current page + buffer, hide rest
             for (var i=0; i<rows.length; i++) {
                 rows[i].style.display = (i >= start && i < end) ? 'table-row' : 'none';
             }
-            
-            bar.innerHTML =
-                '<span>Rekod <strong>' + (displayStart+1) + '–' + displayEnd + '</strong> / ' + total + '</span>' +
-                '<div class="pm-pagination-controls">' +
-                  '<button type="button" class="pm-page-btn" id="pprev" '+(cur===1?'disabled':'')+'>«</button>' +
-                  '<span class="pm-page-info">'+cur+' / '+totalPages+'</span>' +
-                  '<button type="button" class="pm-page-btn" id="pnext" '+(cur===totalPages?'disabled':'')+'>»</button>' +
-                '</div>';
-            bar.querySelector('#pprev').onclick = function(){ if(cur>1){ cur--; render(); } };
-            bar.querySelector('#pnext').onclick = function(){ if(cur<totalPages){ cur++; render(); } };
+
+            info.innerHTML = 'Memaparkan <b>' + (displayStart+1) + '–' + displayEnd + '</b> daripada <b>' + total + '</b> rekod';
+            pmRenderPagination(btns, cur, totalPages, goToPage);
         }
         // Pre-render first page (already hidden by CSS, pagination shows it)
         render();

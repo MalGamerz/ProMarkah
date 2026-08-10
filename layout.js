@@ -192,3 +192,39 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 4500); // visible ~4.5s, then ~0.7s fade+collapse
     });
 });
+
+// ── Shared pagination button renderer ──
+// Every client-side-paginated list (pic_criteria, pic_directory, pic_judges,
+// pic_levels, pic_master_list, pic_medal_settings, pic_schools, pic_sessions,
+// pic_students, pic_tests, attendance_view_school, judge_view_marks,
+// upload_students, ...) used to hand-roll this same button-building loop
+// with a page-specific function name for the onclick handler. Centralized
+// here so every page's pagination looks and updates identically; callers
+// only supply the numbers and a callback.
+function pmRenderPagination(btnsEl, page, totalPages, onGoToPage) {
+    if (!btnsEl) return;
+    const mk = (label, target, opts) => {
+        opts = opts || {};
+        const cls = 'vm-page-btn' + (opts.active ? ' vm-page-active' : '');
+        const dis = opts.disabled ? 'disabled' : '';
+        return '<button class="' + cls + '" ' + dis + ' data-pm-page="' + target + '">' + label + '</button>';
+    };
+    let html = mk('&laquo;', page - 1, { disabled: page === 1 });
+    let sp = Math.max(1, page - 2);
+    let ep = Math.min(totalPages, sp + 4);
+    if (ep - sp < 4) sp = Math.max(1, ep - 4);
+    if (sp > 1) {
+        html += mk('1', 1);
+        if (sp > 2) html += '<span class="vm-page-ellipsis">&hellip;</span>';
+    }
+    for (let i = sp; i <= ep; i++) html += mk(i, i, { active: i === page });
+    if (ep < totalPages) {
+        if (ep < totalPages - 1) html += '<span class="vm-page-ellipsis">&hellip;</span>';
+        html += mk(totalPages, totalPages);
+    }
+    html += mk('&raquo;', page + 1, { disabled: page === totalPages });
+    btnsEl.innerHTML = html;
+    btnsEl.querySelectorAll('[data-pm-page]').forEach(function (b) {
+        b.addEventListener('click', function () { onGoToPage(parseInt(b.dataset.pmPage, 10)); });
+    });
+}

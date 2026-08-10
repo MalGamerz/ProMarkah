@@ -425,62 +425,8 @@ html.pm-light .name-dropdown-box .dd-option { color: #111; }
 }
 .dir-section-body { display: none; }
 
-/* ── PAGINATION (matches pic_view_marks.php exactly) ── */
-.vm-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 8px;
-    padding-top: 4px;
-    padding-bottom: 12px;
-}
-.vm-page-info {
-    font-size: 0.8rem;
-    color: var(--c-text-faint);
-    font-weight: 500;
-}
-.vm-page-btns {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-.vm-page-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 10px;
-    border-radius: 6px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--c-text-muted);
-    background: var(--c-surface-2);
-    border: 1px solid var(--c-border-strong);
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-    -webkit-tap-highlight-color: transparent;
-}
-.vm-page-btn:hover { color: #fff; border-color: var(--c-red); background: var(--c-red-dim); }
-.vm-page-btn.vm-page-active { background: var(--c-red); border-color: var(--c-red); color: #fff; cursor: default; pointer-events: none; }
-.vm-page-ellipsis {
-    display: inline-flex;
-    align-items: center;
-    height: 34px;
-    color: var(--c-text-faint);
-    font-size: 0.85rem;
-    padding: 0 4px;
-}
-html.pm-light .vm-page-info { color: var(--c-gray-500); }
-html.pm-light .vm-page-btn { background: #ffffff; border-color: var(--c-gray-300); color: var(--c-gray-700); }
-html.pm-light .vm-page-btn:hover { background: var(--c-red-100); border-color: var(--c-orange-accent); color: var(--c-red-700); }
-html.pm-light .vm-page-btn.vm-page-active { background: var(--c-orange-accent); border-color: var(--c-orange-accent); color: #ffffff; }
-html.pm-light .vm-page-ellipsis { color: var(--c-gray-400); }
+/* ── PAGINATION: shared .vm-pagination styles now live once in
+   dashboard.css (loaded by layout.php), used by every paginated page. ── */
 
 /* ── Group card ── */
 .dir-group-card {
@@ -667,8 +613,6 @@ html.pm-light .vm-page-ellipsis { color: var(--c-gray-400); }
     .dir-summary { padding: 8px 12px; gap: 10px; }
     .dir-print-btn { display: none; } /* hide print on mobile */
 
-    /* Pagination buttons: larger tap targets */
-    .vm-page-btn { min-width: 40px; padding: 6px 10px; font-size: 0.85rem; }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
@@ -1517,8 +1461,9 @@ function dirFilterToggle(togId, bodyId) {
 }
 
 // ── Universal paginator ──────────────────────────────────────
-// Paginates an array of DOM elements inside a container.
-// Returns a __goPage(n) function attached to the container.
+// Paginates an array of DOM elements inside a container, using the shared
+// pmRenderPagination() button renderer (layout.js) so every list on this
+// page — and every other paginated list in the app — looks/behaves the same.
 function makePaginator(container, items, perPage, renderTarget, infoPrefix) {
     if (items.length <= perPage) return;
     let page = 1;
@@ -1529,35 +1474,19 @@ function makePaginator(container, items, perPage, renderTarget, infoPrefix) {
         items.forEach((el, i) => {
             el.style.display = (i >= start && i < start + perPage) ? '' : 'none';
         });
-
-        // Build paginator HTML
         const end = Math.min(start + perPage, items.length);
-        let html = `<div class="vm-pagination">
-            <span class="vm-page-info">${infoPrefix} ${start + 1}–${end} / ${items.length}</span>
-            <div class="vm-page-btns">`;
-        if (page > 1)    html += `<button class="vm-page-btn" onclick="(function(c){c.__goPage(${page-1})})(document.getElementById('${container.id}'))">&laquo;</button>`;
-        for (let i = 1; i <= total; i++) {
-            // Show first, last, current ±1, ellipsis otherwise
-            if (i === 1 || i === total || Math.abs(i - page) <= 1) {
-                html += `<button class="vm-page-btn ${i === page ? 'vm-page-active' : ''}" onclick="(function(c){c.__goPage(${i})})(document.getElementById('${container.id}'))">${i}</button>`;
-            } else if (Math.abs(i - page) === 2) {
-                html += `<span class="vm-page-ellipsis">&hellip;</span>`;
-            }
-        }
-        if (page < total) html += `<button class="vm-page-btn" onclick="(function(c){c.__goPage(${page+1})})(document.getElementById('${container.id}'))">&raquo;</button>`;
-        html += `</div></div>`;
 
-        // Replace or create paginator element
         let pag = container.querySelector(':scope > .dir-pag-el');
         if (!pag) {
             pag = document.createElement('div');
-            pag.className = 'dir-pag-el';
+            pag.className = 'dir-pag-el vm-pagination';
+            pag.innerHTML = '<span class="vm-page-info"></span><div class="vm-page-btns"></div>';
             container.appendChild(pag);
         }
-        pag.innerHTML = html;
+        pag.querySelector('.vm-page-info').textContent = `${infoPrefix} ${start + 1}–${end} / ${items.length}`;
+        pmRenderPagination(pag.querySelector('.vm-page-btns'), page, total, function (p) { page = p; render(); });
     }
 
-    container.__goPage = function(p) { page = p; render(); };
     render();
 }
 
