@@ -1,7 +1,11 @@
 # ProMarkah
 
-[![Repo Status](https://img.shields.io/badge/status-sanitized-orange)](https://github.com/MalGamerz/ProMarkah)
-[![License](https://img.shields.io/badge/license-unlicensed-lightgrey)]
+[![License](https://img.shields.io/github/license/MalGamerz/ProMarkah)](https://github.com/MalGamerz/ProMarkah)
+[![Last Commit](https://img.shields.io/github/last-commit/MalGamerz/ProMarkah)](https://github.com/MalGamerz/ProMarkah/commits/main)
+[![Repo Size](https://img.shields.io/github/repo-size/MalGamerz/ProMarkah)](https://github.com/MalGamerz/ProMarkah)
+[![Top Language](https://img.shields.io/github/languages/top/MalGamerz/ProMarkah)](https://github.com/MalGamerz/ProMarkah)
+[![Open Issues](https://img.shields.io/github/issues/MalGamerz/ProMarkah)](https://github.com/MalGamerz/ProMarkah/issues)
+[![Stars](https://img.shields.io/github/stars/MalGamerz/ProMarkah?style=social)](https://github.com/MalGamerz/ProMarkah)
 
 Table of Contents
 
