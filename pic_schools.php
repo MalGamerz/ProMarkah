@@ -457,7 +457,7 @@ include 'layout.php';
         <div style="width: 100%;">
             <label>Cari atau Pilih Cawangan</label>
             <div class="dd-wrap" id="ddWrap_school">
-                <div class="dd-trigger" id="ddTrigger_school" onclick="ddToggle('school')">
+                <div class="dd-trigger" id="ddTrigger_school" onclick="ddToggle('school')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_school" style="color:var(--c-text-faint);">-- Semua Cawangan --</span>
                     <span class="dd-arrow">▼</span>
                 </div>

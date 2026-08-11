@@ -494,7 +494,7 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Siri</label>
             <div class="dd-wrap" id="ddWrap_siri">
-                <div class="dd-trigger" id="ddTrigger_siri" onclick="ddToggle('siri')">
+                <div class="dd-trigger" id="ddTrigger_siri" onclick="ddToggle('siri')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_siri" style="color:var(--c-text-faint);">Semua Siri</span>
                     <span class="dd-arrow">▼</span>
                 </div>
@@ -522,7 +522,7 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Kumpulan</label>
             <div class="dd-wrap" id="ddWrap_group">
-                <div class="dd-trigger" id="ddTrigger_group" onclick="ddToggle('group')">
+                <div class="dd-trigger" id="ddTrigger_group" onclick="ddToggle('group')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_group" style="color:var(--c-text-faint);">Semua Kumpulan</span>
                     <span class="dd-arrow">▼</span>
                 </div>
@@ -560,7 +560,7 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Sidang</label>
             <div class="dd-wrap" id="ddWrap_session">
-                <div class="dd-trigger" id="ddTrigger_session" onclick="ddToggle('session')">
+                <div class="dd-trigger" id="ddTrigger_session" onclick="ddToggle('session')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_session" style="color:var(--c-text-faint);">Semua Sidang</span>
                     <span class="dd-arrow">▼</span>
                 </div>
@@ -588,7 +588,7 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Peringkat</label>
             <div class="dd-wrap" id="ddWrap_level">
-                <div class="dd-trigger" id="ddTrigger_level" onclick="ddToggle('level')">
+                <div class="dd-trigger" id="ddTrigger_level" onclick="ddToggle('level')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_level" style="color:var(--c-text-faint);">Semua Peringkat</span>
                     <span class="dd-arrow">▼</span>
                 </div>
@@ -625,7 +625,7 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Cawangan</label>
             <div class="dd-wrap" id="ddWrap_school">
-                <div class="dd-trigger" id="ddTrigger_school" onclick="ddToggle('school')">
+                <div class="dd-trigger" id="ddTrigger_school" onclick="ddToggle('school')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_school" style="color:var(--c-text-faint);">Semua Cawangan</span>
                     <span class="dd-arrow">▼</span>
                 </div>

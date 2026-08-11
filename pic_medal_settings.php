@@ -270,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quotas'])) {
 function renderMedalDD(string $fieldName, string $ddName, string $emptyLabel, array $options, $currentVal) {
     $currentVal = (string)$currentVal;
     echo "<div class=\"dd-wrap\" id=\"ddWrap_{$ddName}\">";
-    echo "<div class=\"dd-trigger\" id=\"ddTrigger_{$ddName}\" onclick=\"ddToggle('{$ddName}')\">";
+    echo "<div class=\"dd-trigger\" id=\"ddTrigger_{$ddName}\" onclick=\"ddToggle('{$ddName}')\" role=\"button\" tabindex=\"0\" aria-haspopup=\"listbox\">";
     $curLabel = $emptyLabel;
     foreach ($options as $opt) {
         if ((string)$opt['value'] === $currentVal && $currentVal !== '' && $currentVal !== '0') { $curLabel = $opt['label']; break; }

@@ -579,7 +579,7 @@ include "layout.php";
         <div>
             <label>Pilih Sidang</label>
             <div class="dd-wrap" id="ddWrap_session">
-                <div class="dd-trigger" id="ddTrigger_session" onclick="ddToggle('session')">
+                <div class="dd-trigger" id="ddTrigger_session" onclick="ddToggle('session')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_session" style="color:var(--c-text-faint);">
                         -- Semua Sidang --
                     </span>
@@ -621,7 +621,7 @@ include "layout.php";
         <div>
             <label>Cari Nama Peringkat</label>
             <div class="dd-wrap" id="ddWrap_search">
-                <div class="dd-trigger" id="ddTrigger_search" onclick="ddToggle('search')">
+                <div class="dd-trigger" id="ddTrigger_search" onclick="ddToggle('search')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_search" style="color:var(--c-text-faint);">
                         -- Semua Peringkat --
                     </span>

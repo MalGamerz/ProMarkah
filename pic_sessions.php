@@ -568,7 +568,7 @@ include 'layout.php';
         <div>
             <label>Cari atau Pilih Sidang</label>
             <div class="dd-wrap" id="ddWrap_session">
-                <div class="dd-trigger" id="ddTrigger_session" onclick="ddToggle('session')">
+                <div class="dd-trigger" id="ddTrigger_session" onclick="ddToggle('session')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_session" style="color:var(--c-text-faint);">-- Semua Sidang --</span>
                     <span class="dd-arrow">▼</span>
                 </div>

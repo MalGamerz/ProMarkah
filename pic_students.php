@@ -833,7 +833,7 @@ include 'layout.php';
         <div>
             <label>Tahun</label>
             <div class="dd-wrap" id="ddWrap_year">
-                <div class="dd-trigger" id="ddTrigger_year" onclick="ddToggle('year')">
+                <div class="dd-trigger" id="ddTrigger_year" onclick="ddToggle('year')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_year" style="color:var(--c-text-faint);">Semua Tahun</span>
                     <span class="dd-arrow">▼</span>
                 </div>
@@ -859,7 +859,7 @@ include 'layout.php';
         <div>
             <label>Siri</label>
             <div class="dd-wrap" id="ddWrap_siri">
-                <div class="dd-trigger" id="ddTrigger_siri" onclick="ddToggle('siri')">
+                <div class="dd-trigger" id="ddTrigger_siri" onclick="ddToggle('siri')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_siri" style="color:var(--c-text-faint);">-- Semua Siri --</span>
                     <span class="dd-arrow">▼</span>
                 </div>
@@ -886,7 +886,7 @@ include 'layout.php';
         <div>
             <label>Sidang</label>
             <div class="dd-wrap" id="ddWrap_session">
-                <div class="dd-trigger dd-trigger-disabled" id="ddTrigger_session" onclick="ddToggle('session')">
+                <div class="dd-trigger dd-trigger-disabled" id="ddTrigger_session" onclick="ddToggle('session')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_session" style="color:var(--c-text-faint);">-- Pilih Siri dahulu --</span>
                     <span class="dd-arrow">▼</span>
                 </div>
@@ -909,7 +909,7 @@ include 'layout.php';
         <div>
             <label>Jantina</label>
             <div class="dd-wrap" id="ddWrap_gender">
-                <div class="dd-trigger" id="ddTrigger_gender" onclick="ddToggle('gender')">
+                <div class="dd-trigger" id="ddTrigger_gender" onclick="ddToggle('gender')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_gender" style="color:var(--c-text-faint);">Semua Jantina</span>
                     <span class="dd-arrow">▼</span>
                 </div>
@@ -930,7 +930,7 @@ include 'layout.php';
         <div>
             <label>Nama Cawangan</label>
             <div class="dd-wrap" id="ddWrap_school">
-                <div class="dd-trigger" id="ddTrigger_school" onclick="ddToggle('school')">
+                <div class="dd-trigger" id="ddTrigger_school" onclick="ddToggle('school')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_school" style="color:var(--c-text-faint);">Semua Cawangan</span>
                     <span class="dd-arrow">▼</span>
                 </div>

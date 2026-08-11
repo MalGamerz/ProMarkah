@@ -161,7 +161,7 @@ function renderSilibusDD(string $fieldName, string $ddName, string $normalEmptyL
     $emptyLabel = $isDisabled ? $disabledEmptyLabel : $normalEmptyLabel;
     $disabledClass = $isDisabled ? ' dd-trigger-disabled' : '';
     echo "<div class=\"dd-wrap\" id=\"ddWrap_{$ddName}\">";
-    echo "<div class=\"dd-trigger{$disabledClass}\" id=\"ddTrigger_{$ddName}\" onclick=\"ddToggle('{$ddName}')\">";
+    echo "<div class=\"dd-trigger{$disabledClass}\" id=\"ddTrigger_{$ddName}\" onclick=\"ddToggle('{$ddName}')\" role=\"button\" tabindex=\"0\" aria-haspopup=\"listbox\">";
     $curLabel = $emptyLabel;
     if (!$isDisabled) {
         foreach ($options as $opt) {

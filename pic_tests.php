@@ -724,7 +724,7 @@ include "layout.php";
             <label>Siri</label>
 
             <div class="dd-wrap" id="ddWrap_siri">
-                <div class="dd-trigger" id="ddTrigger_siri" onclick="ddToggle('siri')">
+                <div class="dd-trigger" id="ddTrigger_siri" onclick="ddToggle('siri')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_siri" style="color:var(--c-text-faint);">
                         -- Semua Siri --
                     </span>
@@ -771,7 +771,7 @@ include "layout.php";
             <label>Sidang</label>
 
             <div class="dd-wrap" id="ddWrap_session">
-                <div class="dd-trigger dd-trigger-disabled" id="ddTrigger_session" onclick="ddToggle('session')">
+                <div class="dd-trigger dd-trigger-disabled" id="ddTrigger_session" onclick="ddToggle('session')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_session" style="color:var(--c-text-faint);">
                         -- Pilih Siri dahulu --
                     </span>
@@ -809,7 +809,7 @@ include "layout.php";
             <label>Peringkat</label>
 
             <div class="dd-wrap" id="ddWrap_level">
-                <div class="dd-trigger" id="ddTrigger_level" onclick="ddToggle('level')">
+                <div class="dd-trigger" id="ddTrigger_level" onclick="ddToggle('level')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_level" style="color:var(--c-text-faint);">
                         -- Semua Peringkat --
                     </span>
@@ -882,7 +882,7 @@ include "layout.php";
             <label>Cari Nama Ujian</label>
 
             <div class="dd-wrap" id="ddWrap_search">
-                <div class="dd-trigger" id="ddTrigger_search" onclick="ddToggle('search')">
+                <div class="dd-trigger" id="ddTrigger_search" onclick="ddToggle('search')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_search" style="color:var(--c-text-faint);">
                         -- Semua Ujian --
                     </span>

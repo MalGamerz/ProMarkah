@@ -248,7 +248,7 @@ include 'layout.php';
     <div>
         <label>Cawangan</label>
         <div class="dd-wrap" id="ddWrap_rcschool">
-            <div class="dd-trigger" id="ddTrigger_rcschool" onclick="rcDdToggle()">
+            <div class="dd-trigger" id="ddTrigger_rcschool" onclick="rcDdToggle()" role="button" tabindex="0" aria-haspopup="listbox">
                 <span id="ddLabel_rcschool" style="color:var(--c-text-faint);">-- Pilih Cawangan --</span>
                 <span class="dd-arrow">▼</span>
             </div>

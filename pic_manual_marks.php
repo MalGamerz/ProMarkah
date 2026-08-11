@@ -23,7 +23,7 @@ function renderMMDD(string $fieldName, string $ddName, string $emptyLabel, strin
     $shownEmpty    = $isDisabled ? $disabledEmptyLabel : $emptyLabel;
     $disabledClass = $isDisabled ? ' dd-trigger-disabled' : '';
     echo "<div class=\"dd-wrap\" id=\"ddWrap_{$ddName}\">";
-    echo "<div class=\"dd-trigger{$disabledClass}\" id=\"ddTrigger_{$ddName}\" onclick=\"ddToggle('{$ddName}')\">";
+    echo "<div class=\"dd-trigger{$disabledClass}\" id=\"ddTrigger_{$ddName}\" onclick=\"ddToggle('{$ddName}')\" role=\"button\" tabindex=\"0\" aria-haspopup=\"listbox\">";
     // Even when disabled (e.g. a value that's fixed/derived rather than
     // user-pickable), still show the matching option's label instead of the
     // generic placeholder — disabled only turns off interaction, it

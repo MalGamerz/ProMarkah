@@ -252,3 +252,38 @@ document.addEventListener('keydown', function (e) {
     e.preventDefault(); // stop Space from scrolling the page
     target.click();
 });
+
+// ── Keep aria-expanded/aria-selected in sync, without touching any
+// existing toggle function ──
+// The app's ~15 duplicated accordion/dropdown toggle functions each drive
+// open/closed state through one of two conventions: an .open or .active
+// class on the trigger itself (dd-trigger, judge.php's summary accordion),
+// or the panel's style.display toggling directly while the trigger is its
+// previous sibling (toggleBlock, dirToggle). Rather than editing every one
+// of those functions to also set aria-expanded — real duplication, real
+// chance of missing one or getting a variable name wrong — this observes
+// the DOM mutations they already make and reflects them onto
+// role="button"/role="option" ancestors generically.
+(function () {
+    const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+            const el = m.target;
+            if (m.attributeName === 'class') {
+                if (el.getAttribute('role') === 'button') {
+                    const open = el.classList.contains('open') || el.classList.contains('active');
+                    el.setAttribute('aria-expanded', open ? 'true' : 'false');
+                }
+                if (el.getAttribute('role') === 'option') {
+                    el.setAttribute('aria-selected', el.classList.contains('selected') ? 'true' : 'false');
+                }
+            }
+            if (m.attributeName === 'style') {
+                const header = el.previousElementSibling;
+                if (header && header.getAttribute('role') === 'button') {
+                    header.setAttribute('aria-expanded', el.style.display === 'block' ? 'true' : 'false');
+                }
+            }
+        });
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'], subtree: true });
+})();
