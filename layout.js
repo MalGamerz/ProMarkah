@@ -340,6 +340,23 @@ document.addEventListener('keydown', function (e) {
 // this gives keyboard users the standard Escape-to-dismiss path instead.
 document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
+
+    // Figure out which trigger should regain focus once we close things —
+    // otherwise focus silently resets to <body>, which is disorienting for
+    // a keyboard user (their next Tab jumps to the top of the page instead
+    // of continuing from where the closed control was).
+    let returnFocusTo = null;
+    const openWrap = e.target.closest('.dd-wrap, .pm-siri-dd');
+    if (openWrap) {
+        returnFocusTo = openWrap.querySelector('.dd-trigger, .pm-siri-dd-trigger');
+    } else if (document.getElementById('pm-user-menu')?.classList.contains('show')) {
+        returnFocusTo = document.getElementById('pm-user-btn');
+    } else if (document.getElementById('pm-notif-menu')?.classList.contains('show')) {
+        returnFocusTo = document.getElementById('pm-notif-btn');
+    } else if (document.getElementById('pm-sidebar')?.classList.contains('pm-sidebar-open')) {
+        returnFocusTo = document.querySelector('.pm-hamburger');
+    }
+
     document.querySelectorAll('.dd-panel.open, .dd-trigger.open').forEach(function (el) { el.classList.remove('open'); });
     document.getElementById('pmSiriDd')?.classList.remove('open');
     document.getElementById('pmSiriDdPanel')?.classList.remove('open');
@@ -351,4 +368,6 @@ document.addEventListener('keydown', function (e) {
     document.getElementById('pm-user-btn')?.setAttribute('aria-expanded', 'false');
     document.getElementById('pm-notif-menu')?.classList.remove('show');
     document.getElementById('pm-notif-btn')?.setAttribute('aria-expanded', 'false');
+
+    if (returnFocusTo) returnFocusTo.focus();
 });
