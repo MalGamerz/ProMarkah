@@ -716,7 +716,7 @@ if ($is_simple_mode) {
                     $isActive = $siriRow["siri_id"] == $activeSiriIdNav;
                     $optLabel = htmlspecialchars($siriRow["siri_name"]) . " (" . htmlspecialchars($siriRow["siri_year"]) . ")";
                     if ($isActive) $activeSiriLabel = $optLabel;
-                    $siriOptionsHtml .= "<div class='pm-siri-dd-opt" . ($isActive ? " selected" : "") . "' data-value='" . (int)$siriRow["siri_id"] . "' onclick=\"pmSiriDdSelect(this)\">{$optLabel}</div>";
+                    $siriOptionsHtml .= "<div class='pm-siri-dd-opt" . ($isActive ? " selected" : "") . "' role='option' tabindex='0' data-value='" . (int)$siriRow["siri_id"] . "' onclick=\"pmSiriDdSelect(this)\">{$optLabel}</div>";
                 }
                 ?>
                 <div class="pm-siri-dd" id="pmSiriDd">
@@ -724,8 +724,8 @@ if ($is_simple_mode) {
                         <span id="pmSiriDdLabel"><?= $activeSiriLabel ?></span>
                         <span class="pm-siri-dd-arrow">▾</span>
                     </button>
-                    <div class="pm-siri-dd-panel" id="pmSiriDdPanel">
-                        <div class="pm-siri-dd-opt<?= $activeSiriIdNav == 0 ? " selected" : "" ?>" data-value="" onclick="pmSiriDdSelect(this)">-- Semua Siri --</div>
+                    <div class="pm-siri-dd-panel" id="pmSiriDdPanel" role="listbox">
+                        <div class="pm-siri-dd-opt<?= $activeSiriIdNav == 0 ? " selected" : "" ?>" role="option" tabindex="0" data-value="" onclick="pmSiriDdSelect(this)">-- Semua Siri --</div>
                         <?= $siriOptionsHtml ?>
                     </div>
                 </div>

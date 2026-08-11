@@ -287,3 +287,24 @@ document.addEventListener('keydown', function (e) {
     });
     observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'], subtree: true });
 })();
+
+// ── Escape closes whatever's open ──
+// Backdrops/overlays (.pm-modal-overlay, the mobile sidebar, the QR modal)
+// only close on a mouse click today — there was no keyboard equivalent at
+// all. Rather than make each full-screen backdrop div itself a focusable
+// "button" (which would be a stray, contentless tab stop — the wrong fix),
+// this gives keyboard users the standard Escape-to-dismiss path instead.
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.dd-panel.open, .dd-trigger.open').forEach(function (el) { el.classList.remove('open'); });
+    document.getElementById('pmSiriDd')?.classList.remove('open');
+    document.getElementById('pmSiriDdPanel')?.classList.remove('open');
+    document.querySelectorAll('.pm-modal-overlay.show').forEach(function (el) { el.classList.remove('show'); });
+    document.getElementById('qrModal')?.classList.remove('visible');
+    document.getElementById('pm-sidebar')?.classList.remove('pm-sidebar-open');
+    document.getElementById('pm-backdrop')?.classList.remove('pm-backdrop-show');
+    document.getElementById('pm-user-menu')?.classList.remove('show');
+    document.getElementById('pm-user-btn')?.setAttribute('aria-expanded', 'false');
+    document.getElementById('pm-notif-menu')?.classList.remove('show');
+    document.getElementById('pm-notif-btn')?.setAttribute('aria-expanded', 'false');
+});
