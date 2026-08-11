@@ -787,7 +787,7 @@ html.pm-light .status-badge-success {
                 }
             ?>
             <div class="student-card">
-                <div class="student-header" onclick="this.parentElement.classList.toggle('is-open'); var d=this.nextElementSibling; d.style.display = d.style.display==='block' ? 'none' : 'block';">
+                <div class="student-header" onclick="this.parentElement.classList.toggle('is-open'); var d=this.nextElementSibling; d.style.display = d.style.display==='block' ? 'none' : 'block';" role="button" tabindex="0">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <span class="student-name"><?= htmlspecialchars($student) ?></span>
                         <?php if ($isEvaluated): ?>

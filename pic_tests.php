@@ -213,7 +213,7 @@ if (isset($_GET["ajax"])) {
     $siriLabel   = !empty($lvl["siri_name"])    ? htmlspecialchars($lvl["siri_name"])    : '— Tiada Siri —';
     $sidangLabel = !empty($lvl["session_name"]) ? htmlspecialchars($lvl["session_name"]) : '— Tiada Sidang —';
     echo "<div class='accordion-card'>
-                <div class='level-header' onclick=\"toggleBlock('level_$lid', this)\">
+                <div class='level-header' onclick=\"toggleBlock('level_$lid', this)\" role='button' tabindex='0'>
                     <span class='acc-icon'>&#9658;</span>
                     <strong>" .
       $levelLabel .

@@ -155,7 +155,7 @@ if (isset($_GET["ajax"])) {
 
     $siriLabel = $sess["siri_name"] ? htmlspecialchars($sess["siri_name"]) : "Tiada Siri";
     echo "<div class='accordion-card'>
-                <div class='level-header' onclick=\"toggleBlock('session_$sid', this)\">
+                <div class='level-header' onclick=\"toggleBlock('session_$sid', this)\" role='button' tabindex='0'>
                     <span class='acc-icon'>&#9658;</span>
                     <strong>" .
       htmlspecialchars($sess["session_name"]) .

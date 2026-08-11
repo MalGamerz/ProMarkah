@@ -874,7 +874,7 @@ if ($tab === 'students_group'):
         $lvl_uid = "lvl_{$sess_id}_{$lvl_id}";
 ?>
     <div class="dir-section">
-        <div class="dir-section-header" onclick="dirToggle('<?= $lvl_uid ?>')">
+        <div class="dir-section-header" onclick="dirToggle('<?= $lvl_uid ?>')" role="button" tabindex="0">
             <div class="dir-section-icon">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             </div>
@@ -1094,7 +1094,7 @@ elseif ($tab === 'judges_school'):
         $stuCount = $stuCountBySchool[$sch_id] ?? 0;
 ?>
     <div class="dir-section">
-        <div class="dir-section-header" onclick="dirToggle('school_j_<?= $sch_id ?>')">
+        <div class="dir-section-header" onclick="dirToggle('school_j_<?= $sch_id ?>')" role="button" tabindex="0">
             <div class="dir-section-icon">
                 <svg viewBox="0 0 24 24"><path d="M2 22V10l10-8 10 8v12"/><path d="M12 22V15"/><path d="M7 22v-4h10v4"/><path d="M7 11h10"/></svg>
             </div>
@@ -1228,7 +1228,7 @@ elseif ($tab === 'groups_judge'):
         $judge_id = $judge['judge_id'];
 ?>
     <div class="dir-section">
-        <div class="dir-section-header" onclick="dirToggle('judge_grp_<?= $judge_id ?>')">
+        <div class="dir-section-header" onclick="dirToggle('judge_grp_<?= $judge_id ?>')" role="button" tabindex="0">
             <div class="dir-section-icon">
                 <svg viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M7 21h10"/><line x1="12" y1="3" x2="12" y2="21"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
             </div>

@@ -385,7 +385,7 @@ if (($_GET['status'] ?? '') === 'success') {
                         echo "<div class='pm-accordion-block' data-session='" . strtolower(htmlspecialchars($sessionName)) . "'>";
 
                         // Enhanced Accordion Header
-                        echo "<div class='pm-accordion-header' onclick=\"toggleSummaryAccordion('{$sidHash}')\" id='header_{$sidHash}'>";
+                        echo "<div class='pm-accordion-header' onclick=\"toggleSummaryAccordion('{$sidHash}')\" id='header_{$sidHash}' role='button' tabindex='0'>";
                         echo "<div class='pm-accordion-header-left'>";
                         echo "<span class='pm-accordion-arrow' id='arrow_{$sidHash}'>▶</span>";
                         

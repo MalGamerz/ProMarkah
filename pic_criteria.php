@@ -262,7 +262,7 @@ if (isset($_GET['ajax'])) {
         $sidangLabel = !empty($lvlInfo['session_name']) ? htmlspecialchars($lvlInfo['session_name']) : '— Tiada Sidang —';
 
         echo "<div class='accordion-card'>
-                <div class='level-header' onclick=\"toggleBlock('level_$lid', this)\">
+                <div class='level-header' onclick=\"toggleBlock('level_$lid', this)\" role='button' tabindex='0'>
                     <span class='acc-icon'>&#9658;</span>
                     <strong>" . htmlspecialchars($lvlInfo['level_name']) . "</strong>
                     <div class='header-badges'>
@@ -280,7 +280,7 @@ if (isset($_GET['ajax'])) {
             $criteriaCount = count($criteriaRows);
 
             echo "<div class='accordion-card accordion-sub'>
-                    <div class='level-header level-header-sub' onclick=\"toggleBlock('test_$tid', this)\">
+                    <div class='level-header level-header-sub' onclick=\"toggleBlock('test_$tid', this)\" role='button' tabindex='0'>
                         <span class='acc-icon'>&#9658;</span>
                         <strong>" . htmlspecialchars($t['test_name']) . "</strong>
                         <div class='header-badges'>

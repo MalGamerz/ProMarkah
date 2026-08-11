@@ -283,7 +283,7 @@ if (isset($_GET['ajax'])) {
             if ($current_school !== '') echo "</tbody></table></div></div></div></div>";
             $uid = 'school_' . $st['school_id'] . '_' . rand(1000,9999);
             echo "<div class='accordion-card'>
-        <div class='school-header' onclick=\"toggleBlock('$uid')\">
+        <div class='school-header' onclick=\"toggleBlock('$uid')\" role='button' tabindex='0'>
             <span class='arrow'>▶</span>
             <strong>$sch</strong>
             <button type='button' class='pm-btn pm-btn-primary btn-sm school-add-btn' onclick=\"event.stopPropagation(); tambahForSchool('{$st['school_id']}')\">+ Tambah</button>

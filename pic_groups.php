@@ -264,7 +264,7 @@ if (isset($_GET['ajax'])) {
         $cur_school_id = $sc['school_id'];
         $found = true;
         echo "<div class='accordion-card'>
-                <div class='school-header' onclick=\"toggleBlock('school_grp_{$cur_school_id}')\">
+                <div class='school-header' onclick=\"toggleBlock('school_grp_{$cur_school_id}')\" role='button' tabindex='0'>
                     <span class='arrow'>▶</span><span>" . htmlspecialchars($sc['school_name']) . "</span>
                 </div>
                 <div id='school_grp_{$cur_school_id}' style='display:none;padding:12px;'>";
@@ -385,7 +385,7 @@ if (isset($_GET['ajax'])) {
             }
 
             echo "<div class='accordion-sub-card' id='card_$uid'>
-                    <div class='accordion-sub-header' onclick=\"toggleBlock('$uid')\">
+                    <div class='accordion-sub-header' onclick=\"toggleBlock('$uid')\" role='button' tabindex='0'>
                         <span class='arrow'>▶</span><span>" . htmlspecialchars($l['level_name']) . "</span>
                         <span class='siri-tag' title='Sidang / Siri'>{$sidangLabel} &middot; {$siriTagLabel}</span>
                     </div>
