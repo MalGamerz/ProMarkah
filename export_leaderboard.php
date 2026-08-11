@@ -159,22 +159,25 @@ $judgesList   = $conn->query("SELECT DISTINCT name AS judge_name FROM judges ORD
         font-family: 'DM Sans', sans-serif;
     }
 
-    /* ── SELECT2 CUSTOM DARK/DYNAMIC MATCH THEME ── */
+    /* ── SELECT2 THEME — matches the shared 32px/0.8rem benchmark in
+       filter_bar.css (this page runs standalone, without layout.php, so
+       it can't just link that file — kept local but numerically aligned
+       so its dropdowns are the same size as every other page's). ── */
     .select2-container .select2-selection--single {
         background: var(--c-surface-2) !important;
         border: 1px solid var(--c-border-strong) !important;
         border-radius: 6px !important;
-        height: 38px !important;
+        height: 32px !important;
         transition: border-color 0.2s;
     }
     .select2-container--default .select2-selection--single .select2-selection__rendered {
         color: var(--c-text) !important;
-        line-height: 36px !important;
+        line-height: 30px !important;
         padding-left: 10px !important;
-        font-size: 0.85rem !important;
+        font-size: 0.8rem !important;
     }
     .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px !important;
+        height: 30px !important;
     }
     .select2-dropdown {
         background: var(--c-surface-1) !important;

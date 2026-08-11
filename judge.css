@@ -534,47 +534,12 @@
         transform-origin: center;
     }
 
-    /* ── Select2 theme ── */
-    .select2-container .select2-selection--single {
-        background: var(--c-surface-2) !important;
-        border: 1px solid var(--c-border-strong) !important;
-        border-radius: 4px !important;
-        height: 38px !important;
-    }
-    .select2-container--open .select2-selection--single {
-        border-color: var(--c-red) !important;
-        box-shadow: none !important;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        color: var(--c-text) !important;
-        line-height: 36px !important;
-        font-size: 0.82rem !important;
-        padding-left: 10px !important;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px !important;
-        right: 8px !important;
-    }
-    .select2-dropdown {
-        background: var(--c-surface-1) !important;
-        border: 1px solid var(--c-border-strong) !important;
-        border-radius: 4px !important;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
-    }
-    .select2-results__option {
-        padding: 8px 12px !important;
-        font-size: 0.82rem !important;
-        color: var(--c-text) !important;
-    }
-    .select2-container--default .select2-results__option--highlighted[aria-selected] {
-        background-color: var(--c-surface-3) !important;
-        color: var(--c-text) !important;
-    }
-    .select2-container--default .select2-results__option[aria-selected="true"] {
-        background-color: var(--c-red) !important;
-        color: #fff !important;
-        font-weight: 600;
-    }
+    /* ── Select2 theme: the canonical 32px/0.8rem version lives in
+       filter_bar.css (loaded by layout.php, which this page includes) —
+       this page used to carry its own 38px copy, drifting from every
+       other Select2 dropdown in the app (judge_view_marks.php,
+       leaderboard.php, pic_criteria.php already relied on the shared
+       one unmodified). ── */
     .form-btn-submit {
         height: 38px !important;
         padding: 0 18px !important;
