@@ -253,6 +253,36 @@ document.addEventListener('keydown', function (e) {
     target.click();
 });
 
+// ── Arrow-key navigation inside the .dd-panel/.pm-siri-dd-panel listboxes
+// opened by the trigger above ── role="option" alone only makes each option
+// individually Tab-reachable; the WAI-ARIA listbox pattern also expects
+// Up/Down (and Home/End) to move among them without tabbing through one at
+// a time. Works whether focus starts on the trigger, the search box, or
+// another option — .dd-wrap/.pm-siri-dd wraps trigger+panel as siblings in
+// every instance of this component, so that's the one thing this can
+// reliably walk up to regardless of which page/ddName it's on.
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return;
+    const wrap = e.target.closest('.dd-wrap, .pm-siri-dd');
+    if (!wrap) return;
+    const listbox = wrap.querySelector('[role="listbox"]');
+    if (!listbox || getComputedStyle(listbox).display === 'none') return;
+    const opts = Array.from(listbox.querySelectorAll('[role="option"]')).filter(function (o) {
+        return !o.classList.contains('hidden') && getComputedStyle(o).display !== 'none';
+    });
+    if (opts.length === 0) return;
+    e.preventDefault();
+    if (e.key === 'Home') { opts[0].focus(); return; }
+    if (e.key === 'End') { opts[opts.length - 1].focus(); return; }
+    let idx = opts.indexOf(e.target);
+    if (e.key === 'ArrowDown') {
+        idx = idx === -1 ? 0 : Math.min(idx + 1, opts.length - 1);
+    } else {
+        idx = idx === -1 ? opts.length - 1 : Math.max(idx - 1, 0);
+    }
+    opts[idx].focus();
+});
+
 // ── Keep aria-expanded/aria-selected in sync, without touching any
 // existing toggle function ──
 // The app's ~15 duplicated accordion/dropdown toggle functions each drive
