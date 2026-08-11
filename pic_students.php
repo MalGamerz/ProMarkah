@@ -837,17 +837,17 @@ include 'layout.php';
                     <span id="ddLabel_year" style="color:var(--c-text-faint);">Semua Tahun</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_year">
+                <div class="dd-panel" id="ddPanel_year" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari tahun..." oninput="ddFilter('year',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_year">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('year','','Semua Tahun')">Semua Tahun</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('year','','Semua Tahun')">Semua Tahun</div>
                         <?php
                         $years = $conn->query("SELECT DISTINCT year FROM students ORDER BY year DESC");
                         while ($y = $years->fetch_assoc()) {
                             $yr = htmlspecialchars($y['year']);
-                            echo "<div class='dd-opt' data-value='{$yr}' onclick=\"ddSelect('year','{$yr}','{$yr}')\">{$yr}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$yr}' onclick=\"ddSelect('year','{$yr}','{$yr}')\">{$yr}</div>";
                         }
                         ?>
                     </div>
@@ -863,18 +863,18 @@ include 'layout.php';
                     <span id="ddLabel_siri" style="color:var(--c-text-faint);">-- Semua Siri --</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_siri">
+                <div class="dd-panel" id="ddPanel_siri" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari siri..." oninput="ddFilter('siri',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_siri">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('siri','','-- Semua Siri --')">-- Semua Siri --</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('siri','','-- Semua Siri --')">-- Semua Siri --</div>
                         <?php
                         $siri_list = $conn->query("SELECT siri_id, siri_name FROM siri ORDER BY siri_year DESC, siri_name");
                         while ($sr = $siri_list->fetch_assoc()) {
                             $sid_  = $sr['siri_id'];
                             $sname = htmlspecialchars($sr['siri_name']);
-                            echo "<div class='dd-opt' data-value='{$sid_}' onclick=\"ddSelect('siri','{$sid_}','{$sname}')\">{$sname}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$sid_}' onclick=\"ddSelect('siri','{$sid_}','{$sname}')\">{$sname}</div>";
                         }
                         ?>
                     </div>
@@ -890,12 +890,12 @@ include 'layout.php';
                     <span id="ddLabel_session" style="color:var(--c-text-faint);">-- Pilih Siri dahulu --</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_session">
+                <div class="dd-panel" id="ddPanel_session" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari sidang..." oninput="ddFilter('session',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_session">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('session','','-- Semua Sidang --')">-- Semua Sidang --</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('session','','-- Semua Sidang --')">-- Semua Sidang --</div>
                     </div>
                     <div class="dd-empty" id="ddEmpty_session">Tiada hasil</div>
                 </div>
@@ -913,14 +913,14 @@ include 'layout.php';
                     <span id="ddLabel_gender" style="color:var(--c-text-faint);">Semua Jantina</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_gender">
+                <div class="dd-panel" id="ddPanel_gender" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari jantina..." oninput="ddFilter('gender',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_gender">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('gender','','Semua Jantina')">Semua Jantina</div>
-                        <div class="dd-opt" data-value="Male" onclick="ddSelect('gender','Male','Lelaki')">Lelaki</div>
-                        <div class="dd-opt" data-value="Female" onclick="ddSelect('gender','Female','Perempuan')">Perempuan</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('gender','','Semua Jantina')">Semua Jantina</div>
+                        <div class="dd-opt" data-value="Male" role="option" tabindex="0" onclick="ddSelect('gender','Male','Lelaki')">Lelaki</div>
+                        <div class="dd-opt" data-value="Female" role="option" tabindex="0" onclick="ddSelect('gender','Female','Perempuan')">Perempuan</div>
                     </div>
                     <div class="dd-empty" id="ddEmpty_gender">Tiada hasil</div>
                 </div>
@@ -934,18 +934,18 @@ include 'layout.php';
                     <span id="ddLabel_school" style="color:var(--c-text-faint);">Semua Cawangan</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_school">
+                <div class="dd-panel" id="ddPanel_school" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari cawangan..." oninput="ddFilter('school',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_school">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('school','','Semua Cawangan')">Semua Cawangan</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('school','','Semua Cawangan')">Semua Cawangan</div>
                         <?php
                         $schools_f = $conn->query("SELECT school_id, school_name FROM schools ORDER BY school_name");
                         while ($sc = $schools_f->fetch_assoc()) {
                             $scid = $sc['school_id'];
                             $scname = htmlspecialchars($sc['school_name']);
-                            echo "<div class='dd-opt' data-value='{$scid}' onclick=\"ddSelect('school','{$scid}','{$scname}')\">{$scname}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$scid}' onclick=\"ddSelect('school','{$scid}','{$scname}')\">{$scname}</div>";
                         }
                         ?>
                     </div>
@@ -1406,12 +1406,12 @@ function loadSidangOptions(siriId) {
 
     if (!siriId) {
         sessLbl.textContent = '-- Pilih Siri dahulu --';
-        sessOpts.innerHTML = "<div class='dd-opt selected' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
+        sessOpts.innerHTML = "<div class='dd-opt selected' role='option' tabindex='0' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
         sessTrigger.classList.add('dd-trigger-disabled');
         return;
     }
     sessLbl.textContent = '-- Semua Sidang --';
-    sessOpts.innerHTML = "<div class='dd-opt selected' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
+    sessOpts.innerHTML = "<div class='dd-opt selected' role='option' tabindex='0' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
     sessTrigger.classList.remove('dd-trigger-disabled');
 
     pmFetch('pic_students.php?ajax_sessions=1&siri=' + encodeURIComponent(siriId))

@@ -731,7 +731,7 @@ include "layout.php";
                     <span class="dd-arrow">▼</span>
                 </div>
 
-                <div class="dd-panel" id="ddPanel_siri">
+                <div class="dd-panel" id="ddPanel_siri" role="listbox">
                     <div class="dd-search-box">
                         <input
                             type="text"
@@ -742,7 +742,7 @@ include "layout.php";
 
                     <div class="dd-options" id="ddOpts_siri">
                         <div
-                            class="dd-opt selected"
+                            class="dd-opt selected" role="option" tabindex="0"
                             data-value=""
                             onclick="ddSelect('siri','','-- Semua Siri --')">
                             -- Semua Siri --
@@ -753,7 +753,7 @@ include "layout.php";
                         while ($sr = $siri_list_f->fetch_assoc()) {
                           $sid_  = $sr["siri_id"];
                           $sname = htmlspecialchars($sr["siri_name"]);
-                          echo "<div class='dd-opt' data-value='{$sid_}' onclick=\"ddSelect('siri','{$sid_}','{$sname}')\">{$sname}</div>";
+                          echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$sid_}' onclick=\"ddSelect('siri','{$sid_}','{$sname}')\">{$sname}</div>";
                         }
                         ?>
                     </div>
@@ -778,7 +778,7 @@ include "layout.php";
                     <span class="dd-arrow">▼</span>
                 </div>
 
-                <div class="dd-panel" id="ddPanel_session">
+                <div class="dd-panel" id="ddPanel_session" role="listbox">
                     <div class="dd-search-box">
                         <input
                             type="text"
@@ -789,7 +789,7 @@ include "layout.php";
 
                     <div class="dd-options" id="ddOpts_session">
                         <div
-                            class="dd-opt selected"
+                            class="dd-opt selected" role="option" tabindex="0"
                             data-value=""
                             onclick="ddSelect('session','','-- Semua Sidang --')">
                             -- Semua Sidang --
@@ -816,7 +816,7 @@ include "layout.php";
                     <span class="dd-arrow">▼</span>
                 </div>
 
-                <div class="dd-panel" id="ddPanel_level">
+                <div class="dd-panel" id="ddPanel_level" role="listbox">
                     <div class="dd-search-box">
                         <input
                             type="text"
@@ -828,7 +828,7 @@ include "layout.php";
                     <div class="dd-options" id="ddOpts_level">
 
                         <div
-                            class="dd-opt selected"
+                            class="dd-opt selected" role="option" tabindex="0"
                             data-value=""
                             onclick="ddSelect('level','','-- Semua Peringkat --')">
                             -- Semua Peringkat --
@@ -859,7 +859,7 @@ include "layout.php";
 
                           echo "
                             <div
-                                class='dd-opt'
+                                class='dd-opt' role='option' tabindex='0'
                                 data-value='{$id}'
                                 onclick=\"ddSelect('level','{$id}','{$label}')\">
                                 {$label}
@@ -889,7 +889,7 @@ include "layout.php";
                     <span class="dd-arrow">▼</span>
                 </div>
 
-                <div class="dd-panel" id="ddPanel_search">
+                <div class="dd-panel" id="ddPanel_search" role="listbox">
                     <div class="dd-search-box">
                         <input
                             type="text"
@@ -902,7 +902,7 @@ include "layout.php";
                     <div class="dd-options" id="ddOpts_search">
 
                         <div
-                            class="dd-opt selected"
+                            class="dd-opt selected" role="option" tabindex="0"
                             data-value=""
                             onclick="ddSelect('search','','-- Semua Ujian --')">
                             -- Semua Ujian --
@@ -920,7 +920,7 @@ include "layout.php";
 
                           echo "
                             <div
-                                class='dd-opt'
+                                class='dd-opt' role='option' tabindex='0'
                                 data-value='{$name}'
                                 onclick=\"ddSelect('search','{$name}','{$name}')\">
                                 {$name}
@@ -1368,12 +1368,12 @@ function loadSidangOptions(siriId) {
 
     if (!siriId) {
         sessLbl.textContent = '-- Pilih Siri dahulu --';
-        sessOpts.innerHTML = "<div class='dd-opt selected' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
+        sessOpts.innerHTML = "<div class='dd-opt selected' role='option' tabindex='0' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
         sessTrigger.classList.add('dd-trigger-disabled');
         return;
     }
     sessLbl.textContent = '-- Semua Sidang --';
-    sessOpts.innerHTML = "<div class='dd-opt selected' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
+    sessOpts.innerHTML = "<div class='dd-opt selected' role='option' tabindex='0' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
     sessTrigger.classList.remove('dd-trigger-disabled');
 
     pmFetch('pic_tests.php?ajax_sessions=1&siri=' + encodeURIComponent(siriId))

@@ -461,17 +461,17 @@ include 'layout.php';
                     <span id="ddLabel_school" style="color:var(--c-text-faint);">-- Semua Cawangan --</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_school">
+                <div class="dd-panel" id="ddPanel_school" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" id="f_search" placeholder="Taip untuk cari..." autocomplete="off" oninput="ddSchoolSearch(this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_school">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelectSchool('','-- Semua Cawangan --')">-- Semua Cawangan --</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelectSchool('','-- Semua Cawangan --')">-- Semua Cawangan --</div>
                         <?php
                         $all_schs = $conn->query("SELECT school_name FROM schools ORDER BY school_name");
                         while ($ds = $all_schs->fetch_assoc()) {
                             $sch_name = htmlspecialchars($ds['school_name'], ENT_QUOTES);
-                            echo "<div class='dd-opt' data-value='{$sch_name}' onclick=\"ddSelectSchool('{$sch_name}','{$sch_name}')\">{$sch_name}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$sch_name}' onclick=\"ddSelectSchool('{$sch_name}','{$sch_name}')\">{$sch_name}</div>";
                         }
                         ?>
                     </div>

@@ -586,13 +586,13 @@ include "layout.php";
                     <span class="dd-arrow">▼</span>
                 </div>
 
-                <div class="dd-panel" id="ddPanel_session">
+                <div class="dd-panel" id="ddPanel_session" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari sidang..." oninput="ddFilter('session',this.value)" onclick="event.stopPropagation()">
                     </div>
 
                     <div class="dd-options" id="ddOpts_session">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('session','','-- Semua Sidang --')">
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('session','','-- Semua Sidang --')">
                             -- Semua Sidang --
                         </div>
                         <?php
@@ -608,7 +608,7 @@ include "layout.php";
                           if ($active_siri_main === 0 && !empty($s["siri_name"])) {
                             $name .= " — " . htmlspecialchars($s["siri_name"]);
                           }
-                          echo "<div class='dd-opt' data-value='{$id}' onclick=\"ddSelect('session','{$id}','{$name}')\">{$name}</div>";
+                          echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$id}' onclick=\"ddSelect('session','{$id}','{$name}')\">{$name}</div>";
                         }
                         ?>
                     </div>
@@ -628,20 +628,20 @@ include "layout.php";
                     <span class="dd-arrow">▼</span>
                 </div>
 
-                <div class="dd-panel" id="ddPanel_search">
+                <div class="dd-panel" id="ddPanel_search" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" id="f_search" placeholder="Taip nama peringkat..." oninput="ddSearchInput(this.value)" onclick="event.stopPropagation()">
                     </div>
 
                     <div class="dd-options" id="ddOpts_search">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('search','','-- Semua Peringkat --')">
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('search','','-- Semua Peringkat --')">
                             -- Semua Peringkat --
                         </div>
                         <?php
                         $dist_levels = $conn->query("SELECT DISTINCT level_name FROM levels ORDER BY level_name");
                         while ($dl = $dist_levels->fetch_assoc()) {
                           $name = htmlspecialchars($dl["level_name"]);
-                          echo "<div class='dd-opt' data-value='{$name}' onclick=\"ddSelect('search','{$name}','{$name}')\">{$name}</div>";
+                          echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$name}' onclick=\"ddSelect('search','{$name}','{$name}')\">{$name}</div>";
                         }
                         ?>
                     </div>

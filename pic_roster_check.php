@@ -252,13 +252,13 @@ include 'layout.php';
                 <span id="ddLabel_rcschool" style="color:var(--c-text-faint);">-- Pilih Cawangan --</span>
                 <span class="dd-arrow">▼</span>
             </div>
-            <div class="dd-panel" id="ddPanel_rcschool">
+            <div class="dd-panel" id="ddPanel_rcschool" role="listbox">
                 <div class="dd-search-box">
                     <input type="text" placeholder="Cari cawangan..." oninput="rcDdFilter(this.value)" onclick="event.stopPropagation()">
                 </div>
                 <div class="dd-options" id="ddOpts_rcschool">
                     <?php foreach ($schools as $s): ?>
-                    <div class="dd-opt" data-value="<?= $s['school_id'] ?>" onclick="rcDdSelect('<?= $s['school_id'] ?>','<?= htmlspecialchars($s['school_name'], ENT_QUOTES) ?>')"><?= htmlspecialchars($s['school_name']) ?></div>
+                    <div class="dd-opt" role="option" tabindex="0" data-value="<?= $s['school_id'] ?>" onclick="rcDdSelect('<?= $s['school_id'] ?>','<?= htmlspecialchars($s['school_name'], ENT_QUOTES) ?>')"><?= htmlspecialchars($s['school_name']) ?></div>
                     <?php endforeach; ?>
                 </div>
                 <div class="dd-empty" id="ddEmpty_rcschool">Tiada hasil</div>

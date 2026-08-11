@@ -572,12 +572,12 @@ include 'layout.php';
                     <span id="ddLabel_session" style="color:var(--c-text-faint);">-- Semua Sidang --</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_session">
+                <div class="dd-panel" id="ddPanel_session" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" id="f_search" placeholder="Taip untuk cari..." autocomplete="off" oninput="ddSessionSearch(this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_session">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelectSession('','-- Semua Sidang --')">-- Semua Sidang --</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelectSession('','-- Semua Sidang --')">-- Semua Sidang --</div>
                         <?php
                         // Scope to "Siri Aktif"; when "Semua Siri" is active, tag each
                         // session with its siri so same-named sessions aren't ambiguous
@@ -593,7 +593,7 @@ include 'layout.php';
                                 $siriLbl = !empty($ds['siri_name']) ? htmlspecialchars($ds['siri_name']) : 'Tiada Siri';
                                 $siriHtml = "<span class='dd-opt-siri'>$siriLbl</span>";
                             }
-                            echo "<div class='dd-opt' data-value='{$s_name}' onclick=\"ddSelectSession('{$s_name}','{$s_name}')\"><span>{$s_name}</span>{$siriHtml}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$s_name}' onclick=\"ddSelectSession('{$s_name}','{$s_name}')\"><span>{$s_name}</span>{$siriHtml}</div>";
                         }
                         ?>
                     </div>

@@ -152,16 +152,16 @@ function renderDirDD(string $fieldName, string $ddName, string $emptyLabel, arra
     $labelColor = ($currentVal === '' || $currentVal === '0') ? 'color:var(--c-text-faint);' : '';
     echo "<span id=\"ddLabel_{$ddName}\" style=\"{$labelColor}\">" . htmlspecialchars($curLabel) . "</span>";
     echo "<span class=\"dd-arrow\">▼</span></div>";
-    echo "<div class=\"dd-panel\" id=\"ddPanel_{$ddName}\">";
+    echo "<div class=\"dd-panel\" id=\"ddPanel_{$ddName}\" role=\"listbox\">";
     echo "<div class=\"dd-search-box\"><input type=\"text\" placeholder=\"Cari...\" oninput=\"ddFilter('{$ddName}',this.value)\" onclick=\"event.stopPropagation()\"></div>";
     echo "<div class=\"dd-options\" id=\"ddOpts_{$ddName}\">";
     $emptySel = ($currentVal === '' || $currentVal === '0') ? 'selected' : '';
-    echo "<div class=\"dd-opt {$emptySel}\" data-value=\"\" onclick=\"ddSelect('{$ddName}','','" . htmlspecialchars($emptyLabel, ENT_QUOTES) . "')\">" . htmlspecialchars($emptyLabel) . "</div>";
+    echo "<div class=\"dd-opt {$emptySel}\" role=\"option\" tabindex=\"0\" data-value=\"\" onclick=\"ddSelect('{$ddName}','','" . htmlspecialchars($emptyLabel, ENT_QUOTES) . "')\">" . htmlspecialchars($emptyLabel) . "</div>";
     foreach ($options as $opt) {
         $sel = ((string)$opt['value'] === $currentVal && $currentVal !== '' && $currentVal !== '0') ? 'selected' : '';
         $valEsc = htmlspecialchars((string)$opt['value'], ENT_QUOTES);
         $lblEsc = htmlspecialchars($opt['label'], ENT_QUOTES);
-        echo "<div class=\"dd-opt {$sel}\" data-value=\"{$valEsc}\" onclick=\"ddSelect('{$ddName}','{$valEsc}','{$lblEsc}')\">" . htmlspecialchars($opt['label']) . "</div>";
+        echo "<div class=\"dd-opt {$sel}\" role=\"option\" tabindex=\"0\" data-value=\"{$valEsc}\" onclick=\"ddSelect('{$ddName}','{$valEsc}','{$lblEsc}')\">" . htmlspecialchars($opt['label']) . "</div>";
     }
     echo "</div><div class=\"dd-empty\" id=\"ddEmpty_{$ddName}\">Tiada hasil</div></div>";
     echo "<input type=\"hidden\" name=\"{$fieldName}\" id=\"f_{$ddName}\" value=\"" . htmlspecialchars($currentVal === '0' ? '' : $currentVal) . "\">";
@@ -1419,7 +1419,7 @@ function dirFilterNameOptions(keyword) {
         list.innerHTML = kw === '' ? '' : `<div class="dir-name-empty">Tiada hasil ditemui</div>`;
     } else {
         list.innerHTML = matches.slice(0, 20).map(name =>
-            `<div class="dd-option" onclick="dirSelectName('${name.replace(/'/g, "\\'")}')">${name}</div>`
+            `<div class="dd-option" role="option" tabindex="0" onclick="dirSelectName('${name.replace(/'/g, "\\'")}')">${name}</div>`
         ).join('');
     }
     box.classList.toggle('open', matches.length > 0 || kw !== '');

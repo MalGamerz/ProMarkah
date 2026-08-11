@@ -35,14 +35,14 @@ function renderMMDD(string $fieldName, string $ddName, string $emptyLabel, strin
     $labelColor = ($currentVal === '' || $isDisabled) ? 'color:var(--c-text-faint);' : '';
     echo "<span id=\"ddLabel_{$ddName}\" style=\"{$labelColor}\">" . htmlspecialchars($curLabel) . "</span>";
     echo "<span class=\"dd-arrow\">▼</span></div>";
-    echo "<div class=\"dd-panel\" id=\"ddPanel_{$ddName}\">";
+    echo "<div class=\"dd-panel\" id=\"ddPanel_{$ddName}\" role=\"listbox\">";
     echo "<div class=\"dd-search-box\"><input type=\"text\" placeholder=\"Cari...\" oninput=\"ddFilter('{$ddName}',this.value)\" onclick=\"event.stopPropagation()\"></div>";
     echo "<div class=\"dd-options\" id=\"ddOpts_{$ddName}\">";
     foreach ($options as $opt) {
         $sel    = ((string)$opt['value'] === $currentVal && $currentVal !== '') ? 'selected' : '';
         $valEsc = htmlspecialchars((string)$opt['value'], ENT_QUOTES);
         $lblEsc = htmlspecialchars($opt['label'], ENT_QUOTES);
-        echo "<div class=\"dd-opt {$sel}\" data-value=\"{$valEsc}\" onclick=\"ddSelect('{$ddName}','{$valEsc}','{$lblEsc}')\">" . htmlspecialchars($opt['label']) . "</div>";
+        echo "<div class=\"dd-opt {$sel}\" role=\"option\" tabindex=\"0\" data-value=\"{$valEsc}\" onclick=\"ddSelect('{$ddName}','{$valEsc}','{$lblEsc}')\">" . htmlspecialchars($opt['label']) . "</div>";
     }
     echo "</div><div class=\"dd-empty\" id=\"ddEmpty_{$ddName}\">Tiada hasil</div></div>";
     echo "<input type=\"hidden\" name=\"{$fieldName}\" id=\"{$ddName}\" value=\"" . htmlspecialchars($currentVal) . "\">";
