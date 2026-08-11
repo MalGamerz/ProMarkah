@@ -296,8 +296,18 @@ document.addEventListener('keydown', function (e) {
 // role="button"/role="option" ancestors generically.
 (function () {
     function syncButtonState(el) {
-        const open = el.classList.contains('open') || el.classList.contains('active');
-        el.setAttribute('aria-expanded', open ? 'true' : 'false');
+        // Two different conventions drive open/closed state across the
+        // ~15 duplicated toggle functions: an .open/.active class on the
+        // trigger itself (dd-trigger, judge.php's summary accordion), or
+        // the next sibling's style.display (toggleBlock, dirToggle) — the
+        // mutation-observer branch below already knows both; this initial
+        // sweep needs to check both too, or a style.display-driven header
+        // that starts collapsed never gets aria-expanded at all until the
+        // first toggle.
+        const openByClass = el.classList.contains('open') || el.classList.contains('active');
+        const sibling = el.nextElementSibling;
+        const openByStyle = sibling && sibling.style.display === 'block';
+        el.setAttribute('aria-expanded', (openByClass || openByStyle) ? 'true' : 'false');
     }
     function syncOptionState(el) {
         el.setAttribute('aria-selected', el.classList.contains('selected') ? 'true' : 'false');
