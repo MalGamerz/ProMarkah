@@ -265,17 +265,20 @@ document.addEventListener('keydown', function (e) {
 // the DOM mutations they already make and reflects them onto
 // role="button"/role="option" ancestors generically.
 (function () {
+    function syncButtonState(el) {
+        const open = el.classList.contains('open') || el.classList.contains('active');
+        el.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function syncOptionState(el) {
+        el.setAttribute('aria-selected', el.classList.contains('selected') ? 'true' : 'false');
+    }
+
     const observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (m) {
             const el = m.target;
             if (m.attributeName === 'class') {
-                if (el.getAttribute('role') === 'button') {
-                    const open = el.classList.contains('open') || el.classList.contains('active');
-                    el.setAttribute('aria-expanded', open ? 'true' : 'false');
-                }
-                if (el.getAttribute('role') === 'option') {
-                    el.setAttribute('aria-selected', el.classList.contains('selected') ? 'true' : 'false');
-                }
+                if (el.getAttribute('role') === 'button') syncButtonState(el);
+                if (el.getAttribute('role') === 'option') syncOptionState(el);
             }
             if (m.attributeName === 'style') {
                 const header = el.previousElementSibling;
@@ -290,6 +293,12 @@ document.addEventListener('keydown', function (e) {
     // top) — so starting the observer has to wait for DOMContentLoaded.
     document.addEventListener('DOMContentLoaded', function () {
         observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'], subtree: true });
+        // The observer only reacts to FUTURE mutations — an option already
+        // rendered with class="dd-opt selected" by PHP (the current filter
+        // value) would otherwise never get aria-selected until the user
+        // changes something. One-time initial sweep covers that.
+        document.querySelectorAll('[role="button"]').forEach(syncButtonState);
+        document.querySelectorAll('[role="option"]').forEach(syncOptionState);
     });
 })();
 
