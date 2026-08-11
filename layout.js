@@ -285,7 +285,12 @@ document.addEventListener('keydown', function (e) {
             }
         });
     });
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'], subtree: true });
+    // document.body doesn't exist yet — this file loads synchronously in
+    // <head>, before <body> is parsed (see the file-level comment at the
+    // top) — so starting the observer has to wait for DOMContentLoaded.
+    document.addEventListener('DOMContentLoaded', function () {
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'], subtree: true });
+    });
 })();
 
 // ── Escape closes whatever's open ──
