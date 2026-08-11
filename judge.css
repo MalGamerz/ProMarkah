@@ -764,13 +764,20 @@
         background: var(--c-surface-3);
         border-color: var(--c-border-strong);
     }
-    .pm-key-btn:focus,
-    .pm-key-btn:focus-visible {
+    .pm-key-btn:focus {
         outline: none;
     }
     .pm-key-btn:focus:not(.active):not(:hover) {
         background: var(--c-surface-2);
         border-color: var(--c-border);
+    }
+    /* :focus-visible (not :focus) so this only shows for real keyboard
+       navigation, not the mouse/touch tap this component otherwise avoids
+       flashing a highlight on — without this, tabbing through the PIN
+       keypad gave zero visual indication of which digit was focused. */
+    .pm-key-btn:focus-visible:not(.active) {
+        outline: 2px solid var(--c-red);
+        outline-offset: 2px;
     }
     .pm-key-btn.active {
         background: var(--c-red);

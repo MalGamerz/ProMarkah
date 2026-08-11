@@ -1468,6 +1468,11 @@ html.pm-light .dd-opt:hover { background:#f3f4f6; }
     background: var(--c-surface-3);
 }
 
+.pm-user-chip:focus-visible {
+    outline: 2px solid var(--c-red);
+    outline-offset: 2px;
+}
+
 .pm-dropdown-menu {
     position: absolute;
     top: calc(100% + 12px);
@@ -1552,6 +1557,11 @@ html.pm-light .dd-opt:hover { background:#f3f4f6; }
 .pm-icon-btn:hover {
     background: var(--c-surface-3);
     color: var(--c-white);
+}
+
+.pm-icon-btn:focus-visible {
+    outline: 2px solid var(--c-red);
+    outline-offset: 2px;
 }
 
 .pm-icon-btn svg {
@@ -1998,6 +2008,11 @@ html.pm-light .silibus-table li::marker {
     background: var(--c-surface-3);
     border-color: var(--c-red-border);
     transform: scale(1.05);
+}
+
+.pm-theme-toggle:focus-visible {
+    outline: 2px solid var(--c-red);
+    outline-offset: 2px;
 }
 
 .pm-theme-toggle svg {
