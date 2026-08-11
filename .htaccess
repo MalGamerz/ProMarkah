@@ -29,6 +29,25 @@
     </FilesMatch>
 </IfModule>
 
+# ── Serve WebP images to browsers that support them ─────────────────────
+# Keeps the .png/.jpg originals in img/ as the source of truth — this just
+# swaps in the matching .webp at request time when one exists alongside it
+# (e.g. logo_silat_1.png + logo_silat_1.webp) and the browser supports it.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP_ACCEPT} image/webp
+    RewriteCond %{REQUEST_FILENAME}.webp -f
+    RewriteRule ^(.*)\.(png|jpe?g)$ $1.webp [T=image/webp,L]
+</IfModule>
+
+# Vary: Accept so a shared cache/CDN never serves the webp swap to a
+# browser that didn't send image/webp in its Accept header (or vice versa).
+<IfModule mod_headers.c>
+    <FilesMatch "\.(png|jpe?g)$">
+        Header append Vary Accept
+    </FilesMatch>
+</IfModule>
+
 # ── Never cache PHP responses ───────────────────────────────────────────
 # The app already sets its own no-store/no-cache headers for auth-gated
 # pages; this is just a safety net so a proxy/browser never caches a
@@ -44,14 +63,17 @@
 # guarantees that if any dump / log / secret / backup ever lands in the web
 # root by mistake, it still can't be fetched over HTTP. Covers dotfiles
 # (.htaccess, .user.ini, .git*), database dumps, logs, backups, and the
-# *.sample templates.
+# *.sample templates. Archive extensions (zip/tar/gz/7z/rar) are included
+# because public_html.zip / public_html.tar at the repo root bundle
+# promarkah.sql (a full DB dump) — .sql alone being blocked doesn't help
+# once it's zipped up under an allowed extension.
 <IfModule mod_authz_core.c>
-    <FilesMatch "(^\.|^error_log$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock)$|secrets.*\.php$)">
+    <FilesMatch "(^\.|^error_log$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock|zip|tar|gz|7z|rar)$|secrets.*\.php$)">
         Require all denied
     </FilesMatch>
 </IfModule>
 <IfModule !mod_authz_core.c>
-    <FilesMatch "(^\.|^error_log$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock)$|secrets.*\.php$)">
+    <FilesMatch "(^\.|^error_log$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock|zip|tar|gz|7z|rar)$|secrets.*\.php$)">
         Order allow,deny
         Deny from all
     </FilesMatch>

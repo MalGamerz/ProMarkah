@@ -405,7 +405,6 @@ include 'layout.php';
 
     .pm-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s; }
     .pm-modal-overlay.show { opacity:1; }
-    .pm-modal-box { max-width:460px; }
     .pm-modal-title { font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.05em;color:var(--c-white);border-bottom:2px solid var(--c-red);display:inline-block;padding-bottom:6px;margin-bottom:18px; }
     .pm-modal-actions { display:flex;gap:10px;justify-content:flex-end;margin-top:18px; }
 
@@ -609,7 +608,7 @@ include 'layout.php';
 <?php endif; ?>
 
 <div class="pm-modal-overlay" id="modal-add-siri">
-    <div class="pm-modal-box">
+    <div class="pm-modal-box pm-modal-box--sm">
         <div class="pm-modal-title">Tambah Siri Baharu</div>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
@@ -638,7 +637,7 @@ include 'layout.php';
 </div>
 
 <div class="pm-modal-overlay" id="modal-edit-siri">
-    <div class="pm-modal-box">
+    <div class="pm-modal-box pm-modal-box--sm">
         <div class="pm-modal-title">Edit Siri</div>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">

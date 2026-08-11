@@ -1093,12 +1093,18 @@ if ($marking_active && $current_session && $current_group) {
             .pm-modal-overlay.show { opacity: 1; }
             .pm-modal-box {
                 background: var(--c-surface-1); border: 1px solid var(--c-border-strong);
-                border-radius: 10px; width: 100%; max-width: 480px;
+                border-radius: 10px; width: 100%; max-width: var(--pm-modal-w-md);
                 box-shadow: 0 10px 36px rgba(0,0,0,0.55);
                 transform: translateY(14px); transition: transform 0.18s ease;
                 overflow: hidden;
             }
             .pm-modal-overlay.show .pm-modal-box { transform: translateY(0); }
+            /* This page redefines .pm-modal-box wholesale above (not just its
+               width) instead of relying on dashboard.css's shared base, so
+               dashboard.css's .pm-modal-box--lg modifier would lose to the
+               rule above on source order — scope the override to this modal
+               specifically instead. */
+            #modal-missing-marks .pm-modal-box { max-width: var(--pm-modal-w-lg); }
             .pm-modal-header {
                 display: flex; align-items: center; justify-content: space-between;
                 padding: 12px 16px 11px;
@@ -1196,7 +1202,7 @@ if ($marking_active && $current_session && $current_group) {
         </div>
 
         <div class='pm-modal-overlay' id='modal-missing-marks'>
-            <div class='pm-modal-box' style='max-width:520px;'>
+            <div class='pm-modal-box pm-modal-box--lg'>
                 <div class='pm-modal-header'>
                     <div class='pm-modal-title'>Markah Belum Lengkap</div>
                     <button type='button' class='pm-modal-close-btn' onclick=\"closeModal('modal-missing-marks')\" title='Tutup'>&times;</button>

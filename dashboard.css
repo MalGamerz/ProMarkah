@@ -75,6 +75,13 @@
     --text-2xl: 2rem;
     --text-3xl: 2.571rem;
 
+    /* Modal widths — previously five ad-hoc values (420/460/480/520/600px)
+       hand-picked per page. Three tiers instead: sm for a few form fields,
+       md (the default) for richer forms, lg for grids/lists. */
+    --pm-modal-w-sm: 460px;
+    --pm-modal-w-md: 520px;
+    --pm-modal-w-lg: 600px;
+
     /* Spacing */
     --sp-1: 4px;
     --sp-2: 8px;
@@ -2115,20 +2122,25 @@ html.pm-light .step-badge {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   MODAL BOX — shared by pic_sessions.php / pic_siri.php
-   (max-width is set per-page as an override)
+   MODAL BOX — shared by pic_sessions.php / pic_siri.php / pic_judges.php /
+   judge.php. Width is one of the three --pm-modal-w-* tokens above,
+   applied per-page via the .pm-modal-box--sm / .pm-modal-box--lg
+   modifiers below (md is the unmodified default).
 ═══════════════════════════════════════════════════════════════ */
 .pm-modal-box {
     background: var(--c-surface-1);
     border: 1px solid var(--c-border-strong);
     border-radius: 14px;
     width: 100%;
+    max-width: var(--pm-modal-w-md);
     margin: 16px;
     padding: 28px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
     transform: translateY(24px);
     transition: transform 0.25s;
 }
+.pm-modal-box--sm { max-width: var(--pm-modal-w-sm); }
+.pm-modal-box--lg { max-width: var(--pm-modal-w-lg); }
 .pm-modal-overlay.show .pm-modal-box {
     transform: translateY(0);
 }

@@ -481,7 +481,6 @@ include 'layout.php';
     /* ── Modal (Assign Schools) ── */
     .pm-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s; }
     .pm-modal-overlay.show { opacity:1; }
-    .pm-modal-box { max-width:600px; }
     .pm-modal-title { font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.05em;color:var(--c-white);border-bottom:2px solid var(--c-red);display:inline-block;padding-bottom:6px;margin-bottom:18px; }
     .pm-modal-actions { display:flex;gap:10px;justify-content:flex-end;margin-top:18px; }
 
@@ -641,7 +640,7 @@ include 'layout.php';
 </div>
 
 <div class="pm-modal-overlay" id="modal-assign-schools">
-    <div class="pm-modal-box">
+    <div class="pm-modal-box pm-modal-box--lg">
         <div class="pm-modal-title">Cawangan: <span id="modalSessionName" style="color:var(--c-text-muted);font-size:1.2rem;"></span></div>
         <p style="font-size:0.85rem;color:var(--c-text-faint);margin-bottom:14px;">
             Pilih cawangan yang terlibat dalam sidang ini.

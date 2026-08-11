@@ -631,7 +631,7 @@ if ($code_query && $code_query->num_rows > 0) {
         background: var(--c-surface-1);
         border: 1px solid var(--c-border-strong);
         border-radius: 14px;
-        width: 100%; max-width: 420px;
+        width: 100%; max-width: var(--pm-modal-w-sm);
         margin: 20px;
         padding: 32px;
         box-shadow: 0 20px 60px rgba(0,0,0,0.7);

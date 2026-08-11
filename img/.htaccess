@@ -1,0 +1,15 @@
+# Image assets only — never execute PHP here. img/layout.php is a stale
+# duplicate page copy that ended up in here by accident; rather than delete
+# it (uncertain provenance) this blocks it from being served/executed
+# directly over HTTP.
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.php$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.php$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
