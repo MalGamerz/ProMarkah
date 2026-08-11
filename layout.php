@@ -596,14 +596,14 @@ if ($is_simple_mode) {
 
         <div class="pm-header-actions">
 
-            <button class="pm-theme-toggle" onclick="pmToggleTheme()" data-tip="Tukar Tema">
+            <button class="pm-theme-toggle" onclick="pmToggleTheme()" data-tip="Tukar Tema" aria-label="Tukar tema terang/gelap">
                 <svg class="tt-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                 <svg class="tt-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </button>
 
             <?php if ($pm_role === "pic"): ?>
                 <div class="pm-notif-wrapper">
-                    <button class="pm-icon-btn" id="pm-notif-btn" onclick="pmToggleNotifMenu(event)">
+                    <button class="pm-icon-btn" id="pm-notif-btn" onclick="pmToggleNotifMenu(event)" aria-label="Notifikasi" aria-haspopup="true" aria-expanded="false">
                         <?= pm_icon("bell") ?>
                         <span class="pm-notif-badge" id="pm-notif-badge" style="display:none;">0</span>
                     </button>
@@ -622,7 +622,7 @@ if ($is_simple_mode) {
             <?php endif; ?>
 
             <div class="pm-user-dropdown">
-                <button class="pm-user-chip" id="pm-user-btn" onclick="pmToggleUserMenu(event)">
+                <button class="pm-user-chip" id="pm-user-btn" onclick="pmToggleUserMenu(event)" aria-haspopup="true" aria-expanded="false">
                     <div class="pm-user-avatar">
                         <?php if ($pm_judge_photo): ?>
                             <img src="<?= htmlspecialchars($pm_judge_photo) ?>" alt="" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">
@@ -972,7 +972,8 @@ if ($is_simple_mode) {
                 function pmToggleNotifMenu(event) {
                     event.stopPropagation();
                     const menu = document.getElementById('pm-notif-menu');
-                    menu.classList.toggle('show');
+                    const open = menu.classList.toggle('show');
+                    document.getElementById('pm-notif-btn')?.setAttribute('aria-expanded', open ? 'true' : 'false');
 
                     if (menu.classList.contains('show') && pmPendingIds.length > 0) {
                         // Mark items visually as read

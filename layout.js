@@ -145,7 +145,9 @@ document.addEventListener('click', function (e) {
 
 function pmToggleUserMenu(e) {
     e.stopPropagation();
-    document.getElementById('pm-user-menu').classList.toggle('show');
+    const menu = document.getElementById('pm-user-menu');
+    const open = menu.classList.toggle('show');
+    document.getElementById('pm-user-btn')?.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 
 // Notification toggle/clear defined in the PIC notification block below
@@ -157,12 +159,14 @@ document.addEventListener('click', function (e) {
     const userBtn = document.getElementById('pm-user-btn');
     if (userMenu && userMenu.classList.contains('show') && !userMenu.contains(e.target) && !userBtn.contains(e.target)) {
         userMenu.classList.remove('show');
+        userBtn?.setAttribute('aria-expanded', 'false');
     }
 
     const notifMenu = document.getElementById('pm-notif-menu');
     const notifBtn = document.getElementById('pm-notif-btn');
     if (notifMenu && notifMenu.classList.contains('show') && !notifMenu.contains(e.target) && !notifBtn.contains(e.target)) {
         notifMenu.classList.remove('show');
+        notifBtn?.setAttribute('aria-expanded', 'false');
     }
 });
 
@@ -228,3 +232,23 @@ function pmRenderPagination(btnsEl, page, totalPages, onGoToPage) {
         b.addEventListener('click', function () { onGoToPage(parseInt(b.dataset.pmPage, 10)); });
     });
 }
+
+// ── Keyboard activation for role="button" elements ──
+// A lot of this app's interactive controls (dropdown triggers, accordion
+// headers, dropdown options) are <div onclick="..."> rather than real
+// <button>s, so they were reachable by mouse only — Tab wouldn't land on
+// them, and even if it somehow did, Enter/Space did nothing. Rather than
+// rewrite every one of those onclick handlers, this listens once, globally,
+// for Enter/Space on anything marked role="button" and fires a native
+// click() — which every existing onclick handler already responds to.
+// Real <button>/<a>/<input> elements already get this from the browser for
+// free and are skipped here to avoid double-firing.
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    const target = e.target.closest('[role="button"]');
+    if (!target) return;
+    const tag = target.tagName;
+    if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    e.preventDefault(); // stop Space from scrolling the page
+    target.click();
+});
