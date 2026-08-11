@@ -233,19 +233,19 @@ function pmRenderPagination(btnsEl, page, totalPages, onGoToPage) {
     });
 }
 
-// ── Keyboard activation for role="button" elements ──
+// ── Keyboard activation for role="button"/role="option" elements ──
 // A lot of this app's interactive controls (dropdown triggers, accordion
 // headers, dropdown options) are <div onclick="..."> rather than real
 // <button>s, so they were reachable by mouse only — Tab wouldn't land on
 // them, and even if it somehow did, Enter/Space did nothing. Rather than
 // rewrite every one of those onclick handlers, this listens once, globally,
-// for Enter/Space on anything marked role="button" and fires a native
-// click() — which every existing onclick handler already responds to.
-// Real <button>/<a>/<input> elements already get this from the browser for
-// free and are skipped here to avoid double-firing.
+// for Enter/Space on anything marked role="button" or role="option" and
+// fires a native click() — which every existing onclick handler already
+// responds to. Real <button>/<a>/<input> elements already get this from the
+// browser for free and are skipped here to avoid double-firing.
 document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
-    const target = e.target.closest('[role="button"]');
+    const target = e.target.closest('[role="button"], [role="option"]');
     if (!target) return;
     const tag = target.tagName;
     if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
