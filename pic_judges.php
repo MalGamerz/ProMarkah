@@ -627,17 +627,10 @@ if ($code_query && $code_query->num_rows > 0) {
         opacity: 0; transition: opacity 0.2s;
     }
     .pm-modal-overlay.show { opacity: 1; }
-    .pm-modal-box {
-        background: var(--c-surface-1);
-        border: 1px solid var(--c-border-strong);
-        border-radius: 14px;
-        width: 100%; max-width: var(--pm-modal-w-sm);
-        margin: 20px;
-        padding: 32px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-        transform: translateY(20px);
-        transition: transform 0.3s;
-    }
+    /* .pm-modal-box itself (background/border/radius/margin/padding/shadow/
+       transform) now comes entirely from dashboard.css's shared base — this
+       page's modals are plain title+form, nothing here needs to override it.
+       Width is set via the .pm-modal-box--sm modifier on the markup below. */
     .pm-modal-overlay.show .pm-modal-box { transform: translateY(0); }
     
     .pm-modal-title {
@@ -803,7 +796,7 @@ if ($code_query && $code_query->num_rows > 0) {
 <?php endif; ?>
 
 <div class="pm-modal-overlay" id="modal-edit">
-    <div class="pm-modal-box">
+    <div class="pm-modal-box pm-modal-box--sm">
         <div class="pm-modal-title">Edit Maklumat Juri</div>
         <form method="POST" id="editForm">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
@@ -832,7 +825,7 @@ if ($code_query && $code_query->num_rows > 0) {
 </div>
 
 <div class="pm-modal-overlay" id="modal-pin">
-    <div class="pm-modal-box">
+    <div class="pm-modal-box pm-modal-box--sm">
         <div class="pm-modal-title">Reset PIN Juri</div>
         <p id="pinModalSubtitle" style="color:var(--c-text-muted);font-size:0.9rem;margin-bottom:24px;"></p>
         <form method="POST" id="pinForm">

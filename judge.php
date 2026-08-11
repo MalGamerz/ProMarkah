@@ -1091,20 +1091,16 @@ if ($marking_active && $current_session && $current_group) {
                 opacity: 0; transition: opacity 0.18s ease;
             }
             .pm-modal-overlay.show { opacity: 1; }
-            .pm-modal-box {
-                background: var(--c-surface-1); border: 1px solid var(--c-border-strong);
-                border-radius: 10px; width: 100%; max-width: var(--pm-modal-w-md);
-                box-shadow: 0 10px 36px rgba(0,0,0,0.55);
-                transform: translateY(14px); transition: transform 0.18s ease;
-                overflow: hidden;
-            }
+            /* Background/border/radius/margin/box-shadow/transform all come
+               from dashboard.css's shared .pm-modal-box now. Only these two
+               are genuinely this page's own: padding is 0 because the
+               header/body/actions bars below manage their own spacing, and
+               overflow is clipped so .pm-modal-header's background respects
+               the box's rounded corners. Width is set via the
+               .pm-modal-box--lg modifier on modal-missing-marks below (md,
+               the shared default, is used for modal-parameter). */
+            .pm-modal-box { padding: 0; overflow: hidden; }
             .pm-modal-overlay.show .pm-modal-box { transform: translateY(0); }
-            /* This page redefines .pm-modal-box wholesale above (not just its
-               width) instead of relying on dashboard.css's shared base, so
-               dashboard.css's .pm-modal-box--lg modifier would lose to the
-               rule above on source order — scope the override to this modal
-               specifically instead. */
-            #modal-missing-marks .pm-modal-box { max-width: var(--pm-modal-w-lg); }
             .pm-modal-header {
                 display: flex; align-items: center; justify-content: space-between;
                 padding: 12px 16px 11px;
