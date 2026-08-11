@@ -66,14 +66,16 @@
 # *.sample templates. Archive extensions (zip/tar/gz/7z/rar) are included
 # because public_html.zip / public_html.tar at the repo root bundle
 # promarkah.sql (a full DB dump) — .sql alone being blocked doesn't help
-# once it's zipped up under an allowed extension.
+# once it's zipped up under an allowed extension. debug_attendance.txt is
+# a leftover print_r() dump of real student/session data; blocked by name
+# prefix rather than the .txt extension so robots.txt stays public.
 <IfModule mod_authz_core.c>
-    <FilesMatch "(^\.|^error_log$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock|zip|tar|gz|7z|rar)$|secrets.*\.php$)">
+    <FilesMatch "(^\.|^error_log$|^debug.*\.txt$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock|zip|tar|gz|7z|rar)$|secrets.*\.php$)">
         Require all denied
     </FilesMatch>
 </IfModule>
 <IfModule !mod_authz_core.c>
-    <FilesMatch "(^\.|^error_log$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock|zip|tar|gz|7z|rar)$|secrets.*\.php$)">
+    <FilesMatch "(^\.|^error_log$|^debug.*\.txt$|\.(sql|log|ini|sample|md|sh|bak|old|inc|env|json|lock|zip|tar|gz|7z|rar)$|secrets.*\.php$)">
         Order allow,deny
         Deny from all
     </FilesMatch>

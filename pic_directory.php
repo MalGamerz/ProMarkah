@@ -622,7 +622,7 @@ html.pm-light .name-dropdown-box .dd-option { color: #111; }
 
 @media print {
     .pm-sidebar, .pm-header, .dir-tabs-desktop, .dir-tabs-mobile,
-    .dir-filter-wrap, .dir-print-btn, .vm-pagination, .lvl-paginator,
+    .dir-filter-wrap, .dir-print-btn, .vm-pagination,
     .pm-backdrop, .pm-overlay { display: none !important; }
     .pm-main { margin-left: 0 !important; padding: 16px !important; }
     .dir-section-body { display: block !important; }
