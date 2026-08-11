@@ -50,16 +50,10 @@
         color: #991B1B;
     }
 
-    /* ── Page heading ── */
-    .pm-page-heading {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 1.5rem;
-        letter-spacing: 0.08em;
-        color: var(--c-text);
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid var(--c-border);
-    }
+    /* ── Page heading: dashboard.css's shared .pm-page-heading (white text,
+       red dot bullet, no border) is used as-is now — every other page that
+       has one (pic_view_marks.php, silibus.php, leaderboard.php, etc.) uses
+       it unmodified; this was the one page overriding it differently. ── */
 
     /* ── Section card — minimal frame ── */
     .judge-card {
@@ -345,46 +339,21 @@
         color: var(--c-red);
     }
 
-    /* New Badges */
-    /* New Badges */
-    .pm-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px; /* Space between dot and text */
-        font-size: 0.65rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        padding: 4px 8px;
-        border-radius: 4px;
-        letter-spacing: 0.05em;
-    }
+    /* Year/Siri badges: shape (pill, dot, font-size) and the dot itself
+       come from dashboard.css's shared .pm-badge/.pm-badge::before — the
+       dot auto-colors via currentColor, so it already matches whatever
+       color each variant below sets, no separate ::before needed. Only
+       the two variant colors are page-specific (dashboard.css doesn't
+       define a "year" or "siri" badge). */
     .pm-badge-year {
         background: var(--c-surface-1);
         color: var(--c-text-muted);
         border: 1px solid var(--c-border-strong);
     }
-    /* Generates the grey dot inside the Year badge */
-    .pm-badge-year::before {
-        content: '';
-        display: inline-block;
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: var(--c-text-muted);
-    }
     .pm-badge-siri {
         background: var(--c-red-dim);
         color: var(--c-red);
         border: 1px solid var(--c-red-border);
-    }
-    /* Generates the red dot inside the Siri badge */
-    .pm-badge-siri::before {
-        content: '';
-        display: inline-block;
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: var(--c-red);
     }
     .pm-accordion-title {
         font-size: 0.9rem;

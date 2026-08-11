@@ -461,21 +461,12 @@ html.review-fullscreen .upload-page-wrapper {
 .tag-exists  { background:var(--c-surface-2); color:var(--c-text-muted); border:1px solid var(--c-border-strong); }
 .tag-new     { background:rgba(200,0,30,0.1); color:var(--c-red); border:1px solid rgba(200,0,30,0.3); }
 
-/* ── Status badges ── */
-.pm-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
-    padding: 4px 11px; border-radius: 20px; white-space: nowrap;
-}
-.pm-badge::before { content:''; width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-.pm-badge-green { background:rgba(34,197,94,0.12); color:#16a34a; border:1px solid rgba(34,197,94,0.3); }
-.pm-badge-green::before { background:#22c55e; }
-.pm-badge-amber { background:rgba(120,120,120,0.12); color:#666; border:1px solid rgba(120,120,120,0.25); }
-.pm-badge-amber::before { background:#999; }
-.pm-badge-gray  { background:rgba(100,100,100,0.1); color:#5a5a5a; border:1px solid rgba(100,100,100,0.22); }
-.pm-badge-gray::before  { background:#888; }
-.pm-badge-red   { background:rgba(239,68,68,0.1); color:#dc2626; border:1px solid rgba(239,68,68,0.28); }
-.pm-badge-red::before   { background:#ef4444; }
+/* ── Status badges: dashboard.css defines the canonical .pm-badge shape
+   and .pm-badge-green/amber/gray/red color variants (shared with every
+   other page's badges — e.g. upload_students.php's own .tag-* colors
+   above already use the muted palette, so this now matches). This page
+   used to carry its own drifted copy with saturated colors (vivid green/
+   red) instead of the shared muted tokens. ── */
 
 /* ── Pagination: shared .vm-pagination styles now live once in
    dashboard.css (loaded by layout.php), used by every paginated page. ── */
@@ -606,9 +597,6 @@ html.review-fullscreen .upload-page-wrapper {
     .wizard-footer > div:empty { 
         display: none; 
     }
-
-    /* Badges: smaller on mobile */
-    .pm-badge { padding: 3px 8px; font-size: 0.65rem; }
 
     /* Table: allow horizontal scroll */
     .pm-table-wrap { -webkit-overflow-scrolling: touch; }
