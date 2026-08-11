@@ -313,8 +313,28 @@ document.addEventListener('keydown', function (e) {
         el.setAttribute('aria-selected', el.classList.contains('selected') ? 'true' : 'false');
     }
 
+    function sweep(root) {
+        root.querySelectorAll('[role="button"]').forEach(syncButtonState);
+        root.querySelectorAll('[role="option"]').forEach(syncOptionState);
+        if (root.getAttribute && root.getAttribute('role') === 'button') syncButtonState(root);
+        if (root.getAttribute && root.getAttribute('role') === 'option') syncOptionState(root);
+    }
+
     const observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (m) {
+            if (m.type === 'childList') {
+                // Some pages (e.g. pic_students.php's _doFilter) replace a
+                // whole list via innerHTML — even on first load, to apply
+                // default sort/pagination — which wholesale-discards
+                // server-rendered nodes the initial sweep already synced
+                // and inserts fresh ones that were never synced at all.
+                // Attribute-mutation watching alone can't catch that; this
+                // re-sweeps whatever subtree just got added.
+                m.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) sweep(node);
+                });
+                return;
+            }
             const el = m.target;
             if (m.attributeName === 'class') {
                 if (el.getAttribute('role') === 'button') syncButtonState(el);
@@ -332,13 +352,12 @@ document.addEventListener('keydown', function (e) {
     // <head>, before <body> is parsed (see the file-level comment at the
     // top) — so starting the observer has to wait for DOMContentLoaded.
     document.addEventListener('DOMContentLoaded', function () {
-        observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'], subtree: true });
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'], childList: true, subtree: true });
         // The observer only reacts to FUTURE mutations — an option already
         // rendered with class="dd-opt selected" by PHP (the current filter
         // value) would otherwise never get aria-selected until the user
         // changes something. One-time initial sweep covers that.
-        document.querySelectorAll('[role="button"]').forEach(syncButtonState);
-        document.querySelectorAll('[role="option"]').forEach(syncOptionState);
+        sweep(document.body);
     });
 })();
 
