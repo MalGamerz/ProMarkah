@@ -155,7 +155,10 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   `pic_directory.php`; the one PHP-interpolated bit, a `spawnPmToast(...
   $_GET['msg'])` call, stayed inline rather than move into the static
   file), `pic_sessions.php`,
-  `pic_siri.php`, `pic_schools.php`, `pic_judges.php`, `pic_groups.php` (+
+  `pic_siri.php`, `pic_schools.php`, `pic_judges.php` (+
+  `pic_judges.css/.js` — same plain-file-move pattern as
+  `pic_medal_settings.php` below — no PHP interpolation in either block),
+  `pic_groups.php` (+
   `pic_groups.css/.js` — its one PHP-interpolated value, the CSRF token,
   is exposed as a plain `const PM_GROUPS_CSRF` in a bootstrap `<script>`
   right before the `<script src>` tag, relying on top-level `let`/`const`
