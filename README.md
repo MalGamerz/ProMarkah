@@ -155,7 +155,9 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   sharing one lexical scope across sequential classic `<script>` tags —
   same mechanism already used for `criteriaByTest` between
   judge_dashboard.js/judge_marking.js)),
-  data (`pic_students.php`, `pic_directory.php`, `pic_master_list.php`,
+  data (`pic_students.php`, `pic_directory.php` (+ `pic_directory.css/.js`,
+  same plain-file-move pattern as `pic_medal_settings.php` below — no PHP
+  interpolation in either block), `pic_master_list.php`,
   `pic_roster_check.php`), and results
   (`pic_manual_marks.php`, `pic_view_marks.php`, `pic_medal_settings.php` (+
   `pic_medal_settings.css/.js` — neither block had any PHP interpolation,
