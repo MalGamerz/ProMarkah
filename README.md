@@ -147,7 +147,10 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   rather than interpolating PHP directly into the file).
   `judge_view_marks.php`, `judge_settings.php`, `silibus.php`.
 - **PIC management**: the `pic_*.php` family — competition structure
-  (`pic_levels.php`, `pic_tests.php`, `pic_criteria.php` (+
+  (`pic_levels.php`, `pic_tests.php` (+ `pic_tests.css/.js`, same
+  plain-file-move pattern and the same `loadSidangOptions()` ARIA gap as
+  `pic_students.php` — its PHP-interpolated toast-trigger `<script>`
+  stayed inline too), `pic_criteria.php` (+
   `pic_criteria.css/.js` — same plain-file-move pattern as
   `pic_directory.php`; the one PHP-interpolated bit, a `spawnPmToast(...
   $_GET['msg'])` call, stayed inline rather than move into the static
