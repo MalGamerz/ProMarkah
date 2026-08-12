@@ -170,7 +170,9 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   same plain-file-move pattern as `pic_medal_settings.php` below — no PHP
   interpolation in either block), `pic_master_list.php`,
   `pic_roster_check.php`), and results
-  (`pic_manual_marks.php`, `pic_view_marks.php`, `pic_medal_settings.php` (+
+  (`pic_manual_marks.php` (+ `pic_manual_marks.css/.js` — same
+  plain-file-move pattern as `pic_medal_settings.php` below — no PHP
+  interpolation in either block), `pic_view_marks.php`, `pic_medal_settings.php` (+
   `pic_medal_settings.css/.js` — neither block had any PHP interpolation,
   so this was a plain file move, same pattern as `upload_students.php`),
   `pic_cawangan_summary.php`, `manage_attendance.php`), and
