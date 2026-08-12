@@ -173,7 +173,11 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   (`pic_manual_marks.php`, `pic_view_marks.php`, `pic_medal_settings.php` (+
   `pic_medal_settings.css/.js` — neither block had any PHP interpolation,
   so this was a plain file move, same pattern as `upload_students.php`),
-  `pic_cawangan_summary.php`, `manage_attendance.php`). Each page still
+  `pic_cawangan_summary.php`, `manage_attendance.php`), and
+  `leaderboard.php` (+ `leaderboard.css/.js` — same plain-file-move
+  pattern; the one PHP-interpolated bit, `leaderboardData`, is set by
+  a small inline bootstrap `<script>` before the `<script src>` tag,
+  same mechanism as `pic_groups.php`'s CSRF const). Each page still
   follows its own long-standing shape (auth/role check → query/POST-handling
   block → inline HTML → inline `<script>` at the bottom) — see the
   cross-file duplication note below before splitting any one of them
