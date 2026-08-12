@@ -1,0 +1,351 @@
+/* leaderboard.css — the "Papan Pendahulu" leaderboard page (leaderboard.php).
+   Split out of that file's inline <style> block, which had nothing to do
+   with the PHP rendering logic around it. */
+
+    /* ── SELECT2 appearance now comes from the shared filter_bar.css,
+       loaded via layout.php — only page-specific width override stays. ── */
+    .filter-bar .select2-container { width: 100% !important; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+        display: flex;
+        flex-wrap: nowrap; /* Forces a single line */
+        gap: 8px; /* Uniform gap between every column, filters and export alike */
+        align-items: flex-end;
+        justify-content: space-between; /* Distribute spacing evenly across the row */
+        overflow-x: auto; /* Allows smooth swipe on smaller laptops without breaking */
+        padding-bottom: 4px; /* Room for focus rings */
+    }
+    .filter-bar::-webkit-scrollbar { height: 4px; }
+    .filter-bar::-webkit-scrollbar-thumb { background: var(--c-border-strong); border-radius: 4px; }
+
+    .filter-col {
+        flex: 1 1 0; /* Equal basis so every column grows to the same width */
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 110px; /* Prevents Select2 from getting completely crushed */
+    }
+
+    /* EXPORT BUTTONS COLUMN */
+    .filter-col.export-col {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 8px; /* Same gap as the filter columns for uniform spacing */
+        margin-bottom: 0;
+    }
+
+    .filter-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--c-text-faint);
+        white-space: nowrap;
+    }
+
+    /* Export button */
+    .btn-export {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        height: 32px; /* Matches the 32px Select2 dropdown height */
+        padding: 0 8px; /* Reduced padding */
+        color: #ffffff !important;
+        border-radius: 4px;
+        font-size: 0.75rem; /* Smaller font to fit everything */
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        font-family: 'DM Sans', sans-serif;
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .btn-export:hover {
+        filter: brightness(0.9);
+        transform: translateY(-1px);
+    }
+
+    .medal-cell {
+        font-size: 1.15rem;
+        font-weight: bold;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    /* border-left accent eats into the cell's padding, so compensate the
+       first cell's left padding to keep content aligned with the header
+       (which has no border). */
+    .gold-row   { background: rgba(255,215,0,  0.10) !important; border-left: 4px solid #ffd700; }
+    .silver-row { background: rgba(192,192,192,0.08) !important; border-left: 4px solid #c0c0c0; }
+    .bronze-row { background: rgba(205,127,50, 0.10) !important; border-left: 4px solid #cd7f32; }
+    .gold-row   td:first-child,
+    .silver-row td:first-child,
+    .bronze-row td:first-child { padding-left: 14px !important; }
+    .gold-row:hover   { background: rgba(255,215,0,  0.18) !important; }
+    .silver-row:hover { background: rgba(192,192,192,0.15) !important; }
+    .bronze-row:hover { background: rgba(205,127,50, 0.18) !important; }
+    /* The site-wide ".pm-table tbody tr:hover td" rule paints a flat grey
+       directly on the <td>, which visually overrides the tinted colors
+       above (those are set on the <tr>, and a td's own background wins).
+       That grey happens to look just like the perak/silver row tint,
+       making every hovered row look silver regardless of its real medal.
+       Repaint at the td level so hovering keeps each row's own medal color. */
+    .gold-row:hover   td { background: rgba(255,215,0,  0.18) !important; }
+    .silver-row:hover td { background: rgba(192,192,192,0.15) !important; }
+    .bronze-row:hover td { background: rgba(205,127,50, 0.18) !important; }
+
+    .quota-badge {
+        display: inline-block;
+        font-size: 0.68rem;
+        font-family: 'DM Mono', monospace;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        padding: 2px 7px;
+        border-radius: 10px;
+        vertical-align: middle;
+        margin-left: 6px;
+    }
+    .quota-badge.school  { background: rgba(99,179,237,0.18);  color: #63b3ed;         border: 1px solid rgba(99,179,237,0.35); }
+    .quota-badge.level   { background: rgba(214,40,40,0.15);   color: var(--c-red);    border: 1px solid rgba(214,40,40,0.3); }
+    .quota-badge.session { background: rgba(154,230,180,0.15); color: #68d391;         border: 1px solid rgba(104,211,145,0.3); }
+    .quota-badge.overall { background: rgba(183,148,244,0.15); color: #b794f4;         border: 1px solid rgba(183,148,244,0.3); }
+    .quota-badge.auto    { background: rgba(160,160,160,0.12); color: var(--c-text-faint); border: 1px solid var(--c-border); }
+
+    .pm-table-wrap {
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+    /* border-collapse: collapse (the site-wide .pm-table default) merges
+       adjacent cell borders into shared lines, which has well-documented
+       Chrome/Safari rendering bugs when any cell in the table is
+       position:sticky — border-collapse: separate sidesteps that merged
+       model entirely. This page only has ONE sticky element left (the
+       header row), which is the well-supported case for this pattern —
+       unlike the earlier attempt that also made a body-row cell sticky,
+       which is what actually caused the overlap bug. */
+    .pm-table { border-collapse: separate; border-spacing: 0; }
+    .pm-table-wrap thead th {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: #1f1f1f;
+    }
+    /* Non-sticky banner — position:sticky on a <td> proved too unreliable
+       across browsers (caused a visible overlap with the row directly
+       below it). It scrolls with the table now instead of staying pinned;
+       less fancy, but it renders correctly, which the sticky version
+       repeatedly did not. */
+    .level-divider-row {
+        pointer-events: none; /* row can never enter :hover state, so no hover rule anywhere can touch it */
+    }
+    tr.level-divider-row td {
+        box-sizing: border-box;
+        height: 38px;
+        /* Subtle tinted fill (same family as the gold/silver/bronze row
+           tints below, just quieter) so the section break reads as a clear
+           band across the table instead of blending into the header/body
+           chrome — matches the tahap-tinted group rows on Silibus. Falls
+           back to the red accent below when the Peringkat name doesn't
+           mention a known belt colour (.tahap-* classes override this). */
+        background: var(--c-red-dim) !important;
+        border-top: 1px solid var(--c-border-strong);
+        border-bottom: 1px solid var(--c-border-strong);
+        white-space: normal !important;
+    }
+    /* Belt-colour tints — same keyword convention as Silibus's tahap-*
+       classes ("... Cula <Colour> <N>"), so a Peringkat's divider band
+       matches the colour its own name names instead of always reading red. */
+    tr.level-divider-row.tahap-hijau td  { background: rgba(34, 197, 94, 0.14) !important; }
+    tr.level-divider-row.tahap-merah td  { background: rgba(248, 113, 113, 0.12) !important; }
+    tr.level-divider-row.tahap-kuning td { background: rgba(234, 179, 8, 0.14) !important; }
+    tr.level-divider-row.tahap-hitam td  { background: rgba(161, 161, 170, 0.12) !important; }
+    html.pm-light tr.level-divider-row.tahap-hijau td  { background: rgba(22, 163, 74, 0.10) !important; }
+    html.pm-light tr.level-divider-row.tahap-merah td  { background: rgba(220, 38, 38, 0.09) !important; }
+    html.pm-light tr.level-divider-row.tahap-kuning td { background: rgba(202, 138, 4, 0.12) !important; }
+    html.pm-light tr.level-divider-row.tahap-hitam td  { background: rgba(63, 63, 70, 0.08) !important; }
+    /* NOT text-align:center — this table is wider than its viewport
+       (.pm-table-wrap scrolls horizontally) and this cell spans
+       colspan="10", so a centered label sits in the middle of the FULL
+       table width, which lands far outside the visible scroll area on
+       any narrow/mobile viewport (confirmed: label ended up ~860px into
+       a 341px-wide viewport, completely off-screen with the row reading
+       as a blank band). position:sticky keeps it pinned to the visible
+       left edge of the scroll container at ANY scroll position instead —
+       strictly better than a fixed center OR the original left-align,
+       since it stays visible even mid-scroll. */
+    .level-divider-row td:last-child {
+        text-align: left !important;
+    }
+    /* Bolder + larger than a plain row label, with an icon accent that
+       matches the belt colour, so it's unmistakably a section header
+       rather than a quiet aside. position:sticky/left keeps it pinned to
+       the visible left edge of .pm-table-wrap's horizontal scroll at ANY
+       scroll position — see the comment above for why. */
+    .level-divider-label {
+        display: flex;
+        align-items: center;
+        justify-content: center; /* Centers the icon and text together */
+        width: 100%;             /* Forces the label to span the full row width */
+        gap: 7px;
+        color: var(--c-text);
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 700;
+        font-size: 0.82rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .level-divider-icon {
+        width: 14px;
+        height: 14px;
+        flex: 0 0 auto;
+        color: var(--c-red);
+    }
+
+    .level-divider-row.tahap-hijau  .level-divider-icon { color: #16a34a; }
+    .level-divider-row.tahap-merah  .level-divider-icon { color: #dc2626; }
+    .level-divider-row.tahap-kuning .level-divider-icon { color: #ca8a04; }
+    .level-divider-row.tahap-hitam  .level-divider-icon { color: #71717a; }
+    @media (max-width: 768px) {
+        tr.level-divider-row td { height: 30px; }
+        .level-divider-label { font-size: 0.75rem; letter-spacing: 0.05em; }
+    }
+    #leaderboard-tables {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    #leaderboard-tables .pm-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        /* Safari/WebKit can let position:sticky children leak past a
+           border-radius + overflow:hidden clip mask, showing the card's
+           own background through a hairline seam. Forcing a mask image
+           makes WebKit re-apply the clip correctly on every repaint. */
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+    }
+
+    .pm-table { min-width: 100%; }
+
+    /* 1. Auto layout — every column sizes to its own actual longest cell
+       content instead of the fixed % widths below being treated as hard
+       constraints. This is what actually fixes the "either overflow on
+       edge-case content (3-digit scores, 'Gangsa') or dead space on the
+       common case" tradeoff that hand-tuning percentages under
+       table-layout:fixed kept bouncing between — auto layout doesn't have
+       that tradeoff because column width tracks real content, not a
+       manually guessed number. The width:X% attributes below still act as
+       soft hints, not hard caps. */
+    #lbTable { table-layout: auto; width: 100%; }
+
+    /* 2. Unified spacing & alignment (Replaces all previous duplicates) */
+    #lbTable td, #lbTable th {
+        text-align: left !important;
+        white-space: normal !important;
+        padding: 8px 6px !important;
+        vertical-align: middle !important;
+        word-wrap: break-word;
+        line-height: 1.3;
+        text-transform: uppercase;
+    }
+
+    /* Ensure old truncate classes wrap instead of cutting off */
+    #lbTable .lb-truncate {
+        white-space: normal !important;
+        word-wrap: break-word;
+    }
+
+    /* 3. Center align specific short-data columns to keep things tidy.
+       Markah/Peratus were removed from this list — those two columns got
+       widened to fit rare edge cases (3-digit scores, "100.00%"), so for
+       the common short case ("54 / 70") centering left visible dead space
+       on both sides instead of just on the right like every other
+       left-aligned column. Left-align reads tighter without needing to
+       shrink the column back down and reintroduce the overflow it was
+       widened to fix. */
+    #lbTable td:nth-child(1), #lbTable th:nth-child(1),   /* Ked. */
+    #lbTable td:nth-child(3), #lbTable th:nth-child(3),   /* Tahun */
+    #lbTable td:nth-child(4), #lbTable th:nth-child(4),   /* Siri */
+    #lbTable td:nth-child(5), #lbTable th:nth-child(5),   /* Sidang */
+    #lbTable td:nth-child(11), #lbTable th:nth-child(11)  /* Pingat */ {
+        text-align: center !important;
+    }
+
+    /* 4. PREVENT awkward mid-word breaks / unwanted wrapping on short
+       fixed-data columns. Under table-layout:auto (current), nowrap here
+       is safe and correct — it tells the browser this column needs at
+       least enough width for its content on one line, and auto layout
+       grows the column to honor that instead of overflowing. (That's
+       different from the old table-layout:fixed setup, where forcing
+       nowrap on an already-too-narrow fixed column caused the text to
+       visually bleed into the next cell instead of growing — Sidang was
+       deliberately left out of this list for that reason back then. Now
+       that layout is auto, that risk no longer applies, so it's back in.) */
+    #lbTable td:nth-child(1), #lbTable th:nth-child(1),   /* Ked. */
+    #lbTable td:nth-child(3), #lbTable th:nth-child(3),   /* Tahun */
+    #lbTable td:nth-child(4), #lbTable th:nth-child(4),   /* Siri */
+    #lbTable td:nth-child(5), #lbTable th:nth-child(5),   /* Sidang */
+    #lbTable td:nth-child(9), #lbTable th:nth-child(9),   /* Markah */
+    #lbTable td:nth-child(10), #lbTable th:nth-child(10), /* Peratus */
+    #lbTable td:nth-child(11), #lbTable th:nth-child(11)  /* Pingat */ {
+        white-space: nowrap !important;
+        word-wrap: normal !important;
+    }
+
+    /* Allow the table header to draw outside its box if necessary */
+    #lbTable thead th {
+        overflow: visible;
+    }
+
+    /* ── IMPROVED RESPONSIVENESS ── */
+    @media (max-width: 1200px) {
+        .filter-bar { flex-wrap: wrap; overflow-x: visible; }
+        .filter-col { flex: 1 1 calc(25% - 8px); }
+        .filter-col.export-col { width: 100%; justify-content: flex-end; margin-top: 8px; }
+    }
+    @media (max-width: 768px) {
+        .filter-col { flex: 1 1 calc(33.333% - 8px); }
+    }
+    @media (max-width: 480px) {
+        .filter-col { flex: 1 1 100%; }
+        .filter-col.export-col { flex-direction: column; width: 100%; align-items: stretch; }
+        .btn-export { width: 100%; }
+    }
+
+    /* On mobile the rounded/clipped card box around the table was fighting
+       with the horizontal scroll — drop the card chrome and let the table
+       just be a plain long scrollable list, full width, no rounding/mask.
+       The table itself keeps the same fixed 1400px layout as desktop
+       (single-line, ellipsized, tooltip on tap-hold) and scrolls sideways —
+       wrapping cells to multiple lines was tried and made every long name
+       break letter-by-letter into unreadable vertical stacks, which is
+       worse than a horizontal scrollbar. */
+    @media (max-width: 1024px) {
+        #leaderboard-tables .pm-card {
+            border-radius: 0;
+            -webkit-mask-image: none;
+            overflow: visible;
+        }
+        #leaderboard-tables .pm-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 🚨 THE FIX: Force a minimum width on mobile/tablets so the table
+           stays wide and readable, triggering the horizontal scrollbar!
+           Bumped from 1050 to 1200 to give the wider Nama Pesilat/Juri
+           columns more absolute room before names have to wrap. */
+        .pm-table {
+            min-width: 1200px !important;
+        }
+        #lbTable {
+            min-width: 1200px !important;
+        }
+    }
