@@ -157,7 +157,9 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   judge_dashboard.js/judge_marking.js)),
   data (`pic_students.php`, `pic_directory.php`, `pic_master_list.php`,
   `pic_roster_check.php`), and results
-  (`pic_manual_marks.php`, `pic_view_marks.php`, `pic_medal_settings.php`,
+  (`pic_manual_marks.php`, `pic_view_marks.php`, `pic_medal_settings.php` (+
+  `pic_medal_settings.css/.js` — neither block had any PHP interpolation,
+  so this was a plain file move, same pattern as `upload_students.php`),
   `pic_cawangan_summary.php`, `manage_attendance.php`). Each page still
   follows its own long-standing shape (auth/role check → query/POST-handling
   block → inline HTML → inline `<script>` at the bottom) — see the
@@ -175,11 +177,17 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
 ### Cross-file duplication in the `pic_*.php` family
 
 A survey found several patterns hand-duplicated across many `pic_*.php`
-files rather than shared. One has been consolidated so far:
+files rather than shared. Two have been consolidated so far:
 
 - **`pagination_helpers.php`** — `pic_view_marks.php`'s `page_url()` and
   `silibus.php`'s `silibus_page_url()` were byte-identical; both are now
-  thin wrappers around one `pm_page_url()`.
+  thin wrappers around one `pm_page_url()`. The same file also gained
+  `pm_render_pagination()` for the handful of server-rendered pagination
+  bars; every client-rendered one now calls the `pmRenderPagination()` JS
+  helper in `layout.js` instead. This fully resolved the
+  `updateXPagination()`/`xGoToPage()` duplication noted below — every page
+  that had it, including the two with the differently-scoped
+  `window.xGoToPage` assignment, now shares one renderer.
 
 **Identified but deliberately deferred** (verified in more depth than the
 one-line summary below suggests — each turned out to have real per-file
@@ -195,13 +203,6 @@ so they're left alone until each can get its own careful pass):
   disabled-capable shape) skips rendering the "clear selection" empty-option
   row entirely, unlike the others — a real functional difference, not just
   an optional parameter.
-- The `updateXPagination()`/`xGoToPage()` JS pair is duplicated across 9
-  files. Most are plain top-level functions with parallel logic (differing
-  only in element-id prefixes and a label noun), but at least two
-  (`pic_master_list.php`, `pic_medal_settings.php`) assign theirs as
-  `window.xGoToPage = function(){}` inside a different scoping structure —
-  consolidating safely needs each file's surrounding structure checked
-  individually, not assumed identical.
 - The self-healing `SHOW COLUMNS` / `ALTER TABLE ADD COLUMN` migration
   boilerplate appears in 6+ places with a different table/column/session-flag
   each time; `pic_judges.php`'s version has no session-flag gate at all and
