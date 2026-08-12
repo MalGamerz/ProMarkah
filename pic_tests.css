@@ -1,0 +1,412 @@
+/* pic_tests.css — the PIC "Pengurusan Ujian" (test management) page
+   (pic_tests.php). Split out of that file's inline <style> block, which
+   had nothing to do with the PHP rendering logic around it. */
+
+    /* ── Filter card ── */
+    .filter-card{
+    background:var(--c-surface-1);
+    border:1px solid var(--c-border-strong);
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:24px;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+    }
+
+    .filter-card-title{
+        font-size:.72rem;
+        font-weight:700;
+        text-transform:uppercase;
+        letter-spacing:.12em;
+        color:var(--c-text-faint);
+        margin-bottom:16px;
+    }
+
+    .pic-filter-bar{
+        display:flex; /* Same flex-equal-share layout as leaderboard.php's
+           .filter-bar/.filter-col and pic_directory.php's .dir-filter —
+           every column gets an identical flex-basis of 0 so widths stay
+           equal, instead of the old grid's minmax(Npx,1fr) tracks which
+           differed page to page. */
+        flex-wrap:wrap;
+        gap:8px;
+        align-items:flex-end;
+    }
+
+    .pic-filter-bar > div{
+        flex:1 1 0;
+        min-width:110px;
+    }
+    @media (max-width: 640px) {
+        .pic-filter-bar { gap: 10px; }
+        .pic-filter-bar > div { flex: 1 1 100%; min-width: 0; }
+    }
+    @media (min-width: 641px) and (max-width: 1024px) {
+        .pic-filter-bar > div { flex: 1 1 calc(50% - 8px); }
+    }
+
+    .pic-filter-bar label{
+        display:block;
+        margin-bottom:6px;
+        font-size:.75rem;
+        font-weight:600;
+        text-transform:uppercase;
+        letter-spacing:.08em;
+        color:var(--c-text-faint);
+    }
+    .pic-filter-bar input,
+    .pic-filter-bar select {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-white);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-size: 0.8rem; /* matches the app-wide 32px/0.8rem filter-bar benchmark */
+        outline: none;
+        width: 100%;
+        transition: border-color .2s;
+        box-sizing: border-box;
+    }
+    .pic-filter-bar input:focus,
+    .pic-filter-bar select:focus { border-color: var(--c-red); }
+    .pic-filter-bar select option { background: var(--c-surface-2); color: var(--c-white); }
+    .pic-filter-bar input::placeholder { color: var(--c-text-faint); }
+
+    /* ── Add card ── */
+    .pic-add-card {
+        display: none;
+        background: var(--c-surface-1);
+        border: 1px solid var(--c-red-border);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 18px;
+    }
+    .pic-add-card h3 {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.1rem;
+        color: var(--c-white);
+        margin-bottom: 14px;
+        letter-spacing: 0.05em;
+    }
+    .pic-add-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+        align-items: end;
+    }
+    .pic-add-form input,
+    .pic-add-form select {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-white);
+        border-radius: 6px;
+        padding: 9px 12px;
+        font-size: 0.875rem;
+        outline: none;
+        width: 100%;
+        transition: border-color .2s;
+    }
+    .pic-add-form input:focus,
+    .pic-add-form select:focus { border-color: var(--c-red); box-shadow: 0 0 0 3px var(--c-red-dim); }
+    .pic-add-form select option { background: var(--c-surface-2); }
+    .pic-add-form label {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--c-text-faint);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.07em;
+    }
+    /* Button in the add-form grid was shorter than the input/select next to
+       it (pm-btn's tight line-height vs. the input's padded box) — pin both
+       to the same height so the row looks uniform. */
+    .pic-add-form button.pm-btn {
+        height: 40px;
+        padding: 0 16px;
+        box-sizing: border-box;
+    }
+
+    /* ── Multi-row "add several at once" input group (used by Nama Ujian) ── */
+    .pic-add-form--multi {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .pic-add-form--multi > div { width: 100%; }
+    .add-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .add-row:last-child { margin-bottom: 0; }
+    .add-row input { flex: 1; min-width: 0; }
+    .add-row-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: all .15s;
+    }
+    .add-row-remove {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-text-faint);
+    }
+    .add-row-remove:hover { border-color: var(--c-red-300); color: var(--c-red); background: rgba(214, 40, 40, .08); }
+    .add-row-add {
+        height: 36px;
+        padding: 0 14px;
+        background: transparent;
+        border: 1px dashed var(--c-border-strong);
+        color: var(--c-text-faint);
+    }
+    .add-row-add:hover { border-color: var(--c-red); color: var(--c-red); }
+    .pic-add-form-actions { display: flex; justify-content: flex-end; }
+    html.pm-light .add-row-remove { background: var(--c-gray-50); border-color: var(--c-gray-300); }
+    html.pm-light .add-row-add { border-color: var(--c-gray-300); color: var(--c-gray-500); }
+
+    /* ── Main card & Accordions ── */
+    .tests-card {
+        background: var(--c-surface-1);
+        border: 1px solid var(--c-border-strong);
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Save bar — always visible */
+    .tests-save-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        background: var(--c-surface-2);
+        border-bottom: 2px solid var(--c-border-strong);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        transition: border-bottom-color .25s;
+    }
+    .tests-save-bar.dirty {
+        border-bottom-color: var(--c-red);
+    }
+    .tests-save-bar .save-msg { font-size: 0.82rem; color: var(--c-text-faint); flex: 1; }
+    .tests-save-bar .save-msg strong { color: var(--c-white); }
+    /* Box styling now comes from the shared .pm-btn.pm-btn-ghost classes on
+       the element itself, matching Simpan's box model instead of a bespoke
+       one-off with no visible border (unlike Simpan's). */
+    .tests-save-bar .btn-discard {
+        display: none;
+    }
+    .tests-save-bar.dirty .btn-discard { display: inline-flex; }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scrollable Container — height set dynamically in JS
+       (fitTestsListHeight) so it always leaves room for the pagination bar
+       below it instead of a static max-height that goes stale whenever the
+       filter UI above the list changes height. */
+    .tests-table-wrap {
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: var(--c-surface-3) transparent;
+        padding: 12px;
+    }
+    @media (max-width: 640px) {
+        .tests-table-wrap { max-height: none !important; overflow-y: visible !important; }
+    }
+
+    /* Accordion Style */
+    .accordion-card {
+        background: var(--c-surface-1);
+        border: 1px solid var(--c-border);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        overflow: hidden;
+        transition: border-color 0.2s;
+    }
+    .accordion-card.has-changes {
+        border-color: var(--c-red);
+        box-shadow: 0 0 0 1px var(--c-red);
+    }
+    /* Display peringkat/ujian names in caps — accordion titles (peringkat),
+       the editable name field (ujian), and the Peringkat dropdown options —
+       purely visual, the stored value keeps whatever case was typed. */
+    .level-header strong,
+    .tests-table input,
+    #ddOpts_level .dd-opt,
+    #ddLabel_level,
+    .pic-add-form select {
+        text-transform: uppercase;
+    }
+    .level-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--c-surface-2);
+        cursor: pointer;
+        color: var(--c-white);
+        font-weight: 600;
+        font-size: 0.92rem;
+        transition: background .15s;
+    }
+    .level-header:hover { background: var(--c-surface-3); }
+    .level-header .acc-icon {
+        color: var(--c-text-muted);
+        font-size: 0.8rem;
+        transition: transform .2s ease;
+        display: inline-block;
+    }
+    .level-header .header-badges {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .level-header .count-badge {
+        background: var(--c-surface-0);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        color: var(--c-text-muted);
+        border: 1px solid var(--c-border);
+        white-space: nowrap;
+    }
+    .level-header .badge-siri,
+    .level-header .badge-sidang {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+        background: var(--c-surface-0);
+        border: 1px solid var(--c-border);
+    }
+    /* Uniform stroke-icon sizing (both badges use the same icon set as the
+       rest of the app — see pm_icon() in layout.php — so Siri/Sidang render
+       at identical size/weight instead of mismatched OS emoji). */
+    .level-header .badge-siri svg,
+    .level-header .badge-sidang svg {
+        width: 12px;
+        height: 12px;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    .level-header .badge-siri {
+        color: var(--c-red);
+        border-color: var(--c-red-border);
+    }
+    .level-header .badge-sidang {
+        color: var(--c-text-muted);
+        border-color: var(--c-border-strong);
+    }
+
+    /* ── Table inside Accordion ── */
+    .table-responsive { width: 100%; overflow-x: auto; }
+    .tests-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        min-width: 400px;
+    }
+    .tests-table thead th {
+        background: var(--c-surface-3);
+        color: var(--c-text-muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 10px 14px;
+        text-align: left;
+        white-space: nowrap;
+        border-bottom: 1px solid var(--c-border-strong);
+    }
+    .tests-table td {
+        padding: 8px 14px;
+        color: var(--c-text-muted);
+        background: var(--c-surface-1);
+        border-bottom: 1px solid var(--c-border);
+        vertical-align: middle;
+        transition: background .1s;
+    }
+    .tests-table tbody tr:last-child td { border-bottom: none; }
+    .tests-table tbody tr:hover td { background: var(--c-surface-2); }
+    .tests-table tbody tr.row-dirty td { background: rgba(214, 40, 40, 0.06) !important; }
+    .tests-table tbody tr.dragging { opacity: 0.4; }
+    .tests-table td.col-drag { width: 36px; cursor: grab; user-select: none; }
+    .tests-table td.col-drag:active { cursor: grabbing; }
+    .tests-table td.col-no { width: 50px; }
+    .tests-table td.col-actions { width: 100px; white-space: nowrap; }
+    .tests-table input {
+        background: var(--c-surface-0) !important;
+        border: 1px solid var(--c-border-strong) !important;
+        color: var(--c-white) !important;
+        border-radius: 4px !important;
+        padding: 5px 8px !important;
+        font-size: 0.82rem !important;
+        outline: none !important;
+        width: 100%;
+        transition: border-color .2s;
+    }
+    .tests-table input:focus { border-color: var(--c-red) !important; }
+
+    #ajaxSpinner { display: none; padding: 30px; text-align: center; color: var(--c-text-faint); margin: 0; }
+
+    /* ── PAGINATION: shared .vm-pagination styles now live once in
+       dashboard.css (loaded by layout.php), used by every paginated page. ── */
+
+    /* ── LIGHT MODE ── */
+    html.pm-light .pic-section-header h2 { color: #111; }
+    html.pm-light .pic-section-sub { color: #555; }
+    html.pm-light .filter-card { background: #fff; border-color: var(--c-gray-200); border-top-color: var(--c-red); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    html.pm-light .filter-card-title { color: #888; }
+    html.pm-light .pic-filter-bar label { color: #555; }
+    html.pm-light .pic-filter-bar input, html.pm-light .pic-filter-bar select { background: var(--c-gray-50); border-color: var(--c-gray-300); color: #111; }
+    html.pm-light .pic-filter-bar input::placeholder { color: var(--c-gray-400); }
+    html.pm-light .pic-filter-bar select option { background: #fff; color: #111; }
+    html.pm-light .pic-add-card { background: #fff; border-color: var(--c-red-border); }
+    html.pm-light .pic-add-card h3 { color: #111; }
+    html.pm-light .pic-add-form label { color: #555; }
+    html.pm-light .pic-add-form input, html.pm-light .pic-add-form select { background: var(--c-gray-50); border-color: var(--c-gray-300); color: #111; }
+    html.pm-light .pic-add-form select option { background: #fff; }
+    html.pm-light .tests-card { background: #fff; border-color: var(--c-gray-200); }
+    html.pm-light .tests-save-bar { background: var(--c-gray-100); border-bottom-color: var(--c-gray-200); }
+    html.pm-light .tests-save-bar.dirty { border-bottom-color: var(--c-red); }
+    html.pm-light .tests-save-bar .save-msg { color: #555; }
+    html.pm-light .tests-save-bar .save-msg strong { color: #111; }
+    html.pm-light .accordion-card { background: #fff; border-color: var(--c-gray-200); }
+    html.pm-light .level-header { background: var(--c-gray-50); color: #111; }
+    html.pm-light .level-header:hover { background: var(--c-gray-100); }
+    html.pm-light .level-header .count-badge { background: #fff; color: #555; border-color: var(--c-gray-300); }
+    html.pm-light .level-header .badge-siri { background: #fff; border-color: var(--c-red-300); }
+    html.pm-light .level-header .badge-sidang { background: #fff; color: #555; border-color: var(--c-gray-300); }
+    html.pm-light .tests-table thead th { background: var(--c-gray-700); color: var(--c-gray-50); border-bottom-color: var(--c-gray-200); }
+    html.pm-light .tests-table td { background: #fff; color: #222; border-bottom-color: var(--c-gray-200); }
+    html.pm-light .tests-table tbody tr:hover td { background: var(--c-gray-50); }
+    html.pm-light .tests-table tbody tr.row-dirty td { background: rgba(214, 40, 40, 0.04) !important; }
+    html.pm-light .tests-table input { background: #fff !important; border-color: var(--c-gray-300) !important; color: #111 !important; }
+    html.pm-light .tests-table input:focus { border-color: var(--c-red) !important; box-shadow: 0 0 0 2px var(--c-red-dim) !important; }
+
+    /* .dd-wrap / .dd-trigger / .dd-panel etc. now come from the shared
+       filter_bar.css (loaded globally via layout.php) so this page's
+       filter dropdowns match pic_view_marks.php / silibus.php /
+       leaderboard.php / judge_view_marks.php exactly instead of drifting
+       with their own local size. */
+    .tests-card{
+    margin-top:20px;
+    }
