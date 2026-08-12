@@ -159,7 +159,11 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   sharing one lexical scope across sequential classic `<script>` tags —
   same mechanism already used for `criteriaByTest` between
   judge_dashboard.js/judge_marking.js)),
-  data (`pic_students.php`, `pic_directory.php` (+ `pic_directory.css/.js`,
+  data (`pic_students.php` (+ `pic_students.css/.js`, same plain-file-move
+  pattern — no PHP interpolation in either block; note left in that commit
+  that `loadSidangOptions()`'s `document.createElement()`-built dd-opt
+  rows never got `role="option"`/`tabindex`, unlike the PHP-echoed ones
+  the accessibility pass covered), `pic_directory.php` (+ `pic_directory.css/.js`,
   same plain-file-move pattern as `pic_medal_settings.php` below — no PHP
   interpolation in either block), `pic_master_list.php`,
   `pic_roster_check.php`), and results
