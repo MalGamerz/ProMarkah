@@ -9,14 +9,77 @@ that part of the flow.
 This README is a living map of the codebase for a new maintainer. It's being
 filled in phase-by-phase as the app is documented and reorganized for
 readability — it does not yet cover every file, but everything it does
-describe should be accurate.
+describe should be accurate. It deliberately stops short of documenting
+exact secret values, exact security-check internals, or copy-pasteable
+exploit detail — see [Secrets & security posture](#secrets--security-posture)
+for what's kept out and why.
 
 ## Tech stack
 
 Plain PHP (mysqli, no framework) + vanilla JS + hand-written CSS. One
-Composer dependency, `firebase/php-jwt`, used only to verify Google/Apple
-OAuth ID tokens (see `oauth_helpers.php`). Deployed on Hostinger shared
-hosting.
+Composer dependency, `firebase/php-jwt` (`^7.1`), used only to verify
+Google/Apple OAuth ID tokens (see `oauth_helpers.php`) — no autoloading
+config beyond Composer's default, no dev dependencies, no test framework.
+Deployed on Hostinger shared hosting (Apache + `mod_rewrite`/`.htaccess`,
+mysqli + curl + zip PHP extensions). Locally this just needs a standard
+Apache/PHP/MySQL stack (Laragon, XAMPP, etc.) — there's no Docker/Vagrant
+config, no `.env` file, and no build step; static assets are plain `.css`/
+`.js` files served as-is.
+
+## Domain glossary
+
+The competition structure nests like this:
+
+**Siri → Sidang → Peringkat → Ujian → Kriteria**
+
+- **Siri** — a competition "series"/edition (e.g. one year's tournament).
+  A PIC picks an "Siri Aktif" that scopes most PIC screens to that edition
+  (a "Semua Siri" / all-series option is also available).
+- **Sidang** (session) — one sitting/round of the competition within a
+  siri. A siri has many sidang; a sidang has many peringkat.
+- **Peringkat** (level/grade) — a belt/grade level scoped to one sidang. A
+  sidang has many peringkat; a peringkat has many ujian, and also owns the
+  kumpulan built under it.
+- **Ujian** (test) — a specific test/exercise under a peringkat. A
+  peringkat has many ujian; a ujian has many kriteria.
+- **Kriteria** (criteria) — a single scoring sub-component of a ujian, with
+  its own maximum mark. Judges/PICs enter one mark per student per
+  kriteria.
+
+Orthogonal to that hierarchy:
+
+- **Cawangan** (school/branch) — the training branch a student belongs to.
+  Cawangan are opted into a siri and, separately, into individual sidang.
+- **Kumpulan** (group) — a set of students competing together within one
+  peringkat, assigned to exactly one judge. Built by dragging students
+  (who are not yet in any group) into a group; ordering within the group
+  is preserved for the marking-table UI.
+- **Juri** (judge) — scores kumpulan. A judge account is a separate record
+  type from PIC/admin/recorder accounts (see [User roles](#user-roles) and
+  [Login](#login--auth-model)).
+- **PIC** ("person in charge") — the organizer role: configures siri,
+  sidang, peringkat, ujian, kriteria, cawangan, kumpulan, and judges, and
+  reviews results/exports. Distinct from `admin`, which is a narrower,
+  separate account type for system-level pages (`admin.php`,
+  `admin_data.php`, `admin_logs.php`).
+
+## User roles
+
+Four role strings live in `$_SESSION['role']`: `pic`, `judge`, `recorder`,
+`admin`. Access is checked per-page, near the top of each file (a role
+whitelist, not a central router) — when adding a new page, copy the
+pattern from a sibling file of the same role rather than inventing a new
+check style.
+
+| Role | Typical area |
+|---|---|
+| `pic` | Every `pic_*.php` configuration/report page, `manage_attendance.php`, `leaderboard.php` (shared with judge), `db_health_check.php` / `test_suite.php` / `page_smoke_test.php` (diagnostics, shared with admin) |
+| `judge` | `judge.php` (the scoring workflow) and its AJAX/JS support files, `judge_view_marks.php`, `judge_settings.php`, `silibus.php` / `silibus_baru.php`, `reset_system.php`, `save_scores.php` / `save_draft_score.php`, `leaderboard.php` (shared with pic) |
+| `recorder` | The attendance-management area (`attendance.php`'s internal, logged-in side) |
+| `admin` | `admin.php`, `admin_data.php`, `admin_logs.php`, plus the diagnostic pages shared with pic |
+
+Public, no-login pages are the QR attendance flow — see the constraint
+below.
 
 ## Two constraints every change must respect
 
@@ -43,7 +106,10 @@ no-op for a session that never logged in (`$_SESSION['last_activity']` is
 never set for one), which is why these pages can safely include it without
 gaining a login requirement. The only page in this family that legitimately
 requires login is `manage_attendance.php` (PIC role) — the internal
-management view, as opposed to the public scan-in flow.
+management view, as opposed to the public scan-in flow. Each QR code is
+signed (not just a plain link) so a visitor can't guess or tamper with
+another session/school's attendance URL — see
+[Secrets & security posture](#secrets--security-posture).
 
 ## Request bootstrap & load order
 
@@ -79,7 +145,9 @@ include 'db.php';                       // pulls in security_bootstrap.php
   a `401 {"error":"session_expired"}` JSON response (see `layout.php`'s
   `pmFetch()` wrapper, which every same-origin `fetch()` call should use so
   that response is handled instead of silently treated as real data);
-  normal navigation gets redirected to `login.php`.
+  normal navigation gets redirected to `login.php`. Idle time is tracked
+  via `keepalive.php`, pinged by client-side JS whenever the user is
+  actively moving the mouse/keyboard.
 
 - **`layout.php`** is included by every dashboard page to render the shared
   `<head>`, header, and sidebar (the page then closes
@@ -94,29 +162,150 @@ include 'db.php';                       // pulls in security_bootstrap.php
   `<script src>` tag, same mechanism as `pic_groups.js`'s
   `PM_GROUPS_CSRF`.
 
-## Secrets
+## Login & auth model
 
-Real credentials (DB, the QR-signing HMAC key, Telegram bot token) live in
-`secrets.php`, one directory **above** `public_html` — never web-reachable,
-even if PHP itself stopped executing. `secrets.sample.php` (safe to keep in
-the web root — no real values) documents every key and the exact deployment
-steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
+Four distinct login paths feed the same `$_SESSION['role']` model:
+
+- **pic / recorder / admin** — classic username + password against the
+  `users` table, handled by `login.php`. Failed attempts are throttled
+  per-IP (self-managed table, created on first use).
+- **judge** — a judge account (separate table from `users`) logs in either
+  with a judge code + PIN, or via Google/Apple Sign-In matched by the
+  email a PIC has recorded on their account — see
+  `SETUP_GOOGLE_APPLE_LOGIN.md` for the OAuth app setup steps (judges
+  only; the other three roles are unaffected by OAuth).
+- Every successful login is written to an audit table (who, role, IP,
+  when) — see `oauth_helpers.php` for the OAuth side and `login.php` for
+  the password side.
+
+## Secrets & security posture
+
+Real credentials (DB, the QR-signing key, Telegram bot token, a couple of
+narrow diagnostic-endpoint tokens) live in `secrets.php`, one directory
+**above** `public_html` — never web-reachable, even if PHP itself stopped
+executing. `secrets.sample.php` (safe to keep in the web root — no real
+values) documents every key name and the exact deployment steps. See
+`SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
 `SETUP_GOOGLE_APPLE_LOGIN.md` for the OAuth-specific configuration.
+
+This README intentionally does **not** restate secret values, exact
+signing/validation algorithms, or other detail that would only be useful
+for attacking rather than maintaining the live site. A few things a new
+maintainer should still know, at the level that's safe to write down:
+
+- Public QR attendance links are cryptographically signed, not just
+  obscure URLs — tampering with the URL invalidates the signature rather
+  than granting access to a different session/school.
+- A couple of diagnostic/ops endpoints (a cron heartbeat check, and — see
+  below — a couple of pages meant to be deleted after initial setup) are
+  gated by a static shared-secret query-string token rather than a login,
+  because they're designed to be hit by a cron job or a developer without
+  a session. Treat any file whose own comments say "delete this when
+  done" as exactly that.
+- **Housekeeping flag for the incoming maintainer**: `test_suite.php` and
+  (to a lesser extent) `telegram_test.php` are diagnostic tools that were
+  left in place with real, hardcoded access tokens after initial setup —
+  both explicitly say "delete when done" in their own header comments.
+  Confirm they're either removed from production or that their tokens
+  have been rotated before treating the site as fully locked down; this
+  README does not reproduce those tokens.
+- `reset_system.php` is judge-role-gated and requires an explicit
+  confirmation query parameter before it does anything. It does **not**
+  delete data — it soft-archives existing scoring records (flips an
+  `archived` column rather than running `DELETE`) and clears judge→group
+  assignments, effectively "start a fresh judging round." Still,
+  something this consequential deserves a confirmation *screen*, not just
+  a confirmation *query parameter* — worth hardening if you're touching
+  this file.
+- A handful of small AJAX dropdown-population endpoints
+  (`load_levels_group.php`, `load_schools_for_session.php`,
+  `load_students_group.php`) don't currently check `$_SESSION['role']` at
+  all before returning data — they only leak dropdown option lists
+  (names/IDs), not scores or credentials, but they're worth bringing in
+  line with the rest of the app's per-file role checks.
+
+## Database schema overview
+
+There's no single canonical `schema.sql` — most tables are created and
+altered lazily, inline, in the PHP pages that first need them
+(`CREATE TABLE IF NOT EXISTS`, or a `SHOW COLUMNS` / `ALTER TABLE ADD
+COLUMN` self-healing check guarded by a per-session flag so it only runs
+once). Treat the PHP files below as the source of truth for the current
+schema, not a migrations folder (only one exists:
+`migrations/2026_08_add_scores_status.sql`, which added the
+draft-vs-final `status` column on `scores`).
+
+High-level table map (names simplified — check the relevant PHP file for
+exact columns before writing a query against one):
+
+| Table | Roughly stores | Created/altered in |
+|---|---|---|
+| `siri` / `siri_schools` | Competition series, and which cawangan opted into each | `pic_siri.php` |
+| `sessions` / `session_schools` | Sidang, and which cawangan opted into each | `pic_sessions.php` |
+| `levels` | Peringkat, scoped to a sidang | `pic_levels.php` |
+| `tests` | Ujian, scoped to a peringkat | `pic_tests.php` |
+| `criteria` | Kriteria (with per-criteria max mark), scoped to a ujian | `pic_criteria.php` |
+| `schools` | Cawangan | `pic_schools.php` |
+| `students` | Student roster, scoped to a cawangan + peringkat | `pic_students.php`, `upload_students.php` |
+| `groups` / `group_students` | Kumpulan, its assigned judge, and its member students (with display order) | `pic_groups.php` |
+| `judges` | Judge accounts (name, PIN hash, judge code, optional email/photo for OAuth) | `pic_judges.php` |
+| `users` | pic/recorder/admin login accounts | — |
+| `scores` | One row per student × criteria mark, with draft/final and scored/skipped status | `save_scores.php`, `save_draft_score.php`, `pic_save_scores.php` |
+| `medal_quotas` / `medal_quotas_session` | Gold/silver/bronze award caps, per level or per session | `pic.php`, `pic_medal_settings.php` |
+| Attendance tables | QR check-in state, keyed off student/session membership | `attendance_helpers.php` and the `attendance_*.php` family |
+
+A prior cleanup deliberately removed a couple of denormalized columns
+(e.g. a redundant session reference on `groups`) in favor of deriving
+that value via joins through `levels`/`criteria` — `db_health_check.php`
+documents the reasoning if you're ever tempted to re-add a shortcut
+column like that.
+
+## Testing & diagnostics
+
+There's no automated test suite (no PHPUnit/Pest, no CI config) — QA is
+manual, via three purpose-built diagnostic pages that each cover a
+different layer:
+
+- **`db_health_check.php`** — re-runs the actual query *shapes* the app
+  depends on (the joins/inserts/updates each page performs) to catch
+  broken joins or orphaned rows after a schema change. Has a write-path
+  section that performs real `INSERT`/`UPDATE`/`DELETE` but always inside
+  a transaction that gets rolled back. Usable from a browser (pic/admin
+  gated) or the CLI (no gate — safe to wire into a cron/CI job later).
+- **`page_smoke_test.php`** — has your *current logged-in browser session*
+  fetch every page relevant to your role and checks for HTTP 200 plus a
+  well-formed closing `</main></body></html>`, which catches a PHP fatal
+  error mid-render (but not silent logic bugs — those only surface in the
+  error log). Has an opt-in, admin-only deeper check that exercises the
+  real score-saving/locking/leaderboard-filtering logic against the DB,
+  again inside a rolled-back transaction.
+- **`test_suite.php`** — a self-contained HTTP integration tester: it
+  makes real requests against the site's own live URLs, grouped by role,
+  and checks status codes/content. See the housekeeping flag above — this
+  one carries a hardcoded access token and should be removed or re-gated
+  before considering the site production-hardened.
 
 ## Map of the codebase
 
 - **Shared/core** (used by nearly every page): `db.php`, `auth_check.php`,
   `security_bootstrap.php` (+ `bootstrap_secrets.php`,
   `bootstrap_error_handling.php`), `layout.php` (+ `layout_icons.php`,
-  `layout.js`, `layout_notifications.css/.js`), `attendance_helpers.php` (+ `expired_qr_page.php`),
-  `oauth_helpers.php`, `oauth_config.php`, `error_page.php`.
+  `layout.js`, `layout_notifications.css/.js`), `attendance_helpers.php` (+
+  `expired_qr_page.php`), `oauth_helpers.php`, `oauth_config.php`,
+  `error_page.php`, `pagination_helpers.php`, `keepalive.php`,
+  `check_notifications.php` / `mark_notifications_read.php`, `lang.php`
+  (a bilingual en/ms string dictionary — appears only partially wired up;
+  most UI text is hardcoded Malay directly in the page files rather than
+  routed through it), `index.php` (a one-line wrapper that requires
+  `login.php` directly, avoiding an extra redirect for "/").
 - **Public attendance flow** (no login — see constraint above):
   `attendance.php`, `save_attendance.php`, `attendance_toggle.php`,
   `attendance_student.php` (+ `attendance_student.css/.js`),
   `attendance_view_all.php`, `attendance_view_dashboard.php`,
   `attendance_view_session.php` (+ `attendance_view_session.css/.js`),
   `attendance_view_school.php` (+ `attendance_view_school.css/.js`),
-  `export_attendance_*.php`. `manage_attendance.php` is the one exception —
+  `export_attendance_excel.php`, `export_attendance_pdf.php`.
+  `manage_attendance.php` is the one exception —
   correctly PIC-login-gated (internal management view, not the public flow).
 
   **Flagged, not fixed** (surfaced during the Phase 4 split, worth a
@@ -138,6 +327,9 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
     `export_attendance_pdf.php` each hand-duplicate the same ~50-line
     UNION/COALESCE filter query rather than sharing it — a real
     consolidation candidate for a future pass.
+  - `export_attendance_excel.php` did not have a visible auth/role check
+    at last read, unlike its PDF sibling — worth double-checking and
+    aligning before relying on it for anything non-public.
 - **Judge scoring**: `judge.php` — the judge's scoring workflow (session/
   group selection, the marking table, submit/lock rules), split into:
   `judge_ajax.php` (the small-form-dropdown AJAX endpoints, required
@@ -148,7 +340,14 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   missing-marks validation — reads its few required PHP values off
   `window.pmJudgeMarkingData`, set by a small inline bootstrap snippet,
   rather than interpolating PHP directly into the file).
-  `judge_view_marks.php`, `judge_settings.php`, `silibus.php`.
+  `judge_view_marks.php` (results, judge's own view), `judge_settings.php`
+  (profile settings, e.g. photo upload), `silibus.php` (filterable/
+  historical syllabus reference), `silibus_baru.php` (always-current
+  syllabus reference, built live from the current levels/tests/criteria),
+  `save_scores.php` (final submit — locks the group), `save_draft_score.php`
+  (autosave while marking, excluded from totals/leaderboard until final),
+  `reset_system.php` (judge-gated "start a fresh judging round" — see
+  [Secrets & security posture](#secrets--security-posture)).
 - **PIC management**: the `pic_*.php` family — competition structure
   (`pic_levels.php`, `pic_tests.php` (+ `pic_tests.css/.js`, same
   plain-file-move pattern and the same `loadSidangOptions()` ARIA gap as
@@ -167,7 +366,9 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   right before the `<script src>` tag, relying on top-level `let`/`const`
   sharing one lexical scope across sequential classic `<script>` tags —
   same mechanism already used for `criteriaByTest` between
-  judge_dashboard.js/judge_marking.js)),
+  judge_dashboard.js/judge_marking.js)), `test_preview.php` (PIC-only
+  cascading-dropdown preview of a test's level→test structure before
+  assigning it),
   data (`pic_students.php` (+ `pic_students.css/.js`, same plain-file-move
   pattern — no PHP interpolation in either block; note left in that commit
   that `loadSidangOptions()`'s `document.createElement()`-built dd-opt
@@ -175,17 +376,29 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   the accessibility pass covered), `pic_directory.php` (+ `pic_directory.css/.js`,
   same plain-file-move pattern as `pic_medal_settings.php` below — no PHP
   interpolation in either block), `pic_master_list.php`,
-  `pic_roster_check.php`), and results
+  `pic_roster_check.php`, `load_levels_group.php`, `load_schools_for_session.php`,
+  `load_students_group.php` (small dropdown/roster AJAX endpoints backing
+  the pages above — see the auth-check gap flagged above)), and results
   (`pic_manual_marks.php` (+ `pic_manual_marks.css/.js` — same
   plain-file-move pattern as `pic_medal_settings.php` below — no PHP
-  interpolation in either block), `pic_view_marks.php`, `pic_medal_settings.php` (+
+  interpolation in either block), `pic_view_marks.php`, `pic_save_scores.php`
+  (manual score entry/correction handler, also supports "Abai"/skip),
+  `pic_medal_settings.php` (+
   `pic_medal_settings.css/.js` — neither block had any PHP interpolation,
   so this was a plain file move, same pattern as `upload_students.php`),
-  `pic_cawangan_summary.php`, `manage_attendance.php`), and
+  `pic_cawangan_summary.php` (+ `cawangan_report_data.php`, a shared,
+  non-web-accessible helper library so this page and its three export
+  variants below never drift out of sync), `manage_attendance.php`), and
   `leaderboard.php` (+ `leaderboard.css/.js` — same plain-file-move
   pattern; the one PHP-interpolated bit, `leaderboardData`, is set by
   a small inline bootstrap `<script>` before the `<script src>` tag,
-  same mechanism as `pic_groups.php`'s CSRF const). Each page still
+  same mechanism as `pic_groups.php`'s CSRF const), `export_leaderboard.php`
+  (mirrors `leaderboard.php`'s own filters; shared by pic and judge),
+  `export_cawangan_summary.php` / `export_cawangan_summary_pdf.php` /
+  `export_cawangan_summary_word.php` (three export formats of the same
+  report — real `.xlsx` via `ZipArchive`, a print-friendly HTML page for
+  "PDF", and an HTML document served with a `.doc` extension for Word).
+  Each page still
   follows its own long-standing shape (auth/role check → query/POST-handling
   block → inline HTML → inline `<script>` at the bottom) — see the
   cross-file duplication note below before splitting any one of them
@@ -197,7 +410,15 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
   as judge.php.
 - **Admin**: `admin.php`, `admin_data.php`, `admin_logs.php`.
 - **Login**: `login.php`, `oauth_apple_start.php`,
-  `oauth_apple_callback.php`, `oauth_google_callback.php`.
+  `oauth_apple_callback.php`, `oauth_google_callback.php`, `logout.php`.
+- **Ops/diagnostics** (see [Testing & diagnostics](#testing--diagnostics)
+  and the housekeeping flag above before relying on any of these in
+  production): `db_health_check.php`, `page_smoke_test.php`,
+  `test_suite.php`, `heartbeat.php` (daily cron "system OK" ping to
+  Telegram — DB connectivity + recent error-log count), `telegram_test.php`
+  (one-off alert-credential check — delete after use, per its own
+  comment), `fetch_options.php` (generic session-gated dropdown-option
+  AJAX endpoint, distinct from the ungated `load_*.php` trio above).
 
 ### Cross-file duplication in the `pic_*.php` family
 
@@ -240,5 +461,23 @@ so they're left alone until each can get its own careful pass):
   `$_POST`) — a shared helper needs to return a bool rather than perform the
   reject itself.
 
-*(This map will grow as later refactor phases document the judge, PIC, and
-attendance-flow files in more depth.)*
+## Refactor-phase convention
+
+The file-splitting work described throughout this README follows a
+numbered "Phase N" convention, visible in the git log — each phase takes
+one large `.php` file's inline `<style>`/`<script>` blocks and extracts
+the parts with **zero PHP interpolation** into standalone `.css`/`.js`
+files, linked back in via `<link>`/`<script src>` with a
+`filemtime()`-based cache-busting query string
+(`?v=<?= @filemtime(__DIR__.'/file.css') ?: time() ?>`). Where a block
+*does* need a PHP value (most often a CSRF token, or one page's bootstrap
+data object), the convention is a small inline `<script>` that sets a
+plain top-level `const`/`let` global right before the external
+`<script src>` tag — classic `<script>` tags share one lexical scope, so
+the external file can reference that global directly. This is a pure,
+behavior-preserving mechanical refactor; it never touches PHP business
+logic. See the git log for the full list of completed phases and which
+file each one covers.
+
+*(This map will grow as later refactor phases document the remaining
+files in more depth.)*
