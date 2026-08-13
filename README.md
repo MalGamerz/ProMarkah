@@ -87,9 +87,12 @@ include 'db.php';                       // pulls in security_bootstrap.php
   static SVG icon lookup table behind `pm_icon()`) and `layout.js` (the
   static parts of what used to be one large inline `<script>` block:
   `pmFetch`, idle keep-alive, theme toggle, sidebar, dropdowns, and alert
-  auto-dismiss). The PIC-only notification/toast script is still inline in
-  `layout.php` itself — it embeds the CSRF token directly, which blocks
-  moving it to a static file for now.
+  auto-dismiss). The PIC-only notification/toast system (rendered only
+  when `$pm_role === "pic"`) is now `layout_notifications.css/.js` (Phase
+  16) — its one PHP-interpolated value, the CSRF token, is exposed as a
+  plain `const PM_LAYOUT_CSRF` in a bootstrap `<script>` right before the
+  `<script src>` tag, same mechanism as `pic_groups.js`'s
+  `PM_GROUPS_CSRF`.
 
 ## Secrets
 
@@ -105,7 +108,7 @@ steps. See `SECURITY_ERROR_HANDLING.md` for the full setup walkthrough and
 - **Shared/core** (used by nearly every page): `db.php`, `auth_check.php`,
   `security_bootstrap.php` (+ `bootstrap_secrets.php`,
   `bootstrap_error_handling.php`), `layout.php` (+ `layout_icons.php`,
-  `layout.js`), `attendance_helpers.php` (+ `expired_qr_page.php`),
+  `layout.js`, `layout_notifications.css/.js`), `attendance_helpers.php` (+ `expired_qr_page.php`),
   `oauth_helpers.php`, `oauth_config.php`, `error_page.php`.
 - **Public attendance flow** (no login — see constraint above):
   `attendance.php`, `save_attendance.php`, `attendance_toggle.php`,
