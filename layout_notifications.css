@@ -1,0 +1,84 @@
+/* layout_notifications.css — the PIC-only global toast/notification system
+   embedded in layout.php (rendered only when $pm_role === "pic"). Split out
+   of that file's inline <style> block. No PHP interpolation, so this is a
+   plain file move. */
+
+#pm-global-toasts {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: calc(100vw - 40px);
+    pointer-events: none;
+}
+.pm-toast-notification {
+    background: var(--c-surface-1);
+    border-left: 4px solid var(--c-red);
+    border: 1px solid var(--c-border-strong);
+    border-left: 4px solid var(--c-red);
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    color: var(--c-text);
+    font-size: 0.92rem;
+    width: 100%;
+    min-width: 280px;
+    max-width: 400px;
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    cursor: pointer;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+.pm-toast-notification.show { transform: translateX(0); opacity: 1; }
+.pm-toast-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 6px;
+    font-size: 1rem;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.5px;
+}
+.pm-toast-close { color: var(--c-text-faint); font-size: 0.8rem; font-family: sans-serif; }
+
+/* Bell dropdown notification items */
+.pm-notif-item {
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--c-text);
+    border-bottom: 1px solid var(--c-border);
+    background: var(--c-red-dim);
+}
+.pm-notif-item.read {
+    background: transparent;
+    color: var(--c-text-muted);
+}
+.pm-notif-time {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--c-text-faint);
+    margin-top: 4px;
+}
+.pm-notif-list {
+    max-height: 320px;
+    overflow-y: auto;
+}
+.pm-notif-empty {
+    padding: 20px 14px;
+    color: var(--c-text-faint);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+    #pm-global-toasts { top: 75px; right: 16px; left: 16px; max-width: none; }
+    .pm-toast-notification { min-width: 100%; max-width: 100%; padding: 14px 16px; }
+}
