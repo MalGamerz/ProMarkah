@@ -14,6 +14,27 @@ exact secret values, exact security-check internals, or copy-pasteable
 exploit detail — see [Secrets & security posture](#secrets--security-posture)
 for what's kept out and why.
 
+## Table of contents
+
+- [Tech stack](#tech-stack)
+- [Domain glossary](#domain-glossary)
+- [End-to-end system flow](#end-to-end-system-flow)
+  - [1. PIC sets up the competition structure](#1-pic-sets-up-the-competition-structure)
+  - [2. Attendance (public, no login — QR scan)](#2-attendance-public-no-login--qr-scan)
+  - [3. Judges score](#3-judges-score)
+  - [4. PIC reviews, corrects, and closes out results](#4-pic-reviews-corrects-and-closes-out-results)
+  - [5. Admin (separate, narrower role)](#5-admin-separate-narrower-role)
+- [User roles](#user-roles)
+- [Two constraints every change must respect](#two-constraints-every-change-must-respect)
+- [Request bootstrap & load order](#request-bootstrap--load-order)
+- [Login & auth model](#login--auth-model)
+- [Secrets & security posture](#secrets--security-posture)
+- [Database schema overview](#database-schema-overview)
+- [Testing & diagnostics](#testing--diagnostics)
+- [Map of the codebase](#map-of-the-codebase)
+  - [Cross-file duplication in the `pic_*.php` family](#cross-file-duplication-in-the-pic_php-family)
+- [Refactor-phase convention](#refactor-phase-convention)
+
 ## Tech stack
 
 Plain PHP (mysqli, no framework) + vanilla JS + hand-written CSS. One
@@ -647,4 +668,4 @@ logic. See the git log for the full list of completed phases and which
 file each one covers.
 
 *(This map will grow as later refactor phases document the remaining
-files in more depth.)*
+files in more depth.)*`
