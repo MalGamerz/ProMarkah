@@ -14,13 +14,35 @@ exact secret values, exact security-check internals, or copy-pasteable
 exploit detail — see [Secrets & security posture](#secrets--security-posture)
 for what's kept out and why.
 
+## Table of contents
+
+- [Tech stack](#tech-stack)
+- [Domain glossary](#domain-glossary)
+- [End-to-end system flow](#end-to-end-system-flow)
+  - [1. PIC sets up the competition structure](#1-pic-sets-up-the-competition-structure)
+  - [2. Attendance (public, no login — QR scan)](#2-attendance-public-no-login--qr-scan)
+  - [3. Judges score](#3-judges-score)
+  - [4. PIC reviews, corrects, and closes out results](#4-pic-reviews-corrects-and-closes-out-results)
+  - [5. Admin (separate, narrower role)](#5-admin-separate-narrower-role)
+- [User roles](#user-roles)
+- [Two constraints every change must respect](#two-constraints-every-change-must-respect)
+- [Request bootstrap & load order](#request-bootstrap--load-order)
+- [Login & auth model](#login--auth-model)
+- [Secrets & security posture](#secrets--security-posture)
+- [Database schema overview](#database-schema-overview)
+- [Testing & diagnostics](#testing--diagnostics)
+- [Map of the codebase](#map-of-the-codebase)
+  - [Cross-file duplication in the `pic_*.php` family](#cross-file-duplication-in-the-pic_php-family)
+- [Refactor-phase convention](#refactor-phase-convention)
+
 ## Tech stack
 
 Plain PHP (mysqli, no framework) + vanilla JS + hand-written CSS. One
-Composer dependency, `firebase/php-jwt` (`^7.1`), used only to verify
-Google/Apple OAuth ID tokens (see `oauth_helpers.php`) — no autoloading
-config beyond Composer's default, no dev dependencies, no test framework.
-Deployed on Hostinger shared hosting (Apache + `mod_rewrite`/`.htaccess`,
+runtime Composer dependency, `firebase/php-jwt` (`^7.1`), used only to
+verify Google/Apple OAuth ID tokens (see `oauth_helpers.php`) — no
+autoloading config beyond Composer's default. `phpunit/phpunit` (`^10.5`)
+is the one dev dependency, backing the `tests/` suite — see
+[Testing & diagnostics](#testing--diagnostics). Deployed on Hostinger shared hosting (Apache + `mod_rewrite`/`.htaccess`,
 mysqli + curl + zip PHP extensions). Locally this just needs a standard
 Apache/PHP/MySQL stack (Laragon, XAMPP, etc.) — there's no Docker/Vagrant
 config, no `.env` file, and no build step; static assets are plain `.css`/
@@ -63,6 +85,129 @@ Orthogonal to that hierarchy:
   separate account type for system-level pages (`admin.php`,
   `admin_data.php`, `admin_logs.php`).
 
+## End-to-end system flow
+
+This walks through a full competition lifecycle in the order things
+actually happen, tying the domain glossary above to the pages that
+implement each step. It's the "how does this app get used" view; see
+[Map of the codebase](#map-of-the-codebase) for the "which file does
+what" view of the same territory.
+
+### 1. PIC sets up the competition structure
+
+All of this is `pic`-role, reachable from `pic.php` (the PIC dashboard)
+and its sidebar:
+
+1. **Create a Siri** (`pic_siri.php`) — a competition edition. The PIC
+   marks one Siri "Aktif," which scopes most PIC screens by default (a
+   "Semua Siri" view is also available). Cawangan (schools) are opted
+   into a Siri here.
+2. **Create Sidang** under that Siri (`pic_sessions.php`) — one sitting/
+   round. Cawangan are separately opted into individual Sidang (a school
+   can be in the Siri but skip a given Sidang).
+3. **Create Peringkat** under a Sidang (`pic_levels.php`) — belt/grade
+   levels contestants compete at.
+4. **Create Ujian** under a Peringkat (`pic_tests.php`), then **Kriteria**
+   under each Ujian (`pic_criteria.php`) — the rubric a judge actually
+   scores against, each Kriteria carrying its own max mark.
+5. **Manage Cawangan** (`pic_schools.php`) and their **student rosters**
+   — one at a time (`pic_students.php`) or in bulk via the import wizard
+   (`upload_students.php`: Excel/PDF → upload → select sheet → review →
+   process). Students are scoped to a Cawangan + Peringkat.
+6. **Build Kumpulan** (`pic_groups.php`) — drag ungrouped students from a
+   Peringkat into groups; each group is assigned to exactly one judge and
+   member order is preserved for the marking-table UI.
+7. **Register judges** (`pic_judges.php`) — creates the judge-code+PIN (or
+   OAuth-email-matched) accounts judges will log in with; see
+   [Login & auth model](#login--auth-model).
+8. Optionally set **medal quotas** (`pic_medal_settings.php`, per level or
+   per session) and review the **live syllabus preview**
+   (`test_preview.php`, `silibus_baru.php`) before the event runs.
+
+### 2. Attendance (public, no login — QR scan)
+
+Independent of the scoring flow, and open to anonymous visitors by
+design (see [the constraint below](#two-constraints-every-change-must-respect)):
+
+1. The PIC/recorder opens `manage_attendance.php` (the only login-gated
+   page in this family) and generates a signed, time-limited QR link per
+   Cawangan + Sidang via `makeQrUrl()`.
+2. A student scans the QR and lands on `attendance.php` /
+   `attendance_student.php`, which validates the signature and expiry
+   (`verifyQrToken()`) before showing the check-in form — an expired or
+   tampered link renders `expired_qr_page.php` instead.
+3. Marking present/absent posts to `save_attendance.php`.
+4. Recorders/PICs review results live via `attendance_view_session.php`,
+   `attendance_view_school.php`, `attendance_view_dashboard.php`, and
+   `attendance_view_all.php`, and can export via
+   `export_attendance_excel.php` / `export_attendance_pdf.php`.
+
+This flow never touches the scoring tables — a student can be marked
+present without any Kumpulan/judge assignment existing yet, and vice
+versa.
+
+### 3. Judges score
+
+1. A judge logs in (judge-code+PIN or Google/Apple OAuth — see
+   [Login & auth model](#login--auth-model)) and lands on `judge.php`'s
+   session-selection screen (`judge_dashboard.js`): cascading Sidang →
+   Peringkat → Kumpulan dropdowns populated via `judge_ajax.php`, showing
+   only the groups assigned to that judge.
+2. Picking a group opens the marking table (`judge_marking.js`): one row
+   per student, one column per Kriteria for the group's Ujian, entering a
+   mark up to each Kriteria's max.
+3. Marks autosave as drafts via `save_draft_score.php` (`status = draft`
+   in `scores`) — excluded from totals/leaderboard until finalized. A
+   missing-marks check runs before submit is allowed.
+4. Final **Submit** posts to `save_scores.php`, which flips the group's
+   scores to final status and **locks** the group (no further edits from
+   the judge side).
+5. Judges can review their own submitted marks (`judge_view_marks.php`),
+   check the reference rubric (`silibus.php` / `silibus_baru.php`), and,
+   if a fresh round is needed, a judge-gated `reset_system.php` soft-
+   archives existing scores and clears judge→group assignments (see
+   [Secrets & security posture](#secrets--security-posture) — this does
+   not delete data, but deserves care).
+
+### 4. PIC reviews, corrects, and closes out results
+
+1. **Manual review/correction** (`pic_manual_marks.php` →
+   `pic_save_scores.php`) — a PIC can enter or correct marks directly, or
+   mark a student "Abai" (skip), for cases a judge couldn't score in the
+   room.
+2. **Results views**: `pic_view_marks.php` (per-session/level marks),
+   `pic_master_list.php` / `pic_roster_check.php` (roster/consistency
+   views), `leaderboard.php` (ranked results — shared by pic and judge
+   roles, medal-quota-aware) with `export_leaderboard.php` for the same
+   filtered view as a download.
+3. **Cawangan-level reporting**: `pic_cawangan_summary.php`, backed by
+   the shared, non-web-facing `cawangan_report_data.php` helper so its
+   three export variants (`export_cawangan_summary.php` — Excel via
+   `ZipArchive`, `export_cawangan_summary_pdf.php` — print-friendly HTML,
+   `export_cawangan_summary_word.php` — HTML served as `.doc`) never
+   drift out of sync with the on-screen report.
+4. **In-app notifications**: PIC-facing toasts/alerts
+   (`check_notifications.php` / `mark_notifications_read.php`, rendered
+   by `layout_notifications.css/.js`) surface events like new submissions
+   needing attention, polled client-side rather than pushed.
+
+### 5. Admin (separate, narrower role)
+
+`admin.php` / `admin_data.php` / `admin_logs.php` are system-level pages
+(distinct from PIC — see [User roles](#user-roles)) for cross-cutting
+account/log management rather than competition content.
+
+### Everything is scoped by the same session/keep-alive layer
+
+Every step above, for every logged-in role, rides on the same
+[request bootstrap](#request-bootstrap--load-order): `auth_check.php`'s
+15-minute idle timeout (kept alive by `keepalive.php` while the tab is
+active), `pmFetch()` handling a `401 session_expired` on any AJAX call
+instead of silently misinterpreting it as data, and CSRF tokens on
+state-changing POSTs (pattern varies per file — see the
+[cross-file duplication note](#cross-file-duplication-in-the-pic_php-family)).
+None of that is repeated per-step above to avoid redundancy.
+
 ## User roles
 
 Four role strings live in `$_SESSION['role']`: `pic`, `judge`, `recorder`,
@@ -73,10 +218,10 @@ check style.
 
 | Role | Typical area |
 |---|---|
-| `pic` | Every `pic_*.php` configuration/report page, `manage_attendance.php`, `leaderboard.php` (shared with judge), `db_health_check.php` / `test_suite.php` / `page_smoke_test.php` (diagnostics, shared with admin) |
+| `pic` | Every `pic_*.php` configuration/report page, `manage_attendance.php`, `leaderboard.php` (shared with judge) |
 | `judge` | `judge.php` (the scoring workflow) and its AJAX/JS support files, `judge_view_marks.php`, `judge_settings.php`, `silibus.php` / `silibus_baru.php`, `reset_system.php`, `save_scores.php` / `save_draft_score.php`, `leaderboard.php` (shared with pic) |
 | `recorder` | The attendance-management area (`attendance.php`'s internal, logged-in side) |
-| `admin` | `admin.php`, `admin_data.php`, `admin_logs.php`, plus the diagnostic pages shared with pic |
+| `admin` | `admin.php`, `admin_data.php`, `admin_logs.php` |
 
 Public, no-login pages are the QR attendance flow — see the constraint
 below.
@@ -164,19 +309,63 @@ include 'db.php';                       // pulls in security_bootstrap.php
 
 ## Login & auth model
 
-Four distinct login paths feed the same `$_SESSION['role']` model:
+All login traffic goes through one file, `login.php`, which forces HTTPS,
+hardens the session cookie (`HttpOnly`, `Strict` SameSite, `Secure` on
+HTTPS) before `session_start()`, and applies the same anti-abuse layer to
+every role before any credential check runs:
 
-- **pic / recorder / admin** — classic username + password against the
-  `users` table, handled by `login.php`. Failed attempts are throttled
-  per-IP (self-managed table, created on first use).
-- **judge** — a judge account (separate table from `users`) logs in either
-  with a judge code + PIN, or via Google/Apple Sign-In matched by the
-  email a PIC has recorded on their account — see
-  `SETUP_GOOGLE_APPLE_LOGIN.md` for the OAuth app setup steps (judges
-  only; the other three roles are unaffected by OAuth).
-- Every successful login is written to an audit table (who, role, IP,
-  when) — see `oauth_helpers.php` for the OAuth side and `login.php` for
-  the password side.
+- A CSRF token (`$_SESSION['csrf_token']`) is required on the POST.
+- A hidden honeypot field and a minimum-elapsed-time check (`form_load_time`)
+  reject same-request bot submissions.
+- IP-based rate limiting is enforced from a self-managed `login_throttle`
+  table (persisted in the DB, not the session, so it survives an
+  attacker dropping cookies between attempts) — 5 failed attempts from
+  one IP locks that IP out for 5 minutes, regardless of which role or
+  username was being tried.
+- A successful login always calls `session_regenerate_id(true)` before
+  writing `$_SESSION`, and always inserts one row into the `audit_log`
+  table (user id, role, IP, timestamp) — the same audit path for every
+  role, whether the credential was a password, a PIN, or an OAuth token
+  (see `oauth_helpers.php` for the OAuth insert).
+
+From there the flow forks by role, but only in how the identity is
+proven and where it redirects — the surrounding session/CSRF/throttle
+machinery above is identical for all four:
+
+| Role | How they authenticate | Table checked | Redirect on success |
+|---|---|---|---|
+| `pic` | Username + password (`password_verify` against a bcrypt/argon hash) | `users` | `pic.php` |
+| `recorder` | Username + password, same form/step as pic | `users` | `attendance.php` (the internal, logged-in attendance-management entry point — see [Attendance flow](#2-attendance-public-no-login--qr-scan)) |
+| `admin` | Username + password, same form/step as pic | `users` | `admin.php` |
+| `judge` | Two-step: username+password (step 1) sets `$_SESSION['step']=2` and reloads `login.php`, which then shows a judge-code dropdown + PIN form (step 2), checked against `password_verify($pin, ...)` — **or** Google/Apple Sign-In, matched to a judge record by the email a PIC has recorded on that judge's account | `judges` (password/PIN path); `judges.email` (OAuth path) | `judge.php` |
+
+Notes that apply across roles:
+
+- pic/recorder/admin all authenticate the same way and share the
+  `users` table — the only difference between them post-login is the
+  `role` string stored in session and, therefore, which per-page role
+  checks let them through (see [User roles](#user-roles)). There is no
+  separate registration flow in this app for any of the four roles —
+  accounts are provisioned directly in the DB / by a PIC (for judges,
+  via `pic_judges.php`).
+- The judge PIN-check step deliberately returns the **same** error
+  message ("Kelayakan tidak sah") whether the judge name or the PIN was
+  wrong, so a wrong PIN attempt can't be used to enumerate which judge
+  names exist.
+- OAuth (Google/Apple) is judge-only — pic/recorder/admin have no OAuth
+  path and are unaffected by that config. See
+  `SETUP_GOOGLE_APPLE_LOGIN.md` for the OAuth app setup steps and
+  `oauth_google_callback.php` / `oauth_apple_callback.php` /
+  `oauth_apple_start.php` for the callback handlers. A judge who signs
+  in via OAuth whose email isn't linked to any judge record gets a
+  dedicated "no_judge_linked" error rather than being silently denied or
+  auto-created.
+- `logout.php` is the single logout path for all four roles — it
+  destroys the session rather than performing any role-specific cleanup.
+- Once logged in, every role rides the same
+  [idle-timeout/keep-alive layer](#request-bootstrap--load-order)
+  (`auth_check.php`, `keepalive.php`, `pmFetch()`) — nothing about idle
+  handling differs by role either.
 
 ## Secrets & security posture
 
@@ -202,13 +391,16 @@ maintainer should still know, at the level that's safe to write down:
   because they're designed to be hit by a cron job or a developer without
   a session. Treat any file whose own comments say "delete this when
   done" as exactly that.
-- **Housekeeping flag for the incoming maintainer**: `test_suite.php` and
-  (to a lesser extent) `telegram_test.php` are diagnostic tools that were
-  left in place with real, hardcoded access tokens after initial setup —
-  both explicitly say "delete when done" in their own header comments.
-  Confirm they're either removed from production or that their tokens
-  have been rotated before treating the site as fully locked down; this
-  README does not reproduce those tokens.
+- **Housekeeping flag for the incoming maintainer**: `telegram_test.php` is
+  a diagnostic tool that was left in place with a real, hardcoded access
+  token after initial setup — it explicitly says "delete when done" in its
+  own header comment. Confirm it's either removed from production or that
+  its token has been rotated before treating the site as fully locked
+  down; this README does not reproduce that token. (`test_suite.php`, its
+  sibling with the same problem, has since been replaced entirely by the
+  PHPUnit suite — see [Testing & diagnostics](#testing--diagnostics) —
+  which needs no hardcoded token because it authenticates with real
+  per-role test credentials supplied only via a gitignored local env file.)
 - `reset_system.php` is judge-role-gated and requires an explicit
   confirmation query parameter before it does anything. It does **not**
   delete data — it soft-archives existing scoring records (flips an
@@ -256,34 +448,58 @@ exact columns before writing a query against one):
 
 A prior cleanup deliberately removed a couple of denormalized columns
 (e.g. a redundant session reference on `groups`) in favor of deriving
-that value via joins through `levels`/`criteria` — `db_health_check.php`
-documents the reasoning if you're ever tempted to re-add a shortcut
-column like that.
+that value via joins through `levels`/`criteria` — the Database test
+suite's `tests/Database/SchemaAndIntegrityTest.php` documents the
+reasoning if you're ever tempted to re-add a shortcut column like that.
 
 ## Testing & diagnostics
 
-There's no automated test suite (no PHPUnit/Pest, no CI config) — QA is
-manual, via three purpose-built diagnostic pages that each cover a
-different layer:
+QA is an automated PHPUnit suite (`tests/`), split into two independent
+suites that each self-skip rather than fail hard when their prerequisites
+aren't available — `composer test` is always safe to run with zero setup:
 
-- **`db_health_check.php`** — re-runs the actual query *shapes* the app
-  depends on (the joins/inserts/updates each page performs) to catch
-  broken joins or orphaned rows after a schema change. Has a write-path
-  section that performs real `INSERT`/`UPDATE`/`DELETE` but always inside
-  a transaction that gets rolled back. Usable from a browser (pic/admin
-  gated) or the CLI (no gate — safe to wire into a cron/CI job later).
-- **`page_smoke_test.php`** — has your *current logged-in browser session*
-  fetch every page relevant to your role and checks for HTTP 200 plus a
-  well-formed closing `</main></body></html>`, which catches a PHP fatal
-  error mid-render (but not silent logic bugs — those only surface in the
-  error log). Has an opt-in, admin-only deeper check that exercises the
-  real score-saving/locking/leaderboard-filtering logic against the DB,
-  again inside a rolled-back transaction.
-- **`test_suite.php`** — a self-contained HTTP integration tester: it
-  makes real requests against the site's own live URLs, grouped by role,
-  and checks status codes/content. See the housekeeping flag above — this
-  one carries a hardcoded access token and should be removed or re-gated
-  before considering the site production-hardened.
+- **`composer test:db`** (`tests/Database/`) — needs only a working local
+  DB connection (the same `secrets.php` every other page already needs;
+  see [Secrets & security posture](#secrets--security-posture)). Every
+  test runs inside one transaction that `tests/Support/DbTestCase.php`
+  always rolls back in `tearDown()`, pass or fail, so nothing here ever
+  persists:
+  - `SchemaAndIntegrityTest` — did the 3NF migration land as expected (no
+    duplicates, no orphaned FKs)?
+  - `QueryPatternsTest` — re-runs the actual join/subquery *shapes* the
+    app depends on (`pic_groups.php`, `judge.php`, `pic_view_marks.php`,
+    `pic_directory.php`, `pic.php`, `pic_master_list.php`,
+    `attendance_view_dashboard.php`, …) against real data, so a broken
+    join surfaces here instead of on the live page.
+  - `WritePathsTest` — the actual `INSERT`/`UPDATE`/`DELETE` statements
+    each page runs.
+  - `DraftScoreLifecycleTest` / `PicCrudLifecycleTest` — full sequential
+    lifecycles (draft save → lock → final submit → leaderboard
+    aggregation; and Create/Read/Update/Delete across every PIC-managed
+    entity) built on self-contained fixtures.
+- **`composer test:http`** (`tests/Http/`) — needs a running instance of
+  the app plus disposable per-role test accounts, supplied via
+  `tests/.env.testing` (gitignored — copy `tests/.env.testing.sample` and
+  fill it in; **never point it at production or use real staff
+  credentials**). Skips itself entirely when that file/those env vars
+  aren't present:
+  - `PublicAttendanceTest` — the anonymous QR flow stays reachable
+    without login, and `manage_attendance.php` stays blocked.
+  - `AuthFlowTest` — per-role login redirects, the judge two-step flow,
+    bad credentials are rejected, and role isolation (a judge-only or
+    admin-only page redirects the wrong role to login).
+  - `PageAvailabilityTest` — every page reachable by each role actually
+    renders to a well-formed close, for a real logged-in session of that
+    role (not a SQL mimic — this catches a plain PHP bug a query-shape
+    test can't).
+  - `EndpointGuardTest` — CSRF/method guards on the state-changing
+    endpoints (`save_draft_score.php`, `save_scores.php`, the `pic_*.php`
+    POST actions, `admin_data.php`/`admin.php`/`admin_logs.php`) reject
+    bad input safely instead of crashing or silently writing.
+
+Run everything with `composer test` (or `vendor/bin/phpunit`); run one
+suite at a time with `composer test:db` / `composer test:http`. See
+`phpunit.xml` for the suite definitions.
 
 ## Map of the codebase
 
@@ -316,8 +532,9 @@ different layer:
     `auth_check.php` include at all, and a looser status whitelist (anything
     that isn't exactly `'Present'` silently becomes `'Absent'` instead of
     being rejected). Nothing in the front-end calls it — only
-    `test_suite.php` does. Left alone pending a decision on whether it's
-    still needed for something outside this repo.
+    `tests/Http/PublicAttendanceTest.php` still exercises it, mirroring the
+    old `test_suite.php`'s coverage. Left alone pending a decision on
+    whether it's still needed for something outside this repo.
   - `attendance_view_dashboard.php` interpolates `$active_siri_id` directly
     into a raw SQL string rather than a prepared statement, unlike every
     other file in this family. Low risk in practice (the value is cast
@@ -413,8 +630,7 @@ different layer:
   `oauth_apple_callback.php`, `oauth_google_callback.php`, `logout.php`.
 - **Ops/diagnostics** (see [Testing & diagnostics](#testing--diagnostics)
   and the housekeeping flag above before relying on any of these in
-  production): `db_health_check.php`, `page_smoke_test.php`,
-  `test_suite.php`, `heartbeat.php` (daily cron "system OK" ping to
+  production): `heartbeat.php` (daily cron "system OK" ping to
   Telegram — DB connectivity + recent error-log count), `telegram_test.php`
   (one-off alert-credential check — delete after use, per its own
   comment), `fetch_options.php` (generic session-gated dropdown-option

@@ -32,9 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_backup_action'])
         die('Security token mismatch.');
     }
 
-    // Sensitive hash columns (password/pin_hash) are deliberately excluded —
-    // a backup doesn't need them to be useful, and there's no reason to let
-    // credential hashes leave the server in a downloadable file.
+    // Full restore fidelity: this backup includes password/pin hash columns
+    // and admin accounts, so a matching Import can fully recreate every
+    // login without anyone re-typing a password. That means this ZIP is as
+    // sensitive as raw DB credentials — treat it that way when storing or
+    // sharing it.
     $backup_tables = [
         'siri'                  => null,
         'sessions'               => null,
@@ -47,10 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_backup_action'])
         'students'               => null,
         'groups'                 => null,
         'group_students'         => null,
-        'judges'                 => 'SELECT id, name, email, role, judge_code FROM judges',
+        'judges'                 => null,
         'scores'                 => null,
         'attendance'             => null,
-        'users'                  => "SELECT id, username, role FROM users WHERE role != 'admin'",
+        'users'                  => null,
         'notifications'          => null,
         'notification_reads'     => null,
         'medal_quotas'           => null,
@@ -91,6 +93,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_backup_action'])
     readfile($tmpZip);
     unlink($tmpZip);
     exit;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FULL RESTORE — read a Full Backup ZIP back and reload every table from it
+// ─────────────────────────────────────────────────────────────────────────────
+
+$flash = '';
+$flash_type = 'success';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_action'])) {
+    if (!isset($_POST['csrf_token']) || !hash_equals($csrf, $_POST['csrf_token'])) {
+        $flash = 'Security token mismatch.'; $flash_type = 'error';
+    } elseif (trim($_POST['import_confirm'] ?? '') !== 'IMPORT') {
+        $flash = 'Type "IMPORT" exactly to confirm.'; $flash_type = 'error';
+    } elseif (!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== UPLOAD_ERR_OK) {
+        $flash = 'No backup file uploaded, or the upload failed.'; $flash_type = 'error';
+    } elseif (strtolower(pathinfo($_FILES['backup_file']['name'], PATHINFO_EXTENSION)) !== 'zip') {
+        $flash = 'The uploaded file must be a .zip backup produced by "Download Full Backup".'; $flash_type = 'error';
+    } else {
+        $zip = new ZipArchive();
+        if ($zip->open($_FILES['backup_file']['tmp_name']) !== true) {
+            $flash = 'Could not read the uploaded ZIP file — it may be corrupted.'; $flash_type = 'error';
+        } else {
+            // Fixed, known table names only — the ZIP entry name is never used
+            // to build a path, so there's no path-traversal surface here.
+            // Parent tables first, so FK-check-enabled installs still load
+            // cleanly even though we also disable checks during the import.
+            $import_order = [
+                'siri', 'sessions', 'levels', 'tests', 'criteria', 'schools',
+                'session_schools', 'siri_schools', 'students', 'groups',
+                'group_students', 'judges', 'scores', 'attendance', 'users',
+                'notifications', 'notification_reads', 'medal_quotas',
+                'medal_quotas_school', 'medal_quotas_session',
+            ];
+
+            $conn->begin_transaction();
+            try {
+                $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+                $imported = [];
+                $skipped  = [];
+
+                foreach ($import_order as $table) {
+                    $csvContent = $zip->getFromName($table . '.csv');
+                    if ($csvContent === false) { $skipped[] = $table; continue; }
+
+                    $fh = fopen('php://temp', 'r+');
+                    fwrite($fh, $csvContent);
+                    rewind($fh);
+                    if (fread($fh, 3) !== "\xEF\xBB\xBF") rewind($fh); // strip export's UTF-8 BOM if present
+
+                    $header = fgetcsv($fh);
+                    if (!$header) { fclose($fh); $skipped[] = $table; continue; }
+
+                    // Only import columns that actually exist on this install —
+                    // production DBs may be a schema version behind/ahead.
+                    $tableCols = [];
+                    $colsResult = $conn->query("SHOW COLUMNS FROM `{$table}`");
+                    while ($c = $colsResult->fetch_assoc()) $tableCols[] = $c['Field'];
+
+                    $useCols = array_values(array_intersect($header, $tableCols));
+                    if (empty($useCols)) { fclose($fh); $skipped[] = $table; continue; }
+
+                    $headerIndex = array_flip($header);
+
+                    $conn->query("DELETE FROM `{$table}`");
+
+                    $colList      = implode(',', array_map(fn($c) => "`{$c}`", $useCols));
+                    $placeholders = implode(',', array_fill(0, count($useCols), '?'));
+                    $stmt  = $conn->prepare("INSERT INTO `{$table}` ({$colList}) VALUES ({$placeholders})");
+                    $types = str_repeat('s', count($useCols));
+
+                    $rowCount = 0;
+                    while (($row = fgetcsv($fh)) !== false) {
+                        if ($row === [null]) continue; // trailing blank line
+                        $vals = [];
+                        foreach ($useCols as $c) {
+                            $v = $row[$headerIndex[$c]] ?? null;
+                            $vals[] = ($v === '') ? null : $v;
+                        }
+                        $stmt->bind_param($types, ...$vals);
+                        $stmt->execute();
+                        $rowCount++;
+                    }
+                    $stmt->close();
+                    fclose($fh);
+                    $imported[$table] = $rowCount;
+                }
+
+                $conn->query("SET FOREIGN_KEY_CHECKS = 1");
+                $conn->commit();
+
+                $flash = 'Restore complete — ' . number_format(array_sum($imported)) . ' rows reloaded across '
+                        . count($imported) . ' tables.'
+                        . (!empty($skipped) ? ' Not found in the ZIP (left untouched): ' . implode(', ', $skipped) . '.' : '')
+                        . ' If the restored data includes different admin/PIC accounts, log out and back in to refresh your session.';
+            } catch (Exception $e) {
+                $conn->rollback();
+                $conn->query("SET FOREIGN_KEY_CHECKS = 1");
+                promarkah_report('Caught', 'admin_data.php import failed — ' . $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
+                $flash = 'Restore failed: ' . $e->getMessage();
+                $flash_type = 'error';
+            }
+            $zip->close();
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,9 +317,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
 // ─────────────────────────────────────────────────────────────────────────────
 // RESET HANDLERS
 // ─────────────────────────────────────────────────────────────────────────────
-
-$flash = '';
-$flash_type = 'success';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_action'])) {
     if (!isset($_POST['csrf_token']) || !hash_equals($csrf, $_POST['csrf_token'])) {
@@ -501,13 +605,37 @@ include 'layout.php';
                     <svg viewBox="0 0 24 24" style="stroke:var(--c-red);"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
                     <div>
                         <div class="export-item-title">Full Backup (All Data)</div>
-                        <div class="export-item-count">Every table as one CSV, bundled into a single ZIP</div>
+                        <div class="export-item-count">Every table as one CSV — scores, groups, students, judges, admin/PIC/judge accounts — bundled into a single ZIP</div>
                     </div>
                 </div>
+                <p style="font-size:var(--text-xs); color:var(--c-red); margin:0;">Contains password/PIN hashes so it can fully restore logins. Store and share this file as securely as your database credentials.</p>
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
                     <input type="hidden" name="full_backup_action" value="1">
                     <button type="submit" class="btn-export-pdf" style="width:100%;">Download Full Backup (ZIP)</button>
+                </form>
+            </div>
+
+            <div class="export-item" style="border-color:rgba(204,0,0,0.3); background:rgba(204,0,0,0.04);">
+                <div class="export-item-header">
+                    <svg viewBox="0 0 24 24" style="stroke:var(--c-red);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <div>
+                        <div class="export-item-title">Import Full Backup (Restore)</div>
+                        <div class="export-item-count">Reloads every table in the ZIP from a Full Backup download</div>
+                    </div>
+                </div>
+                <p style="font-size:var(--text-xs); color:var(--c-text-faint); margin:0; line-height:1.5;">
+                    This <strong>replaces</strong> all current data in every table found in the ZIP — existing rows are deleted first, then the backup's rows are reloaded with their original IDs. Tables missing from the ZIP are left untouched. This cannot be undone; export a fresh backup first if you want to keep the current state.
+                </p>
+                <form method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:var(--sp-3);">
+                    <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                    <input type="hidden" name="import_action" value="1">
+                    <input type="file" name="backup_file" accept=".zip" required class="reset-confirm-input">
+                    <div>
+                        <div class="reset-confirm-label">Type IMPORT to confirm</div>
+                        <input type="text" name="import_confirm" class="reset-confirm-input" autocomplete="off" placeholder="IMPORT">
+                    </div>
+                    <button type="submit" class="btn-reset-full">Restore From Backup</button>
                 </form>
             </div>
 

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         failOnWarning="true"
+         failOnDeprecation="false">
+
+    <!--
+    Two independent suites, both self-skipping rather than failing hard when
+    their prerequisites aren't available:
+
+      - Database: needs a real DB connection (same secrets.php every other
+        page already needs locally). Every test runs inside one transaction
+        that is ALWAYS rolled back in tearDown() — see tests/Support/DbTestCase.php.
+        Nothing here ever persists, even on a passing run.
+
+      - Http: needs a running instance of the app (TEST_BASE_URL) plus test
+        account credentials (see tests/.env.testing.sample). Skips itself via
+        tests/Support/HttpTestCase.php when those aren't configured, so
+        `composer test` never accidentally fires real HTTP requests at
+        whatever TEST_BASE_URL happens to be set to in an unrelated shell.
+    -->
+    <testsuites>
+        <testsuite name="Database">
+            <directory>tests/Database</directory>
+        </testsuite>
+        <testsuite name="Http">
+            <directory>tests/Http</directory>
+        </testsuite>
+    </testsuites>
+
+    <source>
+        <include>
+            <directory>.</directory>
+        </include>
+        <exclude>
+            <directory>vendor</directory>
+            <directory>tests</directory>
+            <directory>docs</directory>
+            <directory>migrations</directory>
+            <directory>img</directory>
+            <directory>sijil</directory>
+            <directory>file</directory>
+        </exclude>
+    </source>
+</phpunit>

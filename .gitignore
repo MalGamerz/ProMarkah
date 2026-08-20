@@ -11,6 +11,7 @@ secrets.local.php
 .env
 .env.*
 !.env.example
+!tests/.env.testing.sample
 user.ini
 !user.ini.sample
 oauth_config.local.php
@@ -46,3 +47,6 @@ error_log
 Thumbs.db
 .vscode/
 .idea/
+
+# PHPUnit cache (regenerated on every run — see phpunit.xml)
+.phpunit.cache/
