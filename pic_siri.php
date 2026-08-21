@@ -296,127 +296,10 @@ $current_year = date('Y');
 include 'layout.php';
 ?>
 
-<style>
-    .siri-tabs {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 24px;
-    }
-    .siri-tab {
-        padding: 8px 20px;
-        border-radius: 20px;
-        border: 1px solid var(--c-border-strong);
-        background: var(--c-surface-1);
-        color: var(--c-text-muted);
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        transition: all 0.15s;
-    }
-    .siri-tab:hover { background: var(--c-surface-2); color: var(--c-white); }
-    .siri-tab.active {
-        background: var(--c-red);
-        border-color: var(--c-red);
-        color: #fff;
-        box-shadow: 0 4px 12px rgba(204,0,0,0.25);
-    }
-
-    .two-col {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-    }
-    /* Sidebar (~248px) stays visible for any viewport above 768px, so a
-       two-column grid right above that point (e.g. 800-1000px) still has
-       its content squeezed by the sidebar even though it's "above" the
-       collapse breakpoint — stack one step earlier to give it room. */
-    @media (max-width: 1000px) { .two-col { grid-template-columns: 1fr; } }
-
-    .section-card {
-        background: var(--c-surface-1);
-        border: 1px solid var(--c-border-strong);
-        border-radius: 12px;
-        padding: 20px;
-    }
-    .section-card h4 {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 1.1rem;
-        letter-spacing: 0.05em;
-        color: var(--c-white);
-        border-bottom: 1px solid var(--c-border);
-        padding-bottom: 10px;
-        margin-bottom: 14px;
-    }
-
-    .school-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: var(--c-surface-2);
-        border: 1px solid var(--c-border);
-        border-radius: 20px;
-        padding: 4px 12px;
-        font-size: 0.78rem;
-        color: var(--c-text-muted);
-        margin: 3px;
-        cursor: pointer;
-        transition: all 0.15s;
-    }
-    .school-pill:hover:not(.locked) { border-color: var(--c-red); color: var(--c-white); }
-    
-    .school-pill.enrolled {
-        background: rgba(74,222,128,0.1);
-        border-color: rgba(74,222,128,0.4);
-        color: #4ade80;
-    }
-    .school-pill.enrolled:hover:not(.locked) {
-        background: rgba(239,68,68,0.1);
-        border-color: rgba(239,68,68,0.4);
-        color: #f87171;
-    }
-    
-    .school-pill.locked {
-        cursor: not-allowed;
-        opacity: 0.85;
-    }
-
-    .session-pill {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: var(--c-surface-2);
-        border: 1px solid var(--c-border);
-        border-radius: 8px;
-        padding: 8px 12px;
-        margin-bottom: 6px;
-        font-size: 0.85rem;
-    }
-    .session-pill.linked {
-        border-color: rgba(74,222,128,0.35);
-        background: rgba(74,222,128,0.05);
-    }
-
-    .pm-form-label { display:block;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text-muted);margin-bottom:7px; }
-    .pm-form-input { width:100%;background:var(--c-surface-2);border:1px solid var(--c-border-strong);border-radius:8px;padding:10px 14px;color:var(--c-white);font-size:0.9rem;outline:none;transition:border-color 0.15s;box-sizing:border-box; }
-    .pm-form-input:focus { border-color:var(--c-red);box-shadow:0 0 0 3px var(--c-red-dim); }
-    .pm-form-group { margin-bottom:14px; }
-
-    .pm-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s; }
-    .pm-modal-overlay.show { opacity:1; }
-    .pm-modal-box { max-width:460px; }
-    .pm-modal-title { font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.05em;color:var(--c-white);border-bottom:2px solid var(--c-red);display:inline-block;padding-bottom:6px;margin-bottom:18px; }
-    .pm-modal-actions { display:flex;gap:10px;justify-content:flex-end;margin-top:18px; }
-
-    .siri-stat-row { display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap; }
-    .siri-stat { background:var(--c-surface-2);border:1px solid var(--c-border);border-radius:10px;padding:14px 18px;text-align:center;flex:1;min-width:100px; }
-    .siri-stat .v { font-size:1.6rem;font-weight:700;font-family:'Bebas Neue',sans-serif;color:var(--c-white); }
-    .siri-stat .l { font-size:0.65rem;color:var(--c-text-faint);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px; }
-
-    html.pm-light .pic-section-header h2 { color: #111; }
-    html.pm-light .pic-section-sub { color: #555; }
-</style>
+<?php
+$pm_siri_css_v = @filemtime(__DIR__ . '/pic_siri.css') ?: time();
+?>
+<link rel="stylesheet" href="pic_siri.css?v=<?= $pm_siri_css_v ?>">
 
 <div class="pic-section-header">
     <div>
@@ -609,7 +492,7 @@ include 'layout.php';
 <?php endif; ?>
 
 <div class="pm-modal-overlay" id="modal-add-siri">
-    <div class="pm-modal-box">
+    <div class="pm-modal-box pm-modal-box--sm">
         <div class="pm-modal-title">Tambah Siri Baharu</div>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
@@ -638,7 +521,7 @@ include 'layout.php';
 </div>
 
 <div class="pm-modal-overlay" id="modal-edit-siri">
-    <div class="pm-modal-box">
+    <div class="pm-modal-box pm-modal-box--sm">
         <div class="pm-modal-title">Edit Siri</div>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
@@ -674,36 +557,10 @@ include 'layout.php';
     <input type="hidden" name="siri_id" id="deleteSiriId">
 </form>
 
-<script>
-function openModal(id) {
-    const m = document.getElementById(id);
-    m.style.display = 'flex';
-    setTimeout(() => m.classList.add('show'), 10);
-}
-function closeModal(id) {
-    const m = document.getElementById(id);
-    m.classList.remove('show');
-    setTimeout(() => m.style.display = 'none', 200);
-}
-document.querySelectorAll('.pm-modal-overlay').forEach(m => {
-    m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
-});
-
-function openEditSiri(id, name, year, notes) {
-    document.getElementById('editSiriId').value    = id;
-    document.getElementById('editSiriName').value  = name;
-    document.getElementById('editSiriYear').value  = year;
-    document.getElementById('editSiriNotes').value = notes;
-    openModal('modal-edit-siri');
-}
-
-function deleteSiri(id, name) {
-    if (confirm('Padam siri "' + name + '"?\n\nSemua sidang dalam siri ini akan dilepaskan (tidak dipadam). Tindakan ini tidak boleh dibuat alik.')) {
-        document.getElementById('deleteSiriId').value = id;
-        document.getElementById('deleteSiriForm').submit();
-    }
-}
-</script>
+<?php
+$pm_siri_js_v = @filemtime(__DIR__ . '/pic_siri.js') ?: time();
+?>
+<script src="pic_siri.js?v=<?= $pm_siri_js_v ?>"></script>
 
 </main>
 </body>

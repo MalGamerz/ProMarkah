@@ -1,0 +1,546 @@
+/* pic_directory.css — the PIC "Direktori" page (pic_directory.php). Split
+   out of that file's inline <style> block, which had nothing to do with
+   the PHP rendering logic around it. */
+
+/* ── DIRECTORY PAGE ──────────────────────────────────────────── */
+
+/* ── Tabs ── */
+.dir-tabs-desktop {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--c-surface-1);
+    border: 1px solid var(--c-border);
+    border-radius: 10px;
+    padding: 5px;
+    flex-wrap: wrap;
+}
+.dir-tabs-mobile { display: none; }
+.dir-tab {
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--c-text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}
+.dir-tab:hover { background: var(--c-surface-2); color: var(--c-white); }
+.dir-tab.active {
+    background: var(--c-red);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(214,40,40,0.35);
+}
+.dir-tab svg {
+    width: 15px; height: 15px;
+    stroke: currentColor; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+/* ── Filter bar ── */
+.dir-filter-wrap {
+    background: var(--c-surface-1);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 10px;
+    margin-bottom: 18px;
+    /* No overflow:hidden here — it used to clip the dd-panel dropdown,
+       which opens below its trigger via position:absolute and is outside
+       this container's normal-flow height. The mobile collapse toggle
+       button below still respects the rounded corners on its own. */
+}
+.dir-filter-toggle {
+    display: none; /* hidden on desktop */
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    color: var(--c-white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+}
+.dir-filter-toggle svg { width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform 0.2s; }
+.dir-filter-toggle.open svg.chevron { transform: rotate(180deg); }
+.dir-filter-body { padding: 16px 20px; }
+/* Same flex-equal-share layout as leaderboard.php's .filter-bar/.filter-col
+   — every field (including the search input) gets an identical flex-basis
+   of 0 with the same flex-grow, so all columns end up exactly the same
+   width no matter how long their label or content is, instead of the old
+   grid's minmax(160px,1fr) tracks drifting uneven widths.
+   NOTE: no overflow-x:auto here (unlike leaderboard.php's .filter-bar) —
+   this component's dropdown panel (.dd-panel) is position:absolute *inside*
+   each .dd-wrap column, not appended to <body> like leaderboard's Select2
+   panels are. Setting overflow-x forces overflow-y non-visible too (CSS
+   spec: the two can't be visible/non-visible mismatched), which clips
+   .dd-panel into a tiny scrollable box instead of letting it drop open
+   normally — that's the "scrolling box" glitch under the search field. */
+.dir-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-end;
+}
+.dir-filter > div {
+    flex: 1 1 0;
+    min-width: 110px;
+}
+.dir-filter label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-text-faint);
+    margin-bottom: 4px;
+}
+.dir-filter input,
+.dir-filter select {
+    background: var(--c-surface-2);
+    border: 1px solid var(--c-border-strong);
+    color: var(--c-white);
+    border-radius: 6px;
+    padding: 0 10px;
+    /* Must match .dd-trigger's *actual* rendered height, which is the
+       global canonical rule in dashboard.css (32px !important) — this
+       page's own local .dd-trigger{height:38px} below is dead, silently
+       overridden by that !important, so 38px here looked right on paper
+       but was visibly taller than the real dropdowns. */
+    height: 32px;
+    font-size: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.dir-filter input:focus, .dir-filter select:focus {
+    border-color: var(--c-red);
+    box-shadow: 0 0 0 3px var(--c-red-dim);
+}
+.dir-filter input::placeholder { color: var(--c-text-faint); }
+.dir-filter select option { background: var(--c-surface-2); color: var(--c-white); }
+
+/* ── Cari Pelajar autocomplete — live name suggestions while typing,
+   same visual pattern as pic_master_list.php's Carian Nama dropdown.
+   Unlike that one (readonly trigger, click-to-open, type-inside-the-box),
+   this one is typed into directly — the field itself IS the form's
+   name="search" input, so no separate hidden field/sync step is needed. ── */
+.name-dropdown-wrapper { position: relative; }
+.name-dropdown-box {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--c-surface-2);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 6px;
+    z-index: 100;
+    max-height: 220px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    display: none;
+}
+.name-dropdown-box.open { display: block; }
+.name-dropdown-box .dd-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--c-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.name-dropdown-box .dd-option:hover,
+.name-dropdown-box .dd-option.selected {
+    background: var(--c-red-dim);
+    color: var(--c-red);
+}
+.name-dropdown-box .dir-name-empty {
+    /* Own class, not .dd-empty — that name is already used by the
+       unrelated dd-panel system further down with display:none baked in,
+       which would leak into (and hide) this element too since this rule
+       never redeclares display. */
+    display: block;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    color: var(--c-text-faint);
+    text-align: center;
+}
+html.pm-light .name-dropdown-box { background: #fff; border-color: var(--c-gray-300); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+html.pm-light .name-dropdown-box .dd-option { color: #111; }
+
+/* ── Section (accordion) ── */
+.dir-section {
+    background: var(--c-surface-1);
+    border: 1px solid var(--c-border);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.dir-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.dir-section-header:hover { background: var(--c-surface-2); }
+.dir-section-icon {
+    width: 34px; height: 34px;
+    background: var(--c-red-dim);
+    border: 1px solid var(--c-red-border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.dir-section-icon svg {
+    width: 16px; height: 16px;
+    stroke: var(--c-red); fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.dir-section-info { flex: 1; min-width: 0; }
+.dir-section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+    color: var(--c-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dir-section-meta {
+    font-size: 0.75rem;
+    color: var(--c-text-faint);
+    font-weight: 400;
+    font-family: 'DM Sans', sans-serif;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dir-section-badge {
+    background: var(--c-red-dim);
+    border: 1px solid var(--c-red-border);
+    color: var(--c-red);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.dir-section-arrow {
+    color: var(--c-text-faint);
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+.dir-section-body { display: none; }
+
+/* ── PAGINATION: shared .vm-pagination styles now live once in
+   dashboard.css (loaded by layout.php), used by every paginated page. ── */
+
+/* ── Group card ── */
+.dir-group-card {
+    margin: 0 14px 12px;
+    background: var(--c-surface-0);
+    border: 1px solid var(--c-border);
+    border-left: 3px solid var(--c-red);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.dir-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(214,40,40,0.04);
+    border-bottom: 1px solid var(--c-border);
+    flex-wrap: wrap;
+}
+.dir-group-name {
+    font-weight: 700;
+    color: var(--c-white);
+    font-size: 0.9rem;
+    flex: 1;
+    min-width: 100px;
+}
+.dir-group-judge {
+    font-size: 0.78rem;
+    color: var(--c-text-faint);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    /* .dir-group-name (flex:1) absorbs all leftover row width, so this and
+       the "N pelajar" badge after it effectively sit right-anchored — but a
+       longer judge name pushes that badge further left than a short one,
+       leaving the badge column ragged card to card. Fixed width keeps it
+       (and everything after it) starting at the same X regardless of the
+       judge's name length. */
+    min-width: 130px;
+}
+.dir-group-judge svg {
+    width: 12px; height: 12px;
+    stroke: var(--c-red); fill: none; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+/* ── Student list ── */
+.dir-student-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+    padding: 10px 12px 12px;
+}
+.dir-student-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--c-surface-1);
+    border: 1px solid var(--c-border);
+    border-radius: 6px;
+    font-size: 0.83rem;
+    color: var(--c-text-muted);
+    transition: background 0.14s;
+}
+.dir-student-chip:hover { background: var(--c-surface-2); color: var(--c-white); }
+.dir-student-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.dir-student-no {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--c-text-faint);
+    background: var(--c-surface-2);
+    border-radius: 4px;
+    padding: 1px 5px;
+    min-width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.dir-gender-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+.dir-gender-m { background: rgba(96,165,250,0.15); color: #93C5FD; border: 1px solid rgba(96,165,250,0.2); }
+.dir-gender-f { background: rgba(244,114,182,0.15); color: #F9A8D4; border: 1px solid rgba(244,114,182,0.2); }
+
+/* ── Judge cards (Tab 2) ── */
+.dir-judge-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--c-border);
+}
+.dir-judge-card:last-child { border-bottom: none; }
+.dir-judge-avatar {
+    width: 38px; height: 38px;
+    background: var(--c-surface-2);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.dir-judge-name {
+    font-weight: 700;
+    color: var(--c-white);
+    font-size: 0.9rem;
+    margin-bottom: 3px;
+}
+.dir-judge-detail {
+    font-size: 0.8rem;
+    color: var(--c-text-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.dir-judge-pill {
+    background: var(--c-surface-2);
+    border: 1px solid var(--c-border);
+    color: var(--c-text-muted);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    text-align: center;
+    /* .dir-group-name (flex:1) fills whatever space these pills don't take,
+       so a card with a short Sidang/Peringkat name shifts this whole pill
+       group further right than one with a long name — fixed width keeps
+       each pill's column starting position consistent card to card. */
+    min-width: 84px;
+}
+
+/* ── Empty state ── */
+.dir-empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--c-text-faint);
+    font-size: 0.9rem;
+}
+.dir-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+/* ── Summary bar ── */
+.dir-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    background: var(--c-surface-1);
+    border: 1px solid var(--c-border);
+    border-radius: 8px;
+    margin-bottom: 18px;
+    font-size: 0.83rem;
+    color: var(--c-text-muted);
+}
+.dir-summary-item { display: flex; align-items: center; gap: 6px; }
+.dir-summary-val { font-family: 'DM Mono', monospace; color: var(--c-white); font-size: 1rem; font-weight: 700; }
+.dir-print-btn { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+    /* Tabs stack vertically */
+    .dir-tabs-desktop { flex-direction: column; gap: 3px; margin-bottom: 16px; }
+    .dir-tab { flex: unset; width: 100%; justify-content: flex-start; }
+
+    /* Collapsible filter on mobile */
+    .dir-filter-toggle { display: flex; }
+    .dir-filter-body { padding: 0 16px 16px; }
+    .dir-filter-body.collapsed { display: none; }
+
+    .dir-filter { gap: 10px; }
+    .dir-filter > div { flex: 1 1 100%; min-width: 0; }
+
+    /* Sections: tighter */
+    .dir-section-header { padding: 12px 14px; gap: 10px; }
+    .dir-section-icon { width: 30px; height: 30px; }
+    .dir-section-icon svg { width: 14px; height: 14px; }
+    .dir-section-title { font-size: 0.95rem; }
+    .dir-section-badge { display: none; } /* badge shown in meta on mobile */
+    .dir-section-meta::after { content: ''; }
+
+    /* Group cards */
+    .dir-group-card { margin: 0 10px 10px; }
+    .dir-group-header { padding: 8px 12px; gap: 6px; }
+    .dir-group-judge { display: none; } /* save space */
+
+    /* Student grid: 1 column on small phones */
+    .dir-student-list { grid-template-columns: 1fr; padding: 8px 10px 10px; gap: 4px; }
+
+    /* Summary */
+    .dir-summary { padding: 8px 12px; gap: 10px; }
+    .dir-print-btn { display: none; } /* hide print on mobile */
+
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    .dir-filter > div { flex: 1 1 calc(50% - 8px); }
+    .dir-student-list { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+}
+
+@media print {
+    .pm-sidebar, .pm-header, .dir-tabs-desktop, .dir-tabs-mobile,
+    .dir-filter-wrap, .dir-print-btn, .vm-pagination,
+    .pm-backdrop, .pm-overlay { display: none !important; }
+    .pm-main { margin-left: 0 !important; padding: 16px !important; }
+    .dir-section-body { display: block !important; }
+    .dir-section { break-inside: avoid; }
+    .dir-group-card { break-inside: avoid; }
+}
+
+/* ── Searchable dropdown (avoids native <select> popup — Chromium/GPU
+   renders the OS listbox solid black for a moment before painting) ── */
+.dd-wrap { position: relative; }
+.dd-trigger{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    /* dashboard.css's canonical .dd-trigger rule overrides this with
+       height:32px !important — kept in sync here so this local copy isn't
+       misleading about the actual rendered size. */
+    height:32px;
+    box-sizing:border-box;
+    width:100%;
+    padding:0 10px;
+    background:var(--c-surface-2);
+    border:1px solid var(--c-border-strong);
+    border-radius:6px;
+    color:var(--c-white);
+    font-size:.8rem;
+    cursor:pointer;
+    user-select:none;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.dd-trigger:hover{ border-color:var(--c-red); }
+.dd-trigger.open{ border-color:var(--c-red); box-shadow:0 0 0 3px var(--c-red-dim); }
+.dd-trigger .dd-arrow { color: var(--c-text-faint); font-size: 0.7rem; transition: transform .2s; }
+.dd-trigger.open .dd-arrow { transform: rotate(180deg); }
+
+.dd-panel{
+    display:none;
+    position:absolute;
+    top:calc(100% + 6px);
+    left:0;
+    right:0;
+    background:var(--c-surface-2);
+    border:1px solid var(--c-red);
+    border-radius:8px;
+    overflow:hidden;
+    z-index:999;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+}
+.dd-panel.open{ display:block; }
+.dd-search-box { padding: 8px; border-bottom: 1px solid var(--c-border-strong); }
+.dd-search-box input {
+    width: 100%; background: var(--c-surface-0); border: 1px solid var(--c-border-strong);
+    color: var(--c-white); border-radius: 4px; padding: 6px 8px; font-size: 0.8rem;
+    outline: none; box-sizing: border-box; transition: border-color .2s;
+}
+.dd-search-box input:focus { border-color: var(--c-red); }
+.dd-search-box input::placeholder { color: var(--c-text-faint); }
+.dd-options { max-height: 220px; overflow-y: auto; scrollbar-width: thin; }
+.dd-opt { padding: 9px 12px; font-size: 0.875rem; color: var(--c-white); cursor: pointer; transition: background .1s; }
+.dd-opt:hover { background: var(--c-surface-3); }
+.dd-opt.selected { color: var(--c-red); font-weight: 600; }
+.dd-opt.hidden { display: none; }
+.dd-empty { padding: 10px 12px; color: var(--c-text-faint); font-size: 0.82rem; display: none; text-align: center; }
+
+html.pm-light .dd-trigger { background: var(--c-gray-50); border-color: var(--c-gray-300); color: #111; }
+html.pm-light .dd-panel { background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+html.pm-light .dd-search-box { border-bottom-color: var(--c-gray-200); }
+html.pm-light .dd-search-box input { background: var(--c-gray-50); border-color: var(--c-gray-300); color: #111; }
+html.pm-light .dd-opt { color: #111; }
+html.pm-light .dd-opt:hover { background: var(--c-gray-100); }
+/* Cari Pelajar text input was left on its dark-theme surface colour in
+   light mode (no override existed here, unlike .dd-trigger just above),
+   so it read as a greyed-out/disabled box next to the properly-themed
+   dropdown triggers beside it. */
+html.pm-light .dir-filter input { background: var(--c-gray-50); border-color: var(--c-gray-300); color: #111; }
+html.pm-light .dir-filter input::placeholder { color: var(--c-gray-400); }

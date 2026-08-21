@@ -114,23 +114,7 @@ function updateGroupsPagination() {
     const e = Math.min(end, total);
     info.innerHTML = `Memaparkan <b>${s}–${e}</b> daripada <b>${total}</b> cawangan`;
 
-    let html = `<button class="vm-page-btn" ${groupsCurrentPage === 1 ? 'disabled' : ''} onclick="groupsGoToPage(${groupsCurrentPage - 1})">&laquo;</button>`;
-    let sp = Math.max(1, groupsCurrentPage - 2);
-    let ep = Math.min(totalPages, sp + 4);
-    if (ep - sp < 4) sp = Math.max(1, ep - 4);
-    if (sp > 1) {
-        html += `<button class="vm-page-btn" onclick="groupsGoToPage(1)">1</button>`;
-        if (sp > 2) html += `<span class="vm-page-ellipsis">&hellip;</span>`;
-    }
-    for (let i = sp; i <= ep; i++) {
-        html += `<button class="vm-page-btn ${i === groupsCurrentPage ? 'vm-page-active' : ''}" onclick="groupsGoToPage(${i})">${i}</button>`;
-    }
-    if (ep < totalPages) {
-        if (ep < totalPages - 1) html += `<span class="vm-page-ellipsis">&hellip;</span>`;
-        html += `<button class="vm-page-btn" onclick="groupsGoToPage(${totalPages})">${totalPages}</button>`;
-    }
-    html += `<button class="vm-page-btn" ${groupsCurrentPage === totalPages ? 'disabled' : ''} onclick="groupsGoToPage(${groupsCurrentPage + 1})">&raquo;</button>`;
-    btns.innerHTML = html;
+    pmRenderPagination(btns, groupsCurrentPage, totalPages, groupsGoToPage);
 }
 
 function groupsGoToPage(page) {

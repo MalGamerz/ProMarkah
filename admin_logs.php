@@ -104,73 +104,10 @@ $pm_page = 'admin_logs';
 include 'layout.php';
 ?>
 
-<style>
-    .ap-wrap { 
-        padding: var(--sp-6); 
-        max-width: 100%; /* Updated to fill the screen */ 
-        display: flex; 
-        flex-direction: 
-        column; gap: var(--sp-6); 
-        
-    }
-
-    .ap-tabnav { display: flex; gap: 4px; border-bottom: 1px solid var(--c-border); flex-wrap: wrap; }
-    .ap-tab { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; font-size: var(--text-sm); font-weight: 600; font-family: 'DM Sans', sans-serif; color: var(--c-text-faint); border: 1px solid transparent; border-bottom: none; border-radius: var(--radius-sm) var(--radius-sm) 0 0; text-decoration: none; transition: color var(--fast) var(--ease), background var(--fast) var(--ease); position: relative; bottom: -1px; }
-    .ap-tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-    .ap-tab:hover { color: var(--c-text); }
-    .ap-tab.active { color: var(--c-text); background: var(--c-surface-1); border-color: var(--c-border); border-bottom-color: var(--c-surface-1); }
-
-    .ap-page-title h1 { font-family: 'Bebas Neue', sans-serif; font-size: var(--text-2xl); color: var(--c-text); letter-spacing: 0.04em; margin: 0 0 2px; }
-    .ap-page-title p { font-size: var(--text-sm); color: var(--c-text-faint); margin: 0; }
-
-    .ap-flash { border-radius: var(--radius-sm); padding: var(--sp-3) var(--sp-4); font-size: var(--text-sm); font-weight: 500; }
-    .ap-flash.success { background: rgba(255,255,255,0.06); border: 1px solid var(--c-border); color: var(--c-text-muted); }
-    .ap-flash.error { background: rgba(204,0,0,0.10); border: 1px solid rgba(204,0,0,0.30); color: #ff6b6b; }
-
-    .ap-card { background: var(--c-surface-1); border: 1px solid var(--c-border); border-radius: var(--radius-lg); overflow: hidden; }
-    .ap-card-head { padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--c-border); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
-    .ap-card-head-left { display: flex; align-items: center; gap: var(--sp-3); }
-    .ap-card-head h2 { font-family: 'Bebas Neue', sans-serif; font-size: var(--text-md); color: var(--c-text); letter-spacing: 0.06em; margin: 0; }
-    .ap-card-head svg { width: 16px; height: 16px; color: var(--c-red); stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-    .ap-card-body { padding: var(--sp-5); }
-
-    /* System stat grid */
-    .sys-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); }
-    @media (max-width: 680px) { .sys-grid { grid-template-columns: repeat(2, 1fr); } }
-
-    .sys-stat { background: var(--c-surface-2); border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: var(--sp-3) var(--sp-4); }
-    .sys-stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; line-height: 1; color: var(--c-text); }
-    .sys-stat-label { font-size: 10px; color: var(--c-text-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
-
-    /* Login frequency bars */
-    .freq-list { display: flex; flex-direction: column; gap: var(--sp-3); }
-    .freq-row { display: flex; align-items: center; gap: var(--sp-3); }
-    .freq-label { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--c-text-muted); width: 70px; flex-shrink: 0; }
-    .freq-bar-wrap { flex: 1; background: var(--c-surface-2); border-radius: 99px; height: 8px; overflow: hidden; }
-    .freq-bar { height: 100%; background: var(--c-red); border-radius: 99px; transition: width 0.5s ease; min-width: 4px; }
-    .freq-count { font-size: var(--text-xs); color: var(--c-text-faint); width: 40px; text-align: right; flex-shrink: 0; }
-
-    /* Top students */
-    .ap-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
-    .ap-table th { text-align: left; padding: var(--sp-3) var(--sp-4); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--c-text-faint); border-bottom: 1px solid var(--c-border); font-weight: 500; }
-    .ap-table td { padding: var(--sp-3) var(--sp-4); color: var(--c-text-muted); border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
-    .ap-table tr:last-child td { border-bottom: none; }
-    .ap-table tbody tr:hover td { background: rgba(255,255,255,0.015); }
-
-    /* Log table specifics */
-    .log-ip { font-family: 'DM Mono', monospace; font-size: var(--text-xs); color: var(--c-text-faint); }
-    .log-time { font-size: var(--text-xs); color: var(--c-text-faint); white-space: nowrap; }
-
-    /* .role-badge and its role variants now live in dashboard.css — shared with admin.php */
-
-    .btn-sm-ghost { background: transparent; color: var(--c-text-faint); border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: 5px 12px; font-size: var(--text-xs); font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all var(--fast) var(--ease); line-height: 1.4; }
-    .btn-sm-ghost:hover { border-color: var(--c-border-strong); color: var(--c-text); }
-
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
-    @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
-
-    .log-note { font-size: var(--text-xs); color: var(--c-text-faint); padding: var(--sp-3) var(--sp-5); border-top: 1px solid var(--c-border); }
-</style>
+<?php
+$pm_alog_css_v = @filemtime(__DIR__ . '/admin_logs.css') ?: time();
+?>
+<link rel="stylesheet" href="admin_logs.css?v=<?= $pm_alog_css_v ?>">
 
 <div class="ap-wrap">
 

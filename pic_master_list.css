@@ -1,0 +1,281 @@
+    /* ── TABLE HEADER: theme-aware, no hardcoded dark ── */
+    /* Matches the canonical .pm-table th (dashboard.css) — Bebas Neue here
+       made this page's table read bigger than the rest of the app. */
+    .master-table th {
+        background: var(--c-surface-2) !important;
+        color: var(--c-text-muted) !important;
+        font-family: 'DM Sans', sans-serif;
+        font-size: var(--text-xs) !important;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border: none !important;
+        box-shadow: 0 2px 0 var(--c-red);
+        white-space: nowrap;
+    }
+
+    /* ── TABLE CELLS: use theme text colors ── */
+    .master-table td {
+        vertical-align: middle !important;
+        border-bottom: 1px solid var(--c-border);
+        color: var(--c-text);
+    }
+
+    .master-table td .student-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 0.3px;
+        color: var(--c-text);
+    }
+
+    .master-table td .year-val {
+        font-weight: 600;
+        color: var(--c-text);
+    }
+
+    .master-table td .mark-pill {
+        background: var(--c-surface-0);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-text);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 1rem;
+        font-family: "DM Mono", monospace;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .master-table td .mark-pct {
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--c-text-faint);
+    }
+
+    .master-table td .session-badge {
+        background: rgba(214,40,40,0.15);
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: var(--c-red);
+        font-weight: 600;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        display: inline-block;
+    }
+
+    /* ── TABLE SCROLL: height is set dynamically in JS
+       (fitMasterListHeight) so it always leaves room for the pagination bar
+       below it instead of a static calc(100vh - Npx) that goes stale
+       whenever the filter UI above the table changes height. ── */
+    .table-scroll-wrapper {
+        overflow-y: auto;
+        position: relative;
+        scrollbar-width: thin;
+        scrollbar-color: var(--c-surface-3) transparent;
+    }
+    @media (max-width: 640px) {
+        .table-scroll-wrapper { max-height: none !important; overflow-y: visible !important; }
+    }
+
+    /* ── PAGINATION: shared .vm-pagination styles now live once in
+       dashboard.css (loaded by layout.php), used by every paginated page. ── */
+
+    /* ── FILTER FORM ── */
+    #masterFilterForm label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--c-text-faint);
+        margin-bottom: 5px;
+    }
+
+    #masterFilterForm input,
+    #masterFilterForm select {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-text);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-size: 0.875rem;
+        font-family: 'DM Sans', sans-serif;
+        outline: none;
+        width: 100%;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #masterFilterForm input:focus,
+    #masterFilterForm select:focus {
+        border-color: var(--c-red);
+        box-shadow: 0 0 0 3px var(--c-red-dim);
+    }
+
+    #masterFilterForm input::placeholder {
+        color: var(--c-text-faint);
+    }
+
+    /* ── SEARCHABLE DROPDOWN ──
+       #nameDropdownTrigger uses the shared .dd-trigger class (dashboard.css)
+       directly instead of a hand-rolled .pm-input style, so it's pixel-
+       identical (height:32px, padding, font-size, colors — all !important
+       there) to the other 5 filters on this form, which all render through
+       renderMasterDD()'s .dd-trigger markup. That component's arrow is
+       normally a flex child of .dd-trigger; an <input> can't render a real
+       child, so this arrow is a sibling span instead, absolutely positioned
+       to land in the same visual spot. */
+    .name-dropdown-wrapper {
+        position: relative;
+    }
+    .name-dropdown-wrapper #nameDropdownTrigger {
+        padding-right: 28px !important; /* clears the arrow so text can't run under it */
+    }
+    .name-dropdown-wrapper > .dd-arrow {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--c-text-faint);
+        font-size: 0.65rem;
+        pointer-events: none;
+        transition: transform .2s;
+    }
+    .name-dropdown-wrapper:has(.name-dropdown-box.open) > .dd-arrow {
+        transform: translateY(-50%) rotate(180deg);
+    }
+
+    .name-dropdown-box {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        border-radius: 6px;
+        z-index: 100;
+        max-height: 220px;
+        overflow-y: auto;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        display: none;
+    }
+
+    .name-dropdown-box.open { display: block; }
+
+    .name-dropdown-box .dd-search {
+        position: sticky;
+        top: 0;
+        background: var(--c-surface-2);
+        padding: 8px;
+        border-bottom: 1px solid var(--c-border);
+    }
+
+    .name-dropdown-box .dd-search input {
+        width: 100%;
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--c-border-strong);
+        background: var(--c-surface-1);
+        color: var(--c-text);
+        font-size: 0.85rem;
+        outline: none;
+    }
+
+    .name-dropdown-box .dd-option {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: var(--c-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .name-dropdown-box .dd-option:hover,
+    .name-dropdown-box .dd-option.selected {
+        background: var(--c-red-dim);
+        color: var(--c-red);
+    }
+
+    .name-dropdown-box .dd-empty {
+        padding: 12px;
+        font-size: 0.85rem;
+        color: var(--c-text-faint);
+        text-align: center;
+    }
+    
+    @media (max-width: 768px) {
+        .master-table th,
+        .master-table td { font-size: 0.75rem; padding: 6px 8px; }
+        .master-table td .student-name { font-weight: 600; font-size: 0.85rem; }
+        .master-table td .mark-pill { font-size: 0.8rem; padding: 3px 8px; }
+        .pm-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+
+    /* ── Searchable dropdown (avoids native <select> popup — Chromium/GPU
+       renders the OS listbox solid black for a moment before painting) ── */
+    .dd-wrap { position: relative; }
+    .dd-trigger{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        height:46px;
+        box-sizing:border-box;
+        width:100%;
+        padding:0 14px;
+        background:var(--c-surface-2);
+        border:1px solid var(--c-border-strong);
+        border-radius:8px;
+        color:var(--c-white);
+        font-size:.875rem;
+        cursor:pointer;
+        user-select:none;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    .dd-trigger:hover{ border-color:var(--c-red); }
+    .dd-trigger.open{ border-color:var(--c-red); box-shadow:0 0 0 3px var(--c-red-dim); }
+    .dd-trigger.dd-trigger-disabled{ opacity:.5; cursor:not-allowed; }
+    .dd-trigger .dd-arrow { color: var(--c-text-faint); font-size: 0.7rem; transition: transform .2s; }
+    .dd-trigger.open .dd-arrow { transform: rotate(180deg); }
+
+    .dd-panel{
+        display:none;
+        position:absolute;
+        top:calc(100% + 6px);
+        left:0;
+        right:0;
+        background:var(--c-surface-2);
+        border:1px solid var(--c-red);
+        border-radius:8px;
+        overflow:hidden;
+        z-index:999;
+        box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .dd-panel.open{ display:block; }
+    .dd-search-box { padding: 8px; border-bottom: 1px solid var(--c-border-strong); }
+    .dd-search-box input {
+        width: 100%; background: var(--c-surface-0); border: 1px solid var(--c-border-strong);
+        color: var(--c-white); border-radius: 4px; padding: 6px 8px; font-size: 0.8rem;
+        outline: none; box-sizing: border-box; transition: border-color .2s;
+    }
+    .dd-search-box input:focus { border-color: var(--c-red); }
+    .dd-search-box input::placeholder { color: var(--c-text-faint); }
+    .dd-options { max-height: 220px; overflow-y: auto; scrollbar-width: thin; }
+    .dd-opt { padding: 9px 12px; font-size: 0.875rem; color: var(--c-white); cursor: pointer; transition: background .1s; }
+    .dd-opt:hover { background: var(--c-surface-3); }
+    .dd-opt.selected { color: var(--c-red); font-weight: 600; }
+    .dd-opt.hidden { display: none; }
+    .dd-empty { padding: 10px 12px; color: var(--c-text-faint); font-size: 0.82rem; display: none; text-align: center; }
+
+    html.pm-light .dd-trigger { background: var(--c-gray-50); border-color: var(--c-gray-300); color: #111; }
+    html.pm-light .dd-panel { background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    html.pm-light .dd-search-box { border-bottom-color: var(--c-gray-200); }
+    html.pm-light .dd-search-box input { background: var(--c-gray-50); border-color: var(--c-gray-300); color: #111; }
+    html.pm-light .dd-opt { color: #111; }
+    html.pm-light .dd-opt:hover { background: var(--c-gray-100); }

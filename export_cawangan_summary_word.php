@@ -42,36 +42,10 @@ header("Expires: 0");
         </w:WordDocument>
     </xml>
     <![endif]-->
-    <style>
-        /* Landscape A4 for Word specifically — the plain CSS `@page {size:
-           ... landscape}` a browser/PDF export reads is NOT reliably
-           honored by Word's HTML importer for orientation. This named
-           "Section1" page + div.Section1{page:Section1} pairing is the
-           actual mechanism Word's importer looks for (mso-page-orientation
-           is the property that matters; `size` here just gives the
-           matching landscape dimensions in points). */
-        @page Section1 {
-            size: 842.0pt 595.0pt;
-            mso-page-orientation: landscape;
-            margin: 1.5cm;
-        }
-        div.Section1 { page: Section1; }
-
-        /* Same font/format as the PDF export (export_cawangan_summary_pdf.php)
-           — kept identical on purpose so Word/PDF read as the same report. */
-        body { font-family: Arial, sans-serif; color: #000; text-align: justify; line-height: 1.5; }
-        .title { text-align: center; font-weight: bold; font-size: 15pt; text-transform: uppercase; margin-bottom: 24px; }
-        /* page-break-after:avoid keeps a heading glued to whatever follows
-           it — without this a heading can land alone at the bottom of a
-           page while its first table gets pushed to the next one. */
-        h3 { font-size: 12pt; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 3px; margin-top: 28px; page-break-after: avoid; }
-        table { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin-bottom: 20px; }
-        th, td { border: 1px solid #000; padding: 6px 9px; text-align: left; vertical-align: top; }
-        th { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9.5pt; }
-        /* One <table> per cawangan (see pm_render_grouped_tables) — tight
-           spacing so a run of them still reads as one continuous list. */
-        .pm-cawangan-table { margin-bottom: 2px; page-break-inside: avoid; }
-    </style>
+<?php
+$pm_ecsw_css_v = @filemtime(__DIR__ . '/export_cawangan_summary_word.css') ?: time();
+?>
+<link rel="stylesheet" href="export_cawangan_summary_word.css?v=<?= $pm_ecsw_css_v ?>">
 </head>
 <body>
     <div class="Section1">

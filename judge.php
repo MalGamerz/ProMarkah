@@ -385,7 +385,7 @@ if (($_GET['status'] ?? '') === 'success') {
                         echo "<div class='pm-accordion-block' data-session='" . strtolower(htmlspecialchars($sessionName)) . "'>";
 
                         // Enhanced Accordion Header
-                        echo "<div class='pm-accordion-header' onclick=\"toggleSummaryAccordion('{$sidHash}')\" id='header_{$sidHash}'>";
+                        echo "<div class='pm-accordion-header' onclick=\"toggleSummaryAccordion('{$sidHash}')\" id='header_{$sidHash}' role='button' tabindex='0'>";
                         echo "<div class='pm-accordion-header-left'>";
                         echo "<span class='pm-accordion-arrow' id='arrow_{$sidHash}'>▶</span>";
                         
@@ -515,21 +515,38 @@ if (($_GET['status'] ?? '') === 'success') {
                         // Peringkat this judge already has a group in surface
                         // first — see the matching ajax_levels endpoint in
                         // judge_ajax.php for why.
+                        // mine_total/mine_done = how many of the judge's own
+                        // groups in this Peringkat exist vs. already have
+                        // submitted marks — shown as a plain "(done/total)"
+                        // fraction so partial progress is just as visible as
+                        // a fully-marked Peringkat, no separate done/not-done
+                        // state needed.
                         $lvlStmt = $conn->prepare(
-                            "SELECT l.*, EXISTS(
-                                SELECT 1 FROM `groups` g WHERE g.level_id = l.level_id AND g.judge_id = ?
-                             ) AS is_mine
+                            "SELECT l.*,
+                                (SELECT COUNT(*) FROM `groups` g
+                                  WHERE g.level_id = l.level_id AND g.judge_id = ?) AS mine_total,
+                                (SELECT COUNT(*) FROM `groups` g
+                                  WHERE g.level_id = l.level_id AND g.judge_id = ?
+                                    AND EXISTS(SELECT 1 FROM scores s WHERE s.group_id = g.group_id AND s.submitted = 1)
+                                ) AS mine_done
                              FROM levels l
                              WHERE l.session_id = ?
-                             ORDER BY is_mine DESC, l.level_name ASC"
+                             ORDER BY (mine_total > 0) DESC,
+                                      (mine_total > 0 AND mine_done = mine_total) ASC,
+                                      l.level_name ASC"
                         );
-                        $lvlStmt->bind_param("ii", $judge_id, $current_session);
+                        $lvlStmt->bind_param("iii", $judge_id, $judge_id, $current_session);
                         $lvlStmt->execute();
                         $levels = $lvlStmt->get_result();
                         while ($l = $levels->fetch_assoc()) {
                             $sel = $current_level == $l["level_id"] ? "selected" : "";
                             $lvlLabel = htmlspecialchars($l["level_name"]);
-                            if ($l["is_mine"]) { $lvlLabel = "★ " . $lvlLabel; }
+                            if ($l["mine_total"] > 0) {
+                                $progress = ($l["mine_done"] == $l["mine_total"])
+                                    ? "✅"
+                                    : "{$l["mine_done"]}/{$l["mine_total"]}";
+                                $lvlLabel = "★ " . $lvlLabel . " ({$progress})";
+                            }
                             echo "<option value='{$l["level_id"]}' $sel>{$lvlLabel}</option>";
                         }
                         $lvlStmt->close();
@@ -595,9 +612,19 @@ if (($_GET['status'] ?? '') === 'success') {
                             ];
                         }
 
-                        // Unmarked groups first, already-marked groups last.
+                        // Own groups surface first, then unmarked before
+                        // marked, then fully-locked sinks to the bottom —
+                        // must match the ajax_groups priority in
+                        // judge_ajax.php exactly, or the Kumpulan order
+                        // flips depending on whether the page loaded fresh
+                        // (this path) or via the Peringkat dropdown (ajax
+                        // path), which is what made it look random.
                         usort($gRows, function ($a, $b) {
+                            if ($a['own'] !== $b['own']) return $b['own'] <=> $a['own'];
                             if ($a['has_marks'] !== $b['has_marks']) return $a['has_marks'] <=> $b['has_marks'];
+                            $aDisabled = $a['disabled'] !== '';
+                            $bDisabled = $b['disabled'] !== '';
+                            if ($aDisabled !== $bDisabled) return $aDisabled <=> $bDisabled;
                             return 0;
                         });
 
@@ -1083,82 +1110,6 @@ if ($marking_active && $current_session && $current_group) {
         }
 
         echo "
-        <style>
-            .pm-modal-overlay {
-                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                background: rgba(0,0,0,0.65); backdrop-filter: blur(3px);
-                z-index: 9999; display: none; align-items: center; justify-content: center;
-                opacity: 0; transition: opacity 0.18s ease;
-            }
-            .pm-modal-overlay.show { opacity: 1; }
-            .pm-modal-box {
-                background: var(--c-surface-1); border: 1px solid var(--c-border-strong);
-                border-radius: 10px; width: 100%; max-width: 480px;
-                box-shadow: 0 10px 36px rgba(0,0,0,0.55);
-                transform: translateY(14px); transition: transform 0.18s ease;
-                overflow: hidden;
-            }
-            .pm-modal-overlay.show .pm-modal-box { transform: translateY(0); }
-            .pm-modal-header {
-                display: flex; align-items: center; justify-content: space-between;
-                padding: 12px 16px 11px;
-                border-bottom: 1px solid var(--c-border-strong);
-                background: var(--c-surface-2);
-            }
-            .pm-modal-title {
-                font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem;
-                color: var(--c-white); letter-spacing: 0.06em;
-                border-left: 3px solid var(--c-red); padding-left: 8px;
-                line-height: 1.2;
-            }
-            .pm-modal-close-btn {
-                background: none; border: none; color: var(--c-text-muted);
-                font-size: 1.1rem; cursor: pointer; padding: 0 2px; line-height: 1;
-                transition: color 0.15s;
-            }
-            .pm-modal-close-btn:hover { color: var(--c-red); }
-            .pm-modal-body { padding: 14px 16px; }
-            .pm-modal-grid {
-                display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-            }
-            .pm-modal-field label {
-                display: block; font-size: 0.68rem; font-weight: 700;
-                text-transform: uppercase; letter-spacing: 0.08em;
-                color: var(--c-text-muted); margin-bottom: 5px;
-            }
-            .pm-modal-field select, .pm-modal-field input.pm-modal-new-input {
-                width: 100%; background: var(--c-surface-2);
-                border: 1px solid var(--c-border-strong);
-                border-radius: 6px; padding: 7px 10px;
-                color: var(--c-text); font-size: 0.82rem;
-                outline: none; transition: border-color 0.15s, box-shadow 0.15s;
-                appearance: auto;
-                box-sizing: border-box;
-            }
-            .pm-modal-field select:focus, .pm-modal-field input.pm-modal-new-input:focus {
-                border-color: var(--c-red);
-                box-shadow: 0 0 0 2px var(--c-red-dim);
-            }
-            .pm-modal-field input.pm-modal-new-input {
-                margin-top: 6px;
-            }
-            .pm-modal-field select:disabled {
-                opacity: 0.45; cursor: not-allowed;
-            }
-            .pm-modal-hint {
-                margin-top: 10px; font-size: 0.75rem; color: var(--c-text-muted);
-                background: var(--c-surface-2); border-left: 2px solid #eab308;
-                padding: 7px 10px; border-radius: 0 5px 5px 0;
-            }
-            .pm-modal-actions {
-                display: flex; gap: 8px; justify-content: flex-end;
-                padding: 10px 16px 12px; border-top: 1px solid var(--c-border-strong);
-                background: var(--c-surface-2);
-            }
-            .pm-modal-actions .pm-btn {
-                font-size: 0.78rem; padding: 6px 14px; border-radius: 5px;
-            }
-        </style>
 
         <div class='pm-modal-overlay' id='modal-parameter'>
             <div class='pm-modal-box'>
@@ -1196,7 +1147,7 @@ if ($marking_active && $current_session && $current_group) {
         </div>
 
         <div class='pm-modal-overlay' id='modal-missing-marks'>
-            <div class='pm-modal-box' style='max-width:520px;'>
+            <div class='pm-modal-box pm-modal-box--lg'>
                 <div class='pm-modal-header'>
                     <div class='pm-modal-title'>Markah Belum Lengkap</div>
                     <button type='button' class='pm-modal-close-btn' onclick=\"closeModal('modal-missing-marks')\" title='Tutup'>&times;</button>

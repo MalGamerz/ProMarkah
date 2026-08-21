@@ -596,14 +596,14 @@ if ($is_simple_mode) {
 
         <div class="pm-header-actions">
 
-            <button class="pm-theme-toggle" onclick="pmToggleTheme()" data-tip="Tukar Tema">
+            <button class="pm-theme-toggle" onclick="pmToggleTheme()" data-tip="Tukar Tema" aria-label="Tukar tema terang/gelap">
                 <svg class="tt-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                 <svg class="tt-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </button>
 
             <?php if ($pm_role === "pic"): ?>
                 <div class="pm-notif-wrapper">
-                    <button class="pm-icon-btn" id="pm-notif-btn" onclick="pmToggleNotifMenu(event)">
+                    <button class="pm-icon-btn" id="pm-notif-btn" onclick="pmToggleNotifMenu(event)" aria-label="Notifikasi" aria-haspopup="true" aria-expanded="false">
                         <?= pm_icon("bell") ?>
                         <span class="pm-notif-badge" id="pm-notif-badge" style="display:none;">0</span>
                     </button>
@@ -622,7 +622,7 @@ if ($is_simple_mode) {
             <?php endif; ?>
 
             <div class="pm-user-dropdown">
-                <button class="pm-user-chip" id="pm-user-btn" onclick="pmToggleUserMenu(event)">
+                <button class="pm-user-chip" id="pm-user-btn" onclick="pmToggleUserMenu(event)" aria-haspopup="true" aria-expanded="false">
                     <div class="pm-user-avatar">
                         <?php if ($pm_judge_photo): ?>
                             <img src="<?= htmlspecialchars($pm_judge_photo) ?>" alt="" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">
@@ -716,7 +716,7 @@ if ($is_simple_mode) {
                     $isActive = $siriRow["siri_id"] == $activeSiriIdNav;
                     $optLabel = htmlspecialchars($siriRow["siri_name"]) . " (" . htmlspecialchars($siriRow["siri_year"]) . ")";
                     if ($isActive) $activeSiriLabel = $optLabel;
-                    $siriOptionsHtml .= "<div class='pm-siri-dd-opt" . ($isActive ? " selected" : "") . "' data-value='" . (int)$siriRow["siri_id"] . "' onclick=\"pmSiriDdSelect(this)\">{$optLabel}</div>";
+                    $siriOptionsHtml .= "<div class='pm-siri-dd-opt" . ($isActive ? " selected" : "") . "' role='option' tabindex='0' data-value='" . (int)$siriRow["siri_id"] . "' onclick=\"pmSiriDdSelect(this)\">{$optLabel}</div>";
                 }
                 ?>
                 <div class="pm-siri-dd" id="pmSiriDd">
@@ -724,8 +724,8 @@ if ($is_simple_mode) {
                         <span id="pmSiriDdLabel"><?= $activeSiriLabel ?></span>
                         <span class="pm-siri-dd-arrow">▾</span>
                     </button>
-                    <div class="pm-siri-dd-panel" id="pmSiriDdPanel">
-                        <div class="pm-siri-dd-opt<?= $activeSiriIdNav == 0 ? " selected" : "" ?>" data-value="" onclick="pmSiriDdSelect(this)">-- Semua Siri --</div>
+                    <div class="pm-siri-dd-panel" id="pmSiriDdPanel" role="listbox">
+                        <div class="pm-siri-dd-opt<?= $activeSiriIdNav == 0 ? " selected" : "" ?>" role="option" tabindex="0" data-value="" onclick="pmSiriDdSelect(this)">-- Semua Siri --</div>
                         <?= $siriOptionsHtml ?>
                     </div>
                 </div>
@@ -793,290 +793,12 @@ if ($is_simple_mode) {
         <?php if ($pm_role === "pic"): ?>
             <div id="pm-global-toasts"></div>
 
-            <style>
-                #pm-global-toasts {
-                    position: fixed;
-                    top: 90px;
-                    right: 20px;
-                    z-index: 9999;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                    max-width: calc(100vw - 40px);
-                    pointer-events: none;
-                }
-                .pm-toast-notification {
-                    background: var(--c-surface-1);
-                    border-left: 4px solid var(--c-red);
-                    border: 1px solid var(--c-border-strong);
-                    border-left: 4px solid var(--c-red);
-                    border-radius: 8px;
-                    padding: 16px 20px;
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-                    color: var(--c-text);
-                    font-size: 0.92rem;
-                    width: 100%;
-                    min-width: 280px;
-                    max-width: 400px;
-                    backdrop-filter: blur(10px);
-                    pointer-events: auto;
-                    cursor: pointer;
-                    transform: translateX(120%);
-                    opacity: 0;
-                    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-                }
-                .pm-toast-notification.show { transform: translateX(0); opacity: 1; }
-                .pm-toast-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    font-weight: 700;
-                    color: var(--c-text);
-                    margin-bottom: 6px;
-                    font-size: 1rem;
-                    font-family: 'Bebas Neue', sans-serif;
-                    letter-spacing: 0.5px;
-                }
-                .pm-toast-close { color: var(--c-text-faint); font-size: 0.8rem; font-family: sans-serif; }
-
-                /* Bell dropdown notification items */
-                .pm-notif-item {
-                    padding: 10px 14px;
-                    font-size: 0.82rem;
-                    line-height: 1.45;
-                    color: var(--c-text);
-                    border-bottom: 1px solid var(--c-border);
-                    background: var(--c-red-dim);
-                }
-                .pm-notif-item.read {
-                    background: transparent;
-                    color: var(--c-text-muted);
-                }
-                .pm-notif-time {
-                    display: block;
-                    font-size: 0.72rem;
-                    color: var(--c-text-faint);
-                    margin-top: 4px;
-                }
-                .pm-notif-list {
-                    max-height: 320px;
-                    overflow-y: auto;
-                }
-                .pm-notif-empty {
-                    padding: 20px 14px;
-                    color: var(--c-text-faint);
-                    font-size: 0.85rem;
-                    text-align: center;
-                }
-
-                @media (max-width: 480px) {
-                    #pm-global-toasts { top: 75px; right: 16px; left: 16px; max-width: none; }
-                    .pm-toast-notification { min-width: 100%; max-width: 100%; padding: 14px 16px; }
-                }
-            </style>
-
-            <script>
-                // ── State ──────────────────────────────────────────────────
-                let pmPendingIds = [];   // IDs received but not yet marked read
-
-                // ── AJAX Polling Connection (Hostinger Safe) ───────────────
-                // Exponential backoff on failure: stays at 3s while healthy,
-                // but doubles (capped at 60s) on each consecutive failure so a
-                // DB hiccup/outage doesn't turn into indefinite full-speed
-                // hammering. Resets to 3s the moment a request succeeds again.
-                const PM_NOTIF_BASE_DELAY = 3000;
-                const PM_NOTIF_MAX_DELAY  = 60000;
-                let pmNotifFailCount = 0;
-                let pmNotifTimer = null;
-
-                function fetchNotifications() {
-                    pmFetch('check_notifications.php')
-                        .then(response => {
-                            if (!response.ok) throw new Error('Network response was not ok');
-                            return response.json();
-                        })
-                        .then(data => {
-                            pmNotifFailCount = 0;
-                            if (!data || !data.new || !data.messages) return;
-
-                            // Track IDs so we can mark them read later
-                            if (data.unread_ids && data.unread_ids.length) {
-                                pmPendingIds = pmPendingIds.concat(data.unread_ids);
-                            }
-
-                            // Add to bell dropdown
-                            data.messages.forEach(msg => addToNotifList(msg));
-                            updateBadge();
-
-                            // Catchup (missed while offline): show a single grouped toast
-                            if (data.is_catchup) {
-                                const count = data.messages.length;
-                                spawnNotification(`Terdapat <b>${count}</b> markah yang dimasukkan semasa anda tiada dalam talian.`);
-                            } else {
-                                // Live: toast each individually
-                                data.messages.forEach(spawnNotification);
-                            }
-                        })
-                        .catch(error => {
-                            // Silently catch errors so we don't spam the console if the network drops temporarily
-                            // console.log('Notification check failed:', error);
-                            pmNotifFailCount++;
-                        })
-                        .finally(() => {
-                            const delay = Math.min(PM_NOTIF_BASE_DELAY * Math.pow(2, pmNotifFailCount), PM_NOTIF_MAX_DELAY);
-                            pmNotifTimer = setTimeout(fetchNotifications, delay);
-                        });
-                }
-
-                // Pause polling while the tab is hidden, resume (with an
-                // immediate check) when it becomes visible again — no point
-                // hitting the DB every few seconds for a tab nobody is looking at.
-                document.addEventListener('visibilitychange', () => {
-                    if (document.hidden) {
-                        if (pmNotifTimer) clearTimeout(pmNotifTimer);
-                    } else {
-                        if (pmNotifTimer) clearTimeout(pmNotifTimer);
-                        fetchNotifications();
-                    }
-                });
-
-                // Start polling when the script loads
-                fetchNotifications();
-
-                // ── Bell dropdown ──────────────────────────────────────────
-                function addToNotifList(message) {
-                    const list = document.getElementById('pm-notif-list');
-                    // Remove empty placeholder
-                    const empty = list.querySelector('.pm-notif-empty');
-                    if (empty) empty.remove();
-
-                    const item = document.createElement('div');
-                    item.className = 'pm-notif-item';
-                    const now = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
-                    item.innerHTML = `<span>${message}</span><span class="pm-notif-time">${now}</span>`;
-                    list.prepend(item);
-                }
-
-                function updateBadge() {
-                    const badge = document.getElementById('pm-notif-badge');
-                    const unread = document.querySelectorAll('#pm-notif-list .pm-notif-item:not(.read)').length;
-                    if (unread > 0) {
-                        badge.style.display = 'flex';
-                        badge.textContent = unread > 99 ? '99+' : unread;
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                }
-
-                // Mark all as read when bell is opened
-                function pmToggleNotifMenu(event) {
-                    event.stopPropagation();
-                    const menu = document.getElementById('pm-notif-menu');
-                    menu.classList.toggle('show');
-
-                    if (menu.classList.contains('show') && pmPendingIds.length > 0) {
-                        // Mark items visually as read
-                        document.querySelectorAll('#pm-notif-list .pm-notif-item').forEach(el => el.classList.add('read'));
-                        updateBadge();
-
-                        // Persist to DB
-                        const ids = [...pmPendingIds];
-                        pmPendingIds = [];
-                        
-                        const formData = new URLSearchParams();
-                        ids.forEach(id => formData.append('ids[]', id));
-                        formData.append('csrf_token', <?= json_encode($pm_csrf) ?>);
-
-                        pmFetch('mark_notifications_read.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: formData.toString()
-                        }).catch(() => {});
-                    }
-                }
-
-                // Clear all
-                function pmClearNotifs(event) {
-                    event.stopPropagation();
-                    document.getElementById('pm-notif-list').innerHTML = '<div class="pm-notif-empty">Tiada notifikasi baharu.</div>';
-                    pmPendingIds = [];
-                    updateBadge();
-                    pmFetch('mark_notifications_read.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: 'all=1&csrf_token=' + encodeURIComponent(<?= json_encode($pm_csrf) ?>)
-                    }).catch(() => {});
-                }
-
-                // ── Toast ─────────────────────────────────────────────────
-                function spawnNotification(message) {
-                    const container = document.getElementById('pm-global-toasts');
-                    const toast = document.createElement('div');
-                    toast.className = 'pm-toast-notification';
-                    toast.innerHTML = `
-                        <div class="pm-toast-header">
-                            <span style="display:flex; align-items:center; gap:8px;">
-                                <span style="font-size:1.2rem;">🔔</span> Markah Masuk!
-                            </span>
-                            <span class="pm-toast-close">✕</span>
-                        </div>
-                        <div style="line-height:1.4;">${message}</div>`;
-                    toast.addEventListener('click', () => {
-                        toast.classList.remove('show');
-                        setTimeout(() => toast.remove(), 400);
-                    });
-                    container.appendChild(toast);
-                    
-                    // Request an animation frame to ensure the DOM is updated before adding the class
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            toast.classList.add('show');
-                        });
-                    });
-                    
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.classList.remove('show');
-                            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 400);
-                        }
-                    }, 6000);
-                }
-
-                // ── Generic save/action result toast ────────────────────────
-                // Shared by every PIC page that shows a "?msg=...&status=..."
-                // result after a POST redirect (pic_groups.php, pic_criteria.php,
-                // pic_tests.php, pic_levels.php, ...). Several of those pages have
-                // an accordion open/scroll-position restore (sessionStorage-based)
-                // that puts the user back wherever they were editing — a static
-                // alert block at the top of the page would be scrolled out of
-                // view in that case, so this floats instead, regardless of
-                // scroll position.
-                function spawnPmToast(message, isError) {
-                    const container = document.getElementById('pm-global-toasts');
-                    if (!container) return;
-                    const toast = document.createElement('div');
-                    toast.className = 'pm-toast-notification';
-                    toast.innerHTML = `
-                        <div class="pm-toast-header">
-                            <span style="display:flex; align-items:center; gap:8px;">
-                                <span style="font-size:1.2rem;">${isError ? '⚠️' : '✅'}</span> ${isError ? 'Ralat' : 'Berjaya'}
-                            </span>
-                            <span class="pm-toast-close">✕</span>
-                        </div>
-                        <div style="line-height:1.4;">${message}</div>`;
-                    toast.addEventListener('click', () => {
-                        toast.classList.remove('show');
-                        setTimeout(() => toast.remove(), 400);
-                    });
-                    container.appendChild(toast);
-                    requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.classList.remove('show');
-                            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 400);
-                        }
-                    }, 5000);
-                }
-            </script>
+            <?php
+            $pm_layout_notif_css_v = @filemtime(__DIR__ . '/layout_notifications.css') ?: time();
+            $pm_layout_notif_js_v  = @filemtime(__DIR__ . '/layout_notifications.js') ?: time();
+            ?>
+            <link rel="stylesheet" href="layout_notifications.css?v=<?= $pm_layout_notif_css_v ?>">
+            <script>const PM_LAYOUT_CSRF = <?= json_encode($pm_csrf) ?>;</script>
+            <script src="layout_notifications.js?v=<?= $pm_layout_notif_js_v ?>"></script>
 
         <?php endif; ?>

@@ -3,5 +3,18 @@
     "type": "project",
     "require": {
         "firebase/php-jwt": "^7.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:db": "phpunit --testsuite Database",
+        "test:http": "phpunit --testsuite Http"
     }
 }

@@ -32,93 +32,10 @@ $reportTitle = pm_cawangan_report_title($conn, $active_siri);
 $data = pm_cawangan_report_data($conn, $active_siri);
 ?>
 
-<style>
-/* ── Formal report styling — plain black/white, no icons or colour
-   accents. This page IS the report (also what gets exported), not an app
-   dashboard widget, so it's kept deliberately unadorned. ── */
-.pm-report-title {
-    text-align: center;
-    font-family: Arial, sans-serif;
-    font-weight: 700;
-    font-size: 1.3rem;
-    letter-spacing: 0.02em;
-    color: var(--c-text);
-    margin: 0 0 24px;
-    text-transform: uppercase;
-}
-.pm-report-actions {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 28px;
-}
-.pm-report-actions a {
-    font-family: Arial, sans-serif;
-    font-size: 0.82rem;
-    padding: 7px 16px;
-    border: 1px solid var(--c-border-strong);
-    border-radius: 3px;
-    color: var(--c-text);
-    text-decoration: none;
-    background: var(--c-surface-1);
-}
-.pm-report-actions a:hover { background: var(--c-surface-2); }
-
-.pm-report-section { margin-bottom: 36px; }
-.pm-report-section h3 {
-    font-family: Arial, sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--c-text);
-    text-transform: uppercase;
-    margin: 0 0 10px;
-    border-bottom: 2px solid var(--c-text);
-    padding-bottom: 4px;
-    /* Keep the heading glued to whatever comes right after it — without
-       this, a heading can land alone at the bottom of a page while its
-       first table gets pushed to the next one. */
-    page-break-after: avoid;
-}
-.pm-report-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: Arial, sans-serif;
-    font-size: 0.85rem;
-}
-.pm-report-table th,
-.pm-report-table td {
-    border: 1px solid var(--c-border-strong);
-    padding: 7px 10px;
-    text-align: left;
-    color: var(--c-text);
-    vertical-align: top;
-}
-.pm-report-table th {
-    background: var(--c-surface-2);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.78rem;
-}
-.pm-report-table td.center { text-align: center; }
-
-/* One <table> per cawangan (see pm_render_grouped_tables) — tight spacing
-   between them so a run of cawangan tables still reads as one continuous
-   list, not a series of oddly separated blocks. */
-.pm-cawangan-table { margin-bottom: 2px; page-break-inside: avoid; }
-.pm-cawangan-banner {
-    text-align: left;
-    background: var(--c-surface-3);
-    font-size: 0.82rem;
-}
-
-/* A4 landscape if this page itself is printed directly (the actual PDF
-   export has its own copy of this, since it's a separate document). */
-@media print {
-    @page { size: A4 landscape; margin: 12mm; }
-    .pm-report-actions { display: none; }
-    body { text-align: justify; }
-}
-</style>
+<?php
+$pm_pcs_css_v = @filemtime(__DIR__ . '/pic_cawangan_summary.css') ?: time();
+?>
+<link rel="stylesheet" href="pic_cawangan_summary.css?v=<?= $pm_pcs_css_v ?>">
 
 <div class="pm-report-title"><?= htmlspecialchars($reportTitle) ?></div>
 

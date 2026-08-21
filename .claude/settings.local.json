@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -l \"C:/laragon/www/ProMarkah V3/pic_view_marks.php\")"
+    ]
+  }
+}

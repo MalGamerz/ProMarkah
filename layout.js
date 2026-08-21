@@ -145,7 +145,9 @@ document.addEventListener('click', function (e) {
 
 function pmToggleUserMenu(e) {
     e.stopPropagation();
-    document.getElementById('pm-user-menu').classList.toggle('show');
+    const menu = document.getElementById('pm-user-menu');
+    const open = menu.classList.toggle('show');
+    document.getElementById('pm-user-btn')?.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 
 // Notification toggle/clear defined in the PIC notification block below
@@ -157,12 +159,14 @@ document.addEventListener('click', function (e) {
     const userBtn = document.getElementById('pm-user-btn');
     if (userMenu && userMenu.classList.contains('show') && !userMenu.contains(e.target) && !userBtn.contains(e.target)) {
         userMenu.classList.remove('show');
+        userBtn?.setAttribute('aria-expanded', 'false');
     }
 
     const notifMenu = document.getElementById('pm-notif-menu');
     const notifBtn = document.getElementById('pm-notif-btn');
     if (notifMenu && notifMenu.classList.contains('show') && !notifMenu.contains(e.target) && !notifBtn.contains(e.target)) {
         notifMenu.classList.remove('show');
+        notifBtn?.setAttribute('aria-expanded', 'false');
     }
 });
 
@@ -191,4 +195,208 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 400);
         }, 4500); // visible ~4.5s, then ~0.7s fade+collapse
     });
+});
+
+// ── Shared pagination button renderer ──
+// Every client-side-paginated list (pic_criteria, pic_directory, pic_judges,
+// pic_levels, pic_master_list, pic_medal_settings, pic_schools, pic_sessions,
+// pic_students, pic_tests, attendance_view_school, judge_view_marks,
+// upload_students, ...) used to hand-roll this same button-building loop
+// with a page-specific function name for the onclick handler. Centralized
+// here so every page's pagination looks and updates identically; callers
+// only supply the numbers and a callback.
+function pmRenderPagination(btnsEl, page, totalPages, onGoToPage) {
+    if (!btnsEl) return;
+    const mk = (label, target, opts) => {
+        opts = opts || {};
+        const cls = 'vm-page-btn' + (opts.active ? ' vm-page-active' : '');
+        const dis = opts.disabled ? 'disabled' : '';
+        return '<button class="' + cls + '" ' + dis + ' data-pm-page="' + target + '">' + label + '</button>';
+    };
+    let html = mk('&laquo;', page - 1, { disabled: page === 1 });
+    let sp = Math.max(1, page - 2);
+    let ep = Math.min(totalPages, sp + 4);
+    if (ep - sp < 4) sp = Math.max(1, ep - 4);
+    if (sp > 1) {
+        html += mk('1', 1);
+        if (sp > 2) html += '<span class="vm-page-ellipsis">&hellip;</span>';
+    }
+    for (let i = sp; i <= ep; i++) html += mk(i, i, { active: i === page });
+    if (ep < totalPages) {
+        if (ep < totalPages - 1) html += '<span class="vm-page-ellipsis">&hellip;</span>';
+        html += mk(totalPages, totalPages);
+    }
+    html += mk('&raquo;', page + 1, { disabled: page === totalPages });
+    btnsEl.innerHTML = html;
+    btnsEl.querySelectorAll('[data-pm-page]').forEach(function (b) {
+        b.addEventListener('click', function () { onGoToPage(parseInt(b.dataset.pmPage, 10)); });
+    });
+}
+
+// ── Keyboard activation for role="button"/role="option" elements ──
+// A lot of this app's interactive controls (dropdown triggers, accordion
+// headers, dropdown options) are <div onclick="..."> rather than real
+// <button>s, so they were reachable by mouse only — Tab wouldn't land on
+// them, and even if it somehow did, Enter/Space did nothing. Rather than
+// rewrite every one of those onclick handlers, this listens once, globally,
+// for Enter/Space on anything marked role="button" or role="option" and
+// fires a native click() — which every existing onclick handler already
+// responds to. Real <button>/<a>/<input> elements already get this from the
+// browser for free and are skipped here to avoid double-firing.
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    const target = e.target.closest('[role="button"], [role="option"]');
+    if (!target) return;
+    const tag = target.tagName;
+    if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    e.preventDefault(); // stop Space from scrolling the page
+    target.click();
+});
+
+// ── Arrow-key navigation inside the .dd-panel/.pm-siri-dd-panel listboxes
+// opened by the trigger above ── role="option" alone only makes each option
+// individually Tab-reachable; the WAI-ARIA listbox pattern also expects
+// Up/Down (and Home/End) to move among them without tabbing through one at
+// a time. Works whether focus starts on the trigger, the search box, or
+// another option — .dd-wrap/.pm-siri-dd wraps trigger+panel as siblings in
+// every instance of this component, so that's the one thing this can
+// reliably walk up to regardless of which page/ddName it's on.
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return;
+    const wrap = e.target.closest('.dd-wrap, .pm-siri-dd');
+    if (!wrap) return;
+    const listbox = wrap.querySelector('[role="listbox"]');
+    if (!listbox || getComputedStyle(listbox).display === 'none') return;
+    const opts = Array.from(listbox.querySelectorAll('[role="option"]')).filter(function (o) {
+        return !o.classList.contains('hidden') && getComputedStyle(o).display !== 'none';
+    });
+    if (opts.length === 0) return;
+    e.preventDefault();
+    if (e.key === 'Home') { opts[0].focus(); return; }
+    if (e.key === 'End') { opts[opts.length - 1].focus(); return; }
+    let idx = opts.indexOf(e.target);
+    if (e.key === 'ArrowDown') {
+        idx = idx === -1 ? 0 : Math.min(idx + 1, opts.length - 1);
+    } else {
+        idx = idx === -1 ? opts.length - 1 : Math.max(idx - 1, 0);
+    }
+    opts[idx].focus();
+});
+
+// ── Keep aria-expanded/aria-selected in sync, without touching any
+// existing toggle function ──
+// The app's ~15 duplicated accordion/dropdown toggle functions each drive
+// open/closed state through one of two conventions: an .open or .active
+// class on the trigger itself (dd-trigger, judge.php's summary accordion),
+// or the panel's style.display toggling directly while the trigger is its
+// previous sibling (toggleBlock, dirToggle). Rather than editing every one
+// of those functions to also set aria-expanded — real duplication, real
+// chance of missing one or getting a variable name wrong — this observes
+// the DOM mutations they already make and reflects them onto
+// role="button"/role="option" ancestors generically.
+(function () {
+    function syncButtonState(el) {
+        // Two different conventions drive open/closed state across the
+        // ~15 duplicated toggle functions: an .open/.active class on the
+        // trigger itself (dd-trigger, judge.php's summary accordion), or
+        // the next sibling's style.display (toggleBlock, dirToggle) — the
+        // mutation-observer branch below already knows both; this initial
+        // sweep needs to check both too, or a style.display-driven header
+        // that starts collapsed never gets aria-expanded at all until the
+        // first toggle.
+        const openByClass = el.classList.contains('open') || el.classList.contains('active');
+        const sibling = el.nextElementSibling;
+        const openByStyle = sibling && sibling.style.display === 'block';
+        el.setAttribute('aria-expanded', (openByClass || openByStyle) ? 'true' : 'false');
+    }
+    function syncOptionState(el) {
+        el.setAttribute('aria-selected', el.classList.contains('selected') ? 'true' : 'false');
+    }
+
+    function sweep(root) {
+        root.querySelectorAll('[role="button"]').forEach(syncButtonState);
+        root.querySelectorAll('[role="option"]').forEach(syncOptionState);
+        if (root.getAttribute && root.getAttribute('role') === 'button') syncButtonState(root);
+        if (root.getAttribute && root.getAttribute('role') === 'option') syncOptionState(root);
+    }
+
+    const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+            if (m.type === 'childList') {
+                // Some pages (e.g. pic_students.php's _doFilter) replace a
+                // whole list via innerHTML — even on first load, to apply
+                // default sort/pagination — which wholesale-discards
+                // server-rendered nodes the initial sweep already synced
+                // and inserts fresh ones that were never synced at all.
+                // Attribute-mutation watching alone can't catch that; this
+                // re-sweeps whatever subtree just got added.
+                m.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) sweep(node);
+                });
+                return;
+            }
+            const el = m.target;
+            if (m.attributeName === 'class') {
+                if (el.getAttribute('role') === 'button') syncButtonState(el);
+                if (el.getAttribute('role') === 'option') syncOptionState(el);
+            }
+            if (m.attributeName === 'style') {
+                const header = el.previousElementSibling;
+                if (header && header.getAttribute('role') === 'button') {
+                    header.setAttribute('aria-expanded', el.style.display === 'block' ? 'true' : 'false');
+                }
+            }
+        });
+    });
+    // document.body doesn't exist yet — this file loads synchronously in
+    // <head>, before <body> is parsed (see the file-level comment at the
+    // top) — so starting the observer has to wait for DOMContentLoaded.
+    document.addEventListener('DOMContentLoaded', function () {
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'], childList: true, subtree: true });
+        // The observer only reacts to FUTURE mutations — an option already
+        // rendered with class="dd-opt selected" by PHP (the current filter
+        // value) would otherwise never get aria-selected until the user
+        // changes something. One-time initial sweep covers that.
+        sweep(document.body);
+    });
+})();
+
+// ── Escape closes whatever's open ──
+// Backdrops/overlays (.pm-modal-overlay, the mobile sidebar, the QR modal)
+// only close on a mouse click today — there was no keyboard equivalent at
+// all. Rather than make each full-screen backdrop div itself a focusable
+// "button" (which would be a stray, contentless tab stop — the wrong fix),
+// this gives keyboard users the standard Escape-to-dismiss path instead.
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+
+    // Figure out which trigger should regain focus once we close things —
+    // otherwise focus silently resets to <body>, which is disorienting for
+    // a keyboard user (their next Tab jumps to the top of the page instead
+    // of continuing from where the closed control was).
+    let returnFocusTo = null;
+    const openWrap = e.target.closest('.dd-wrap, .pm-siri-dd');
+    if (openWrap) {
+        returnFocusTo = openWrap.querySelector('.dd-trigger, .pm-siri-dd-trigger');
+    } else if (document.getElementById('pm-user-menu')?.classList.contains('show')) {
+        returnFocusTo = document.getElementById('pm-user-btn');
+    } else if (document.getElementById('pm-notif-menu')?.classList.contains('show')) {
+        returnFocusTo = document.getElementById('pm-notif-btn');
+    } else if (document.getElementById('pm-sidebar')?.classList.contains('pm-sidebar-open')) {
+        returnFocusTo = document.querySelector('.pm-hamburger');
+    }
+
+    document.querySelectorAll('.dd-panel.open, .dd-trigger.open').forEach(function (el) { el.classList.remove('open'); });
+    document.getElementById('pmSiriDd')?.classList.remove('open');
+    document.getElementById('pmSiriDdPanel')?.classList.remove('open');
+    document.querySelectorAll('.pm-modal-overlay.show').forEach(function (el) { el.classList.remove('show'); });
+    document.getElementById('qrModal')?.classList.remove('visible');
+    document.getElementById('pm-sidebar')?.classList.remove('pm-sidebar-open');
+    document.getElementById('pm-backdrop')?.classList.remove('pm-backdrop-show');
+    document.getElementById('pm-user-menu')?.classList.remove('show');
+    document.getElementById('pm-user-btn')?.setAttribute('aria-expanded', 'false');
+    document.getElementById('pm-notif-menu')?.classList.remove('show');
+    document.getElementById('pm-notif-btn')?.setAttribute('aria-expanded', 'false');
+
+    if (returnFocusTo) returnFocusTo.focus();
 });

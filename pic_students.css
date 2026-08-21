@@ -1,0 +1,491 @@
+/* pic_students.css — the PIC "Pengurusan Pelajar" (student management) page
+   (pic_students.php). Split out of that file's inline <style> block, which
+   had nothing to do with the PHP rendering logic around it. */
+
+    /* ── Filter card ── */
+    .filter-card {
+        background: var(--c-surface-1);
+        border: 1px solid var(--c-border-strong);
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 18px;
+    }
+    .filter-card-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--c-text-faint);
+        margin-bottom: 12px;
+    }
+    .pic-filter-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        align-items: end;
+    }
+    .pic-filter-bar > div {
+        min-width: 0;
+    }
+    .pic-filter-bar label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: .75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--c-text-faint);
+    }
+    .pic-filter-bar input,
+    .pic-filter-bar select {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-white);
+        border-radius: 6px;
+        height: 32px;
+        padding: 0 10px;
+        font-size: .8rem;
+        outline: none;
+        width: 100%;
+        transition: border-color .2s;
+        box-sizing: border-box;
+    }
+    .pic-filter-bar input:focus,
+    .pic-filter-bar select:focus {
+        border-color: var(--c-red);
+    }
+    .pic-filter-bar select option {
+        background: var(--c-surface-2);
+        color: var(--c-white);
+    }
+    .pic-filter-bar input::placeholder {
+        color: var(--c-text-faint);
+    }
+
+    /* ── Add card ── */
+    .pic-add-card {
+        display: none;
+        background: var(--c-surface-1);
+        border: 1px solid var(--c-red-border);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 18px;
+    }
+    .pic-add-card h3 {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.1rem;
+        color: var(--c-white);
+        margin-bottom: 14px;
+        letter-spacing: 0.05em;
+    }
+    .pic-add-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+        align-items: end;
+    }
+    .pic-add-form input,
+    .pic-add-form select {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-white);
+        border-radius: 6px;
+        padding: 9px 12px;
+        font-size: 0.875rem;
+        outline: none;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color .2s;
+    }
+    .pic-add-form input:focus,
+    .pic-add-form select:focus {
+        border-color: var(--c-red);
+        box-shadow: 0 0 0 3px var(--c-red-dim);
+    }
+    .pic-add-form select option {
+        background: var(--c-surface-2);
+    }
+    .pic-add-form label {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--c-text-faint);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.07em;
+    }
+    /* Button in the add-form grid was shorter than the input/select next to
+       it (pm-btn's tight line-height vs. the input's padded box) — pin both
+       to the same height so the row looks uniform. */
+    .pic-add-form button.pm-btn {
+        height: 40px;
+        padding: 0 16px;
+        box-sizing: border-box;
+    }
+
+    /* ── Multi-row "add several students at once" group ── */
+    .pic-add-form--multi {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .pic-add-form--multi > div { width: 100%; }
+    .pic-add-form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+    }
+    .add-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .add-row:last-child { margin-bottom: 0; }
+    .add-row input { flex: 1; min-width: 0; }
+    .add-row .student-gender-select { flex: 0 0 140px; }
+    .add-row-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: all .15s;
+    }
+    .add-row-remove {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-text-faint);
+    }
+    .add-row-remove:hover { border-color: var(--c-red-300); color: var(--c-red); background: rgba(214, 40, 40, .08); }
+    .add-row-add {
+        height: 36px;
+        padding: 0 14px;
+        margin-top: 10px;
+        background: transparent;
+        border: 1px dashed var(--c-border-strong);
+        color: var(--c-text-faint);
+    }
+    .add-row-add:hover { border-color: var(--c-red); color: var(--c-red); }
+    .pic-add-form-actions { display: flex; justify-content: flex-end; }
+    html.pm-light .add-row-remove { background: var(--c-gray-50); border-color: var(--c-gray-300); }
+    html.pm-light .add-row-add { border-color: var(--c-gray-300); color: var(--c-gray-500); }
+
+    /* ── Paste-a-name-list box (bulk-fills the row list above) ── */
+    .pic-paste-list-wrap textarea {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-white);
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        font-family: inherit;
+        line-height: 1.5;
+        outline: none;
+        width: 100%;
+        box-sizing: border-box;
+        resize: vertical;
+        transition: border-color .2s;
+    }
+    .pic-paste-list-wrap textarea:focus {
+        border-color: var(--c-red);
+        box-shadow: 0 0 0 3px var(--c-red-dim);
+    }
+    html.pm-light .pic-paste-list-wrap textarea {
+        background: #fff;
+        border-color: var(--c-gray-300);
+        color: var(--c-gray-900);
+    }
+    .paste-actions-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+    /* #pasteStatusBadge reuses dashboard.css's shared .pm-badge component
+       (already theme-aware — light mode is handled there, not here) so this
+       status reads the same as every other status pill in the app instead
+       of a one-off colored line. */
+    /* A generated row whose name matches an existing student (same
+       level+cawangan) or repeats within the pasted list itself — flagged
+       so the PIC can review before submitting, not a hard block. */
+    .add-row-student input.name-duplicate {
+        border-color: #facc15 !important;
+        background: rgba(250, 204, 21, 0.08) !important;
+    }
+
+    /* Display student/peringkat/cawangan data in caps — the accordion
+       titles (Cawangan), the editable Nama/Peringkat fields in the table,
+       the add-form's Peringkat/Cawangan selects, and the Cawangan filter
+       dropdown — purely visual, the stored value keeps whatever case was
+       typed. */
+    .school-header strong,
+    .students-table input:not([type=hidden]),
+    .students-table select,
+    .pic-add-form select,
+    #ddOpts_school .dd-opt,
+    #ddLabel_school {
+        text-transform: uppercase;
+    }
+
+    /* ── Accordion ── */
+    .accordion-card {
+        background: var(--c-surface-1);
+        border: 1px solid var(--c-border);
+        border-radius: 10px;
+        margin-bottom: 12px;
+    }
+    .school-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--c-surface-1);
+        border-bottom: 1px solid var(--c-border);
+        cursor: pointer;
+        color: var(--c-white);
+        font-weight: 600;
+        font-size: 0.92rem;
+        transition: background .15s;
+        border-radius: 10px;
+    }
+    .school-header:hover {
+        background: var(--c-surface-2);
+    }
+    .school-header .arrow {
+        color: var(--c-red);
+        font-size: 0.9rem;
+        transition: transform .2s ease;
+        display: inline-block;
+    }
+    .school-header .school-add-btn {
+        margin-left: auto;
+        text-transform: none;
+        flex-shrink: 0;
+    }
+
+    /* ── Accordion body ── */
+    .accordion-body {
+        max-height: 420px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .accordion-body .table-responsive {
+        overflow-x: auto;
+    }
+
+    /* ── Save bar ── */
+    .school-sticky-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        background: var(--c-surface-2);
+        border-bottom: 2px solid var(--c-red);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        animation: slideDown .2s ease;
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .school-sticky-bar .sticky-msg {
+        font-size: 0.82rem;
+        color: var(--c-text-faint);
+        flex: 1;
+    }
+    .school-sticky-bar .sticky-msg strong {
+        color: var(--c-white);
+    }
+    /* Inline save feedback, shown right at the sticky bar being edited —
+       not a page-top banner, which would be scrolled out of view on a long
+       accordion list. */
+    .sticky-feedback {
+        font-size: 0.82rem;
+        font-weight: 700;
+        opacity: 0;
+        transition: opacity .2s ease;
+        white-space: nowrap;
+    }
+    .sticky-feedback.show { opacity: 1; }
+    .sticky-feedback.is-success { color: #4ade80; }
+    .sticky-feedback.is-error   { color: var(--c-red); }
+    html.pm-light .sticky-feedback.is-success { color: #16a34a; }
+
+    /* ── Students table ── */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .students-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        min-width: 600px;
+    }
+    .students-table th {
+        background: var(--c-surface-3);
+        color: var(--c-text-muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 11px 14px;
+        text-align: left;
+        white-space: nowrap;
+        border-bottom: 2px solid var(--c-red);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+    }
+    .students-table td {
+        padding: 9px 14px;
+        color: var(--c-text-muted);
+        background: var(--c-surface-1);
+        border-bottom: 1px solid var(--c-border);
+        vertical-align: middle;
+        transition: background .1s;
+    }
+    .students-table tbody tr:hover td {
+        background: var(--c-surface-2);
+    }
+    .students-table tbody tr.row-dirty td {
+        background: rgba(214, 40, 40, 0.06) !important;
+    }
+    .students-table input:not([type=hidden]),
+    .students-table select {
+        background: var(--c-surface-0) !important;
+        border: 1px solid var(--c-border-strong) !important;
+        color: var(--c-white) !important;
+        border-radius: 4px !important;
+        padding: 5px 8px !important;
+        font-size: 0.82rem !important;
+        outline: none !important;
+        width: 100%;
+        transition: border-color .2s;
+    }
+    .students-table input:focus,
+    .students-table select:focus {
+        border-color: var(--c-red) !important;
+    }
+    .students-table select option {
+        background: var(--c-surface-2);
+        color: var(--c-white);
+    }
+
+    .btn-sm {
+        font-size: 0.78rem !important;
+        padding: 5px 10px !important;
+    }
+
+    /* ── PAGINATION: shared .vm-pagination styles now live once in
+       dashboard.css (loaded by layout.php), used by every paginated page. ── */
+
+    #ajaxSpinner {
+        display: none;
+        padding: 30px;
+        text-align: center;
+        color: var(--c-text-faint);
+    }
+
+    /* ── STUDENT LIST: scrollable so pagination always stays on screen ── */
+    #studentListScroll {
+        overflow-y: auto;
+        padding-right: 4px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--c-border-strong) transparent;
+    }
+    #studentListScroll::-webkit-scrollbar { width: 4px; }
+    #studentListScroll::-webkit-scrollbar-track { background: transparent; }
+    #studentListScroll::-webkit-scrollbar-thumb { background: var(--c-border-strong); border-radius: 2px; }
+    @media (max-width: 640px) {
+        #studentListScroll { max-height: none !important; overflow-y: visible !important; }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LIGHT MODE
+    ══════════════════════════════════════════════════════════ */
+    html.pm-light .pic-section-header h2 { color: #111; }
+    html.pm-light .pic-section-sub { color: #555; }
+
+    html.pm-light .filter-card {
+        background: #fff;
+        border-color: var(--c-gray-200);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    html.pm-light .filter-card-title { color: #888; }
+    html.pm-light .pic-filter-bar label { color: #555; }
+    html.pm-light .pic-filter-bar input,
+    html.pm-light .pic-filter-bar select {
+        background: var(--c-gray-50);
+        border-color: var(--c-gray-300);
+        color: #111;
+    }
+    html.pm-light .pic-filter-bar input::placeholder { color: var(--c-gray-400); }
+    html.pm-light .pic-filter-bar select option {
+        background: #fff;
+        color: #111;
+    }
+
+    html.pm-light .pic-add-card {
+        background: #fff;
+        border-color: var(--c-red-border);
+    }
+    html.pm-light .pic-add-card h3 { color: #111; }
+    html.pm-light .pic-add-form input,
+    html.pm-light .pic-add-form select {
+        background: var(--c-gray-50);
+        border-color: var(--c-gray-300);
+        color: #111;
+    }
+    html.pm-light .pic-add-form select option {
+        background: #fff;
+        color: #111;
+    }
+    html.pm-light .pic-add-form label { color: #555; }
+
+    html.pm-light .accordion-card {
+        background: #fff;
+        border-color: var(--c-gray-200);
+    }
+    html.pm-light .school-header {
+        background: var(--c-gray-100);
+        border-bottom-color: var(--c-gray-200);
+        color: #111;
+    }
+    html.pm-light .school-header:hover { background: #e9eaec; }
+    html.pm-light .school-sticky-bar { background: var(--c-gray-100); }
+    html.pm-light .school-sticky-bar .sticky-msg strong { color: #111; }
+
+    html.pm-light .students-table th {
+        background: var(--c-gray-700);
+        color: var(--c-gray-50);
+    }
+    html.pm-light .students-table td {
+        background: #fff;
+        color: #222;
+        border-bottom-color: var(--c-gray-200);
+    }
+    html.pm-light .students-table tbody tr:hover td { background: var(--c-gray-50); }
+    html.pm-light .students-table tbody tr.row-dirty td {
+        background: rgba(214, 40, 40, 0.05) !important;
+    }
+    html.pm-light .students-table input:not([type=hidden]),
+    html.pm-light .students-table select {
+        background: #fff !important;
+        border-color: var(--c-gray-300) !important;
+        color: #111 !important;
+    }
+    html.pm-light .students-table input:focus,
+    html.pm-light .students-table select:focus {
+        border-color: var(--c-red) !important;
+        box-shadow: 0 0 0 2px var(--c-red-dim) !important;
+    }
+    html.pm-light .students-table select option {
+        background: #fff;
+        color: #111;
+    }

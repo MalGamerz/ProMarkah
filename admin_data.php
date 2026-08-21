@@ -32,9 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_backup_action'])
         die('Security token mismatch.');
     }
 
-    // Sensitive hash columns (password/pin_hash) are deliberately excluded —
-    // a backup doesn't need them to be useful, and there's no reason to let
-    // credential hashes leave the server in a downloadable file.
+    // Full restore fidelity: this backup includes password/pin hash columns
+    // and admin accounts, so a matching Import can fully recreate every
+    // login without anyone re-typing a password. That means this ZIP is as
+    // sensitive as raw DB credentials — treat it that way when storing or
+    // sharing it.
     $backup_tables = [
         'siri'                  => null,
         'sessions'               => null,
@@ -47,10 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_backup_action'])
         'students'               => null,
         'groups'                 => null,
         'group_students'         => null,
-        'judges'                 => 'SELECT id, name, email, role, judge_code FROM judges',
+        'judges'                 => null,
         'scores'                 => null,
         'attendance'             => null,
-        'users'                  => "SELECT id, username, role FROM users WHERE role != 'admin'",
+        'users'                  => null,
         'notifications'          => null,
         'notification_reads'     => null,
         'medal_quotas'           => null,
@@ -91,6 +93,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['full_backup_action'])
     readfile($tmpZip);
     unlink($tmpZip);
     exit;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FULL RESTORE — read a Full Backup ZIP back and reload every table from it
+// ─────────────────────────────────────────────────────────────────────────────
+
+$flash = '';
+$flash_type = 'success';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_action'])) {
+    if (!isset($_POST['csrf_token']) || !hash_equals($csrf, $_POST['csrf_token'])) {
+        $flash = 'Security token mismatch.'; $flash_type = 'error';
+    } elseif (trim($_POST['import_confirm'] ?? '') !== 'IMPORT') {
+        $flash = 'Type "IMPORT" exactly to confirm.'; $flash_type = 'error';
+    } elseif (!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== UPLOAD_ERR_OK) {
+        $flash = 'No backup file uploaded, or the upload failed.'; $flash_type = 'error';
+    } elseif (strtolower(pathinfo($_FILES['backup_file']['name'], PATHINFO_EXTENSION)) !== 'zip') {
+        $flash = 'The uploaded file must be a .zip backup produced by "Download Full Backup".'; $flash_type = 'error';
+    } else {
+        $zip = new ZipArchive();
+        if ($zip->open($_FILES['backup_file']['tmp_name']) !== true) {
+            $flash = 'Could not read the uploaded ZIP file — it may be corrupted.'; $flash_type = 'error';
+        } else {
+            // Fixed, known table names only — the ZIP entry name is never used
+            // to build a path, so there's no path-traversal surface here.
+            // Parent tables first, so FK-check-enabled installs still load
+            // cleanly even though we also disable checks during the import.
+            $import_order = [
+                'siri', 'sessions', 'levels', 'tests', 'criteria', 'schools',
+                'session_schools', 'siri_schools', 'students', 'groups',
+                'group_students', 'judges', 'scores', 'attendance', 'users',
+                'notifications', 'notification_reads', 'medal_quotas',
+                'medal_quotas_school', 'medal_quotas_session',
+            ];
+
+            $conn->begin_transaction();
+            try {
+                $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+                $imported = [];
+                $skipped  = [];
+
+                foreach ($import_order as $table) {
+                    $csvContent = $zip->getFromName($table . '.csv');
+                    if ($csvContent === false) { $skipped[] = $table; continue; }
+
+                    $fh = fopen('php://temp', 'r+');
+                    fwrite($fh, $csvContent);
+                    rewind($fh);
+                    if (fread($fh, 3) !== "\xEF\xBB\xBF") rewind($fh); // strip export's UTF-8 BOM if present
+
+                    $header = fgetcsv($fh);
+                    if (!$header) { fclose($fh); $skipped[] = $table; continue; }
+
+                    // Only import columns that actually exist on this install —
+                    // production DBs may be a schema version behind/ahead.
+                    $tableCols = [];
+                    $colsResult = $conn->query("SHOW COLUMNS FROM `{$table}`");
+                    while ($c = $colsResult->fetch_assoc()) $tableCols[] = $c['Field'];
+
+                    $useCols = array_values(array_intersect($header, $tableCols));
+                    if (empty($useCols)) { fclose($fh); $skipped[] = $table; continue; }
+
+                    $headerIndex = array_flip($header);
+
+                    $conn->query("DELETE FROM `{$table}`");
+
+                    $colList      = implode(',', array_map(fn($c) => "`{$c}`", $useCols));
+                    $placeholders = implode(',', array_fill(0, count($useCols), '?'));
+                    $stmt  = $conn->prepare("INSERT INTO `{$table}` ({$colList}) VALUES ({$placeholders})");
+                    $types = str_repeat('s', count($useCols));
+
+                    $rowCount = 0;
+                    while (($row = fgetcsv($fh)) !== false) {
+                        if ($row === [null]) continue; // trailing blank line
+                        $vals = [];
+                        foreach ($useCols as $c) {
+                            $v = $row[$headerIndex[$c]] ?? null;
+                            $vals[] = ($v === '') ? null : $v;
+                        }
+                        $stmt->bind_param($types, ...$vals);
+                        $stmt->execute();
+                        $rowCount++;
+                    }
+                    $stmt->close();
+                    fclose($fh);
+                    $imported[$table] = $rowCount;
+                }
+
+                $conn->query("SET FOREIGN_KEY_CHECKS = 1");
+                $conn->commit();
+
+                $flash = 'Restore complete — ' . number_format(array_sum($imported)) . ' rows reloaded across '
+                        . count($imported) . ' tables.'
+                        . (!empty($skipped) ? ' Not found in the ZIP (left untouched): ' . implode(', ', $skipped) . '.' : '')
+                        . ' If the restored data includes different admin/PIC accounts, log out and back in to refresh your session.';
+            } catch (Exception $e) {
+                $conn->rollback();
+                $conn->query("SET FOREIGN_KEY_CHECKS = 1");
+                promarkah_report('Caught', 'admin_data.php import failed — ' . $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
+                $flash = 'Restore failed: ' . $e->getMessage();
+                $flash_type = 'error';
+            }
+            $zip->close();
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,9 +317,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
 // ─────────────────────────────────────────────────────────────────────────────
 // RESET HANDLERS
 // ─────────────────────────────────────────────────────────────────────────────
-
-$flash = '';
-$flash_type = 'success';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_action'])) {
     if (!isset($_POST['csrf_token']) || !hash_equals($csrf, $_POST['csrf_token'])) {
@@ -344,123 +448,10 @@ $pm_page = 'admin_data';
 include 'layout.php';
 ?>
 
-<style>
-    .ap-wrap { 
-        padding: var(--sp-6); 
-        max-width: 100%; /* Updated to fill the screen */ 
-        display: flex; 
-        flex-direction: column; 
-        gap: var(--sp-6); 
-        
-    }
-
-    .ap-tabnav { display: flex; gap: 4px; border-bottom: 1px solid var(--c-border); flex-wrap: wrap; }
-    .ap-tab { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; font-size: var(--text-sm); font-weight: 600; font-family: 'DM Sans', sans-serif; color: var(--c-text-faint); border: 1px solid transparent; border-bottom: none; border-radius: var(--radius-sm) var(--radius-sm) 0 0; text-decoration: none; transition: color var(--fast) var(--ease), background var(--fast) var(--ease); position: relative; bottom: -1px; }
-    .ap-tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-    .ap-tab:hover { color: var(--c-text); }
-    .ap-tab.active { color: var(--c-text); background: var(--c-surface-1); border-color: var(--c-border); border-bottom-color: var(--c-surface-1); }
-
-    .ap-page-title h1 { font-family: 'Bebas Neue', sans-serif; font-size: var(--text-2xl); color: var(--c-text); letter-spacing: 0.04em; margin: 0 0 2px; }
-    .ap-page-title p { font-size: var(--text-sm); color: var(--c-text-faint); margin: 0; }
-
-    .ap-flash { border-radius: var(--radius-sm); padding: var(--sp-3) var(--sp-4); font-size: var(--text-sm); font-weight: 500; }
-    .ap-flash.success { background: rgba(255,255,255,0.06); border: 1px solid var(--c-border); color: var(--c-text-muted); }
-    .ap-flash.error { background: rgba(204,0,0,0.10); border: 1px solid rgba(204,0,0,0.30); color: #ff6b6b; }
-
-    .ap-card { background: var(--c-surface-1); border: 1px solid var(--c-border); border-radius: var(--radius-lg); overflow: hidden; }
-    .ap-card-head { padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--c-border); display: flex; align-items: center; gap: var(--sp-3); }
-    .ap-card-head h2 { font-family: 'Bebas Neue', sans-serif; font-size: var(--text-md); color: var(--c-text); letter-spacing: 0.06em; margin: 0; }
-    .ap-card-head svg { width: 16px; height: 16px; color: var(--c-red); stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-    .ap-card-body { padding: var(--sp-5); }
-
-    /* Export grid */
-    .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
-    @media (max-width: 560px) { .export-grid { grid-template-columns: 1fr; } }
-
-    .export-item {
-        border: 1px solid var(--c-border);
-        border-radius: var(--radius-sm);
-        padding: var(--sp-4);
-        display: flex;
-        flex-direction: column;
-        gap: var(--sp-3);
-    }
-    .export-item-header { display: flex; align-items: center; gap: var(--sp-3); }
-    .export-item-header svg { width: 18px; height: 18px; stroke: var(--c-red); fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-    .export-item-title { font-weight: 600; font-size: var(--text-sm); color: var(--c-text); }
-    .export-item-count { font-size: var(--text-xs); color: var(--c-text-faint); }
-    .export-btn-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--sp-2);
-        margin: 0;
-        padding: 0;
-    }
-
-    .btn-export-csv {
-        background: transparent;
-        border: 1px solid var(--c-border);
-        border-radius: var(--radius-sm);
-        padding: 8px 10px;
-        font-size: var(--text-xs);
-        font-weight: 600;
-        font-family: 'DM Sans', sans-serif;
-        color: var(--c-text-muted);
-        cursor: pointer;
-        transition: all var(--fast) var(--ease);
-        width: 100%;
-    }
-    .btn-export-csv:hover { border-color: var(--c-border-strong); color: var(--c-text); }
-
-    .btn-export-pdf {
-        background: var(--c-red);
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 8px 10px;
-        font-size: var(--text-xs);
-        font-weight: 600;
-        font-family: 'DM Sans', sans-serif;
-        color: #fff;
-        cursor: pointer;
-        transition: background var(--fast) var(--ease);
-        width: 100%;
-    }
-    .btn-export-pdf:hover { background: var(--c-red-dark); }
-
-    /* Reset section */
-    .reset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
-    @media (max-width: 560px) { .reset-grid { grid-template-columns: 1fr; } }
-
-    .reset-item { border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); }
-    .reset-item.danger { border-color: rgba(204,0,0,0.3); background: rgba(204,0,0,0.04); }
-
-    .reset-item-title { font-weight: 600; font-size: var(--text-sm); color: var(--c-text); }
-    .reset-item-desc { font-size: var(--text-xs); color: var(--c-text-faint); line-height: 1.5; }
-
-    .reset-confirm-label { font-size: var(--text-xs); color: var(--c-text-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
-    .reset-confirm-input {
-        background: var(--c-surface-1);
-        border: 1px solid var(--c-border);
-        border-radius: var(--radius-sm);
-        color: var(--c-text);
-        padding: 8px var(--sp-3);
-        font-size: var(--text-sm);
-        font-family: 'DM Mono', monospace;
-        outline: none;
-        width: 100%;
-        box-sizing: border-box;
-        transition: border-color var(--fast) var(--ease);
-    }
-    .reset-confirm-input:focus { border-color: var(--c-red); }
-
-    .btn-reset { background: transparent; border: 1px solid rgba(204,0,0,0.4); color: var(--c-red); border-radius: var(--radius-sm); padding: 8px var(--sp-4); font-size: var(--text-sm); font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; width: 100%; transition: all var(--fast) var(--ease); }
-    .btn-reset:hover { background: rgba(204,0,0,0.1); border-color: var(--c-red); }
-
-    .btn-reset-full { background: var(--c-red); border: none; color: #fff; border-radius: var(--radius-sm); padding: 8px var(--sp-4); font-size: var(--text-sm); font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; width: 100%; transition: background var(--fast) var(--ease); }
-    .btn-reset-full:hover { background: var(--c-red-dark); }
-
-    .warning-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(204,0,0,0.1); border: 1px solid rgba(204,0,0,0.3); color: var(--c-red); border-radius: 99px; padding: 3px 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
-</style>
+<?php
+$pm_adata_css_v = @filemtime(__DIR__ . '/admin_data.css') ?: time();
+?>
+<link rel="stylesheet" href="admin_data.css?v=<?= $pm_adata_css_v ?>">
 
 <div class="ap-wrap">
 
@@ -501,13 +492,37 @@ include 'layout.php';
                     <svg viewBox="0 0 24 24" style="stroke:var(--c-red);"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
                     <div>
                         <div class="export-item-title">Full Backup (All Data)</div>
-                        <div class="export-item-count">Every table as one CSV, bundled into a single ZIP</div>
+                        <div class="export-item-count">Every table as one CSV — scores, groups, students, judges, admin/PIC/judge accounts — bundled into a single ZIP</div>
                     </div>
                 </div>
+                <p style="font-size:var(--text-xs); color:var(--c-red); margin:0;">Contains password/PIN hashes so it can fully restore logins. Store and share this file as securely as your database credentials.</p>
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
                     <input type="hidden" name="full_backup_action" value="1">
                     <button type="submit" class="btn-export-pdf" style="width:100%;">Download Full Backup (ZIP)</button>
+                </form>
+            </div>
+
+            <div class="export-item" style="border-color:rgba(204,0,0,0.3); background:rgba(204,0,0,0.04);">
+                <div class="export-item-header">
+                    <svg viewBox="0 0 24 24" style="stroke:var(--c-red);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <div>
+                        <div class="export-item-title">Import Full Backup (Restore)</div>
+                        <div class="export-item-count">Reloads every table in the ZIP from a Full Backup download</div>
+                    </div>
+                </div>
+                <p style="font-size:var(--text-xs); color:var(--c-text-faint); margin:0; line-height:1.5;">
+                    This <strong>replaces</strong> all current data in every table found in the ZIP — existing rows are deleted first, then the backup's rows are reloaded with their original IDs. Tables missing from the ZIP are left untouched. This cannot be undone; export a fresh backup first if you want to keep the current state.
+                </p>
+                <form method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:var(--sp-3);">
+                    <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                    <input type="hidden" name="import_action" value="1">
+                    <input type="file" name="backup_file" accept=".zip" required class="reset-confirm-input">
+                    <div>
+                        <div class="reset-confirm-label">Type IMPORT to confirm</div>
+                        <input type="text" name="import_confirm" class="reset-confirm-input" autocomplete="off" placeholder="IMPORT">
+                    </div>
+                    <button type="submit" class="btn-reset-full">Restore From Backup</button>
                 </form>
             </div>
 

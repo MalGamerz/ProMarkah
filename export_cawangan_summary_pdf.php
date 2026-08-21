@@ -29,30 +29,10 @@ $data = pm_cawangan_report_data($conn, $active_siri);
 <head>
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($reportTitle) ?></title>
-    <style>
-        /* A4 landscape — applies both on screen (so the print preview
-           already shows the right shape) and when actually printed. */
-        @page { size: A4 landscape; margin: 12mm; }
-        body { font-family: Arial, sans-serif; color: #000; margin: 24px; text-align: justify; line-height: 1.5; }
-        .title { text-align: center; font-weight: bold; font-size: 15pt; text-transform: uppercase; margin-bottom: 24px; }
-        /* page-break-after:avoid keeps a heading glued to whatever follows
-           it — without this a heading can land alone at the bottom of a
-           page while its first table gets pushed to the next one. */
-        h3 { font-size: 12pt; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 3px; margin-top: 28px; page-break-after: avoid; }
-        table { width: 100%; border-collapse: collapse; font-size: 10.5pt; }
-        th, td { border: 1px solid #000; padding: 6px 9px; text-align: left; vertical-align: top; }
-        th { background: #eee; font-weight: bold; text-transform: uppercase; font-size: 9.5pt; }
-        /* One <table> per cawangan (see pm_render_grouped_tables) — tight
-           spacing so a run of them still reads as one continuous list. */
-        .pm-cawangan-table { margin-bottom: 2px; page-break-inside: avoid; }
-        @media print {
-            .no-print { display: none !important; }
-            body { margin: 0; }
-        }
-        .controls { margin-bottom: 24px; text-align: right; }
-        .btn { padding: 8px 16px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
-        .btn-back { background: #999; margin-right: 10px; }
-    </style>
+<?php
+$pm_ecspdf_css_v = @filemtime(__DIR__ . '/export_cawangan_summary_pdf.css') ?: time();
+?>
+<link rel="stylesheet" href="export_cawangan_summary_pdf.css?v=<?= $pm_ecspdf_css_v ?>">
 </head>
 <body>
 

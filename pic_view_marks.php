@@ -122,7 +122,7 @@ function renderVMDD(string $fieldName, string $ddName, string $normalEmptyLabel,
     $emptyLabel = $isDisabled ? $disabledEmptyLabel : $normalEmptyLabel;
     $disabledClass = $isDisabled ? ' dd-trigger-disabled' : '';
     echo "<div class=\"dd-wrap\" id=\"ddWrap_{$ddName}\">";
-    echo "<div class=\"dd-trigger{$disabledClass}\" id=\"ddTrigger_{$ddName}\" onclick=\"ddToggle('{$ddName}')\">";
+    echo "<div class=\"dd-trigger{$disabledClass}\" id=\"ddTrigger_{$ddName}\" onclick=\"ddToggle('{$ddName}')\" role=\"button\" tabindex=\"0\" aria-haspopup=\"listbox\">";
     $curLabel = $emptyLabel;
     if (!$isDisabled) {
         foreach ($options as $opt) {
@@ -132,16 +132,16 @@ function renderVMDD(string $fieldName, string $ddName, string $normalEmptyLabel,
     $labelColor = ($currentVal === '' || $currentVal === '0' || $isDisabled) ? 'color:var(--c-text-faint);' : '';
     echo "<span id=\"ddLabel_{$ddName}\" style=\"{$labelColor}\">" . htmlspecialchars($curLabel) . "</span>";
     echo "<span class=\"dd-arrow\">▼</span></div>";
-    echo "<div class=\"dd-panel\" id=\"ddPanel_{$ddName}\">";
+    echo "<div class=\"dd-panel\" id=\"ddPanel_{$ddName}\" role=\"listbox\">";
     echo "<div class=\"dd-search-box\"><input type=\"text\" placeholder=\"Cari...\" oninput=\"ddFilter('{$ddName}',this.value)\" onclick=\"event.stopPropagation()\"></div>";
     echo "<div class=\"dd-options\" id=\"ddOpts_{$ddName}\">";
     $emptySel = ($currentVal === '' || $currentVal === '0') ? 'selected' : '';
-    echo "<div class=\"dd-opt {$emptySel}\" data-value=\"\" onclick=\"ddSelect('{$ddName}','','" . htmlspecialchars($normalEmptyLabel, ENT_QUOTES) . "')\">" . htmlspecialchars($normalEmptyLabel) . "</div>";
+    echo "<div class=\"dd-opt {$emptySel}\" role=\"option\" tabindex=\"0\" data-value=\"\" onclick=\"ddSelect('{$ddName}','','" . htmlspecialchars($normalEmptyLabel, ENT_QUOTES) . "')\">" . htmlspecialchars($normalEmptyLabel) . "</div>";
     foreach ($options as $opt) {
         $sel = ((string)$opt['value'] === $currentVal && $currentVal !== '' && $currentVal !== '0') ? 'selected' : '';
         $valEsc = htmlspecialchars((string)$opt['value'], ENT_QUOTES);
         $lblEsc = htmlspecialchars($opt['label'], ENT_QUOTES);
-        echo "<div class=\"dd-opt {$sel}\" data-value=\"{$valEsc}\" onclick=\"ddSelect('{$ddName}','{$valEsc}','{$lblEsc}')\">" . htmlspecialchars($opt['label']) . "</div>";
+        echo "<div class=\"dd-opt {$sel}\" role=\"option\" tabindex=\"0\" data-value=\"{$valEsc}\" onclick=\"ddSelect('{$ddName}','{$valEsc}','{$lblEsc}')\">" . htmlspecialchars($opt['label']) . "</div>";
     }
     echo "</div><div class=\"dd-empty\" id=\"ddEmpty_{$ddName}\">Tiada hasil</div></div>";
     echo "<input type=\"hidden\" name=\"{$fieldName}\" id=\"{$ddName}\" value=\"" . htmlspecialchars($currentVal === '0' ? '' : $currentVal) . "\">";
@@ -261,378 +261,10 @@ foreach ($page_pairs as [$grp, $stu]) {
 }
 ?>
 
-<style>
-/* ── PAGINATION (matches pic_judges.php / pic_students.php etc.) ── */
-.vm-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 0;
-    padding: 16px;
-    border-top: 1px solid var(--c-border);
-}
-.vm-page-info {
-    font-size: 0.8rem;
-    color: var(--c-text-faint);
-    font-weight: 500;
-}
-.vm-page-btns {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-.vm-page-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 10px;
-    border-radius: 6px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--c-text-muted);
-    background: var(--c-surface-2);
-    border: 1px solid var(--c-border-strong);
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-}
-.vm-page-btn:hover:not(.vm-page-disabled) {
-    color: #fff;
-    border-color: var(--c-red);
-    background: var(--c-red-dim);
-}
-.vm-page-btn.vm-page-active {
-    background: var(--c-red);
-    border-color: var(--c-red);
-    color: #fff;
-    cursor: default;
-    pointer-events: none;
-}
-.vm-page-btn.vm-page-disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-.vm-page-ellipsis {
-    display: inline-flex;
-    align-items: center;
-    height: 34px;
-    color: var(--c-text-faint);
-    font-size: 0.85rem;
-    padding: 0 4px;
-}
-html.pm-light .vm-page-info { color: #6b7280; }
-html.pm-light .vm-page-btn { background: #ffffff; border-color: #d1d5db; color: #374151; }
-html.pm-light .vm-page-btn:hover:not(.vm-page-disabled) { background: #fee2e2; border-color: #e2581e; color: #b91c1c; }
-html.pm-light .vm-page-btn.vm-page-active { background: #e2581e; border-color: #e2581e; color: #ffffff; }
-html.pm-light .vm-page-ellipsis { color: #9ca3af; }
-html.pm-light .vm-pagination { border-top-color: #e5e7eb; }
-@media (max-width: 640px) {
-    .vm-pagination { flex-direction: column; align-items: center; text-align: center; }
-    .vm-page-btns { width: 100%; justify-content: center; }
-}
-
-/* ── LAYOUT ── */
-.filter-grid {
-    display: grid;
-    grid-template-columns: repeat(var(--fg-cols, 5), 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
-}
-.filter-grid > div {
-    min-width: 0;
-}
-select:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-.filter-grid label {
-    font-size: 0.7rem !important;
-    margin-bottom: 3px !important;
-}
-.filter-grid .pm-select {
-    height: 32px;
-    font-size: 0.8rem;
-    padding-top: 0;
-    padding-bottom: 0;
-}
-@media (max-width: 640px) {
-    .filter-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 400px) {
-    .filter-grid { grid-template-columns: 1fr; }
-}
-
-/* ── Searchable dropdown (.dd-wrap/.dd-trigger/.dd-panel/etc.) is now
-   defined once in the shared filter_bar.css, loaded via layout.php — kept
-   local here only if a page needs to override it. ── */
-
-/* ── STUDENT LIST: scrollable so pagination is always visible.
-   Height set dynamically in JS (fitMarksListHeight) so it always leaves
-   room for the pagination bar below it instead of a static
-   calc(100vh - Npx) that goes stale whenever the filter grid above the
-   list changes height. ── */
-.marks-list {
-    overflow-y: auto;
-    min-height: 80px;
-    padding-right: 4px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--c-border-strong) transparent;
-}
-@media (max-width: 640px) {
-    .marks-list { max-height: none !important; overflow-y: visible !important; }
-}
-.marks-list::-webkit-scrollbar { width: 4px; }
-.marks-list::-webkit-scrollbar-track { background: transparent; }
-.marks-list::-webkit-scrollbar-thumb { background: var(--c-border-strong); border-radius: 2px; }
-
-/* ── MODERN ACCORDION STYLES (COMPACT) ── */
-.group-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--c-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin: 10px 0 6px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.group-title svg {
-    stroke: var(--c-text-muted);
-    width: 14px;
-    height: 14px;
-}
-.group-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--c-border-strong);
-}
-
-.student-card {
-    background: var(--c-surface-2);
-    border: 1px solid var(--c-border-strong);
-    border-radius: 6px;
-    margin-bottom: 4px;
-    overflow: hidden;
-    transition: all 0.2s ease;
-}
-.student-card:hover {
-    border-color: var(--c-red);
-}
-
-.student-header {
-    padding: 7px 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    background: transparent;
-    gap: 8px;
-}
-@media (max-width: 640px) {
-    .student-header { flex-wrap: wrap; }
-    .student-header > div { flex-wrap: wrap; }
-}
-
-.student-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--c-text);
-    letter-spacing: 0.2px;
-}
-
-.chevron {
-    transition: transform 0.2s ease;
-    color: var(--c-text-muted);
-    font-size: 0.7rem;
-}
-.student-card.is-open .chevron {
-    transform: rotate(180deg);
-    color: var(--c-red);
-}
-
-/* ── COMPACT BADGES ── */
-.score-badge {
-    background: var(--c-surface-0);
-    border: 1px solid var(--c-border-strong);
-    color: var(--c-text);
-    padding: 3px 12px;
-    border-radius: 20px; 
-    font-weight: 700;
-    font-size: 1rem;
-    font-family: 'DM Mono', monospace;
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-}
-.score-badge span {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--c-text-muted);
-}
-
-/* Unrated: Red tint (Still indicates action needed) */
-.status-badge {
-    background: rgba(214, 40, 40, 0.1);
-    color: #F87171;
-    border: 1px solid rgba(214, 40, 40, 0.3);
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* Rated: High-contrast (Indicates completion) */
-.status-badge-success {
-    background: rgba(74, 222, 128, 0.12);
-    color: #16a34a;
-    border: 1px solid var(--c-border-strong);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.student-details {
-    display: none;
-    padding: 0 14px 14px 14px;
-    border-top: 1px solid var(--c-border-strong);
-    margin-top: 4px;
-}
-
-/* ── COMPACT INNER TABLE ── */
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 4px;
-}
-.modern-table th {
-    color: var(--c-text-muted);
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 0 10px 6px 10px;
-    border-bottom: 1px solid var(--c-border);
-    text-align: left;
-}
-.modern-table td {
-    padding: 8px 10px;
-    background: var(--c-surface-2);
-    color: var(--c-text-muted);
-    font-size: 0.85rem;
-}
-.modern-table tr td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
-.modern-table tr td:last-child {
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
-    text-align: center;
-    font-weight: 700;
-    color: var(--c-text);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.95rem;
-}
-
-/* ── DRILLDOWN PICKER ── */
-.drilldown-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-}
-.drilldown-grid label {
-    color: var(--pm-text-muted);
-    font-size: 0.8rem;
-    margin-bottom: 4px;
-    display: block;
-    text-transform: uppercase;
-    font-weight: 600;
-}
-.drilldown-empty {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--c-text-muted);
-    background: var(--c-surface-2);
-    border-radius: 8px;
-    border: 1px dashed var(--c-border-strong);
-    margin-top: 20px;
-}
-/* ── LIGHT MODE OVERRIDES ── */
-html.pm-light .group-title {
-    color: #6b7280;
-}
-html.pm-light .group-title svg {
-    stroke: #6b7280;
-}
-html.pm-light .group-title::after {
-    background: #e5e7eb;
-}
-html.pm-light .student-card {
-    background: #ffffff;
-    border-color: #d1d5db;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-html.pm-light .student-card:hover {
-    border-color: #e2581e;
-    box-shadow: 0 2px 8px rgba(226,88,30,0.12);
-}
-html.pm-light .student-name {
-    color: #111827;
-}
-html.pm-light .score-badge {
-    background: #f3f4f6;
-    border-color: #d1d5db;
-    color: #111827;
-}
-html.pm-light .score-badge span {
-    color: #6b7280;
-}
-html.pm-light .chevron {
-    color: #9ca3af;
-}
-html.pm-light .student-details {
-    border-top-color: #e5e7eb;
-}
-html.pm-light .modern-table th {
-    color: #6b7280;
-    border-bottom-color: #e5e7eb;
-}
-html.pm-light .modern-table td {
-    background: #f9fafb;
-    color: #374151;
-}
-html.pm-light .modern-table tr td:last-child {
-    color: #111827;
-}
-html.pm-light .drilldown-empty {
-    background: #f9fafb;
-    border-color: #d1d5db;
-    color: #6b7280;
-}
-html.pm-light .status-badge-success {
-    box-shadow: none;
-    border-color: #86efac;
-}
-</style>
+<?php
+$pm_vm_css_v = @filemtime(__DIR__ . '/pic_view_marks.css') ?: time();
+?>
+<link rel="stylesheet" href="pic_view_marks.css?v=<?= $pm_vm_css_v ?>">
 
 <h2 class="pm-page-heading" style="margin-bottom:10px;">📊 Semak Markah</h2>
 
@@ -704,69 +336,10 @@ html.pm-light .status-badge-success {
         </div>
     </form>
 
-    <script>
-    // ── Searchable dropdown logic (matches pic_students.php's dd-wrap) ──
-    // ddName here IS the hidden input's own id (vm_siri, vm_school, ...) —
-    // kept that way so vmCascade's reset logic below can address it directly.
-    function ddToggle(ddName) {
-        const trigger = document.getElementById('ddTrigger_' + ddName);
-        if (trigger.classList.contains('dd-trigger-disabled')) return;
-        const panel = document.getElementById('ddPanel_' + ddName);
-        const isOpen = panel.classList.contains('open');
-        document.querySelectorAll('.dd-panel.open').forEach(p => p.classList.remove('open'));
-        document.querySelectorAll('.dd-trigger.open').forEach(t => t.classList.remove('open'));
-        if (!isOpen) {
-            panel.classList.add('open'); trigger.classList.add('open');
-            setTimeout(() => panel.querySelector('.dd-search-box input')?.focus(), 50);
-        }
-    }
-
-    function ddFilter(ddName, val) {
-        const opts = document.querySelectorAll('#ddOpts_' + ddName + ' .dd-opt');
-        const empty = document.getElementById('ddEmpty_' + ddName);
-        let any = false;
-        opts.forEach(o => {
-            const m = o.textContent.toLowerCase().includes(val.toLowerCase());
-            o.classList.toggle('hidden', !m);
-            if (m) any = true;
-        });
-        if (empty) empty.style.display = any ? 'none' : 'block';
-    }
-
-    // Kumpulan (vm_group) is the one exception to "every filter is
-    // independent" — its dropdown options are now scoped server-side to
-    // the selected Peringkat (vm_level), so a Kumpulan value chosen under
-    // a since-changed Peringkat has to be cleared here too, not just left
-    // as a stale hidden-field value the dropdown no longer shows selected.
-    const VM_LEVEL_TO_GROUP = { vm_level: 'vm_group' };
-
-    function ddSelect(ddName, value, label) {
-        document.getElementById(ddName).value = value;
-        const lbl = document.getElementById('ddLabel_' + ddName);
-        lbl.textContent = label;
-        lbl.style.color = value === '' ? 'var(--c-text-faint)' : '';
-        document.querySelectorAll('#ddOpts_' + ddName + ' .dd-opt').forEach(o => o.classList.toggle('selected', o.dataset.value === value));
-        document.getElementById('ddPanel_' + ddName).classList.remove('open');
-        document.getElementById('ddTrigger_' + ddName).classList.remove('open');
-        const dependentGroup = VM_LEVEL_TO_GROUP[ddName];
-        if (dependentGroup) {
-            const groupField = document.getElementById(dependentGroup);
-            if (groupField) groupField.value = '';
-        }
-        // Every other filter is independent — no parent/child resetting.
-        // Submitting the form carries forward all currently-set hidden
-        // input values (including the one that was just changed) as GET
-        // params.
-        document.getElementById('vm-filter-form').submit();
-    }
-
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.dd-wrap')) {
-            document.querySelectorAll('.dd-panel.open').forEach(p => p.classList.remove('open'));
-            document.querySelectorAll('.dd-trigger.open').forEach(t => t.classList.remove('open'));
-        }
-    });
-    </script>
+<?php
+$pm_vm_js_v = @filemtime(__DIR__ . '/pic_view_marks.js') ?: time();
+?>
+<script src="pic_view_marks.js?v=<?= $pm_vm_js_v ?>"></script>
 
     <?php
     // Filters to preserve across pagination links (see page_url() above)
@@ -860,7 +433,7 @@ html.pm-light .status-badge-success {
                 }
             ?>
             <div class="student-card">
-                <div class="student-header" onclick="this.parentElement.classList.toggle('is-open'); var d=this.nextElementSibling; d.style.display = d.style.display==='block' ? 'none' : 'block';">
+                <div class="student-header" onclick="this.parentElement.classList.toggle('is-open'); var d=this.nextElementSibling; d.style.display = d.style.display==='block' ? 'none' : 'block';" role="button" tabindex="0">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <span class="student-name"><?= htmlspecialchars($student) ?></span>
                         <?php if ($isEvaluated): ?>
@@ -894,67 +467,9 @@ html.pm-light .status-badge-success {
         <?php endif; ?>
     </div><!-- end .marks-list -->
 
-    <?php if ($total_pages > 1):
-        $sp_ = max(1, $page - 2);
-        $ep_ = min($total_pages, $sp_ + 4);
-        if ($ep_ - $sp_ < 4) $sp_ = max(1, $ep_ - 4);
-        $start_num_ = $total_students === 0 ? 0 : (($page - 1) * $per_page) + 1;
-        $end_num_   = min($page * $per_page, $total_students);
-    ?>
-    <div class="vm-pagination">
-        <span class="vm-page-info">
-            Memaparkan <b><?= $start_num_ ?>–<?= $end_num_ ?></b> daripada <b><?= $total_students ?></b> pesilat
-        </span>
-        <div class="vm-page-btns">
-            <?php if ($page > 1): ?>
-            <a href="<?= page_url($page - 1, $filter_params) ?>" class="vm-page-btn">&laquo;</a>
-            <?php else: ?>
-            <span class="vm-page-btn vm-page-disabled">&laquo;</span>
-            <?php endif; ?>
-
-            <?php if ($sp_ > 1): ?>
-            <a href="<?= page_url(1, $filter_params) ?>" class="vm-page-btn">1</a>
-            <?php if ($sp_ > 2): ?><span class="vm-page-ellipsis">&hellip;</span><?php endif; ?>
-            <?php endif; ?>
-
-            <?php for ($i = $sp_; $i <= $ep_; $i++): ?>
-            <a href="<?= page_url($i, $filter_params) ?>"
-               class="vm-page-btn <?= $i === $page ? 'vm-page-active' : '' ?>"><?= $i ?></a>
-            <?php endfor; ?>
-
-            <?php if ($ep_ < $total_pages): ?>
-            <?php if ($ep_ < $total_pages - 1): ?><span class="vm-page-ellipsis">&hellip;</span><?php endif; ?>
-            <a href="<?= page_url($total_pages, $filter_params) ?>" class="vm-page-btn"><?= $total_pages ?></a>
-            <?php endif; ?>
-
-            <?php if ($page < $total_pages): ?>
-            <a href="<?= page_url($page + 1, $filter_params) ?>" class="vm-page-btn">&raquo;</a>
-            <?php else: ?>
-            <span class="vm-page-btn vm-page-disabled">&raquo;</span>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
+    <?php pm_render_pagination($page, $total_pages, $total_students, $per_page, 'pesilat', fn($p) => page_url($p, $filter_params)); ?>
 </div>
 
-<script>
-// ── Fit the marks list + pagination into the viewport, no page scroll ──
-function fitMarksListHeight() {
-    const scrollEl = document.querySelector('.marks-list');
-    if (!scrollEl) return;
-    if (window.innerWidth <= 640) {
-        scrollEl.style.maxHeight = '';
-        return;
-    }
-    const pagination = document.querySelector('.vm-pagination');
-    const top = scrollEl.getBoundingClientRect().top;
-    const paginationH = pagination ? pagination.offsetHeight : 0;
-    const available = window.innerHeight - top - paginationH - 24; // 24px bottom breathing room
-    scrollEl.style.maxHeight = Math.max(150, available) + 'px';
-}
-window.addEventListener('resize', fitMarksListHeight);
-document.addEventListener('DOMContentLoaded', fitMarksListHeight);
-</script>
 
 </main>
 </body>

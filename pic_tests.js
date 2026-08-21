@@ -1,0 +1,402 @@
+// pic_tests.js — the PIC "Pengurusan Ujian" (test management) page
+// (pic_tests.php). Split out of that file's inline <script> block, which
+// had nothing to do with the PHP rendering logic around it. No PHP
+// interpolation here, so this is a plain file move, no bootstrap-data
+// object needed.
+
+let _t = null;
+let _dirtyRows = new Set();
+let _orderDirty = false;
+
+function ajaxFilter() {
+    clearTimeout(_t);
+    _t = setTimeout(_load, 400);
+}
+
+function _load() {
+    const params = new URLSearchParams({
+        ajax: '1',
+        search: document.getElementById('f_search').value,
+        level: document.getElementById('f_level').value,
+        siri: document.getElementById('f_siri').value,
+        session: document.getElementById('f_session').value
+    });
+
+    const wrapper = document.getElementById('testList');
+    const spinner = document.getElementById('ajaxSpinner');
+
+    wrapper.style.display = 'none';
+    spinner.style.display = 'block';
+
+    pmFetch('pic_tests.php?' + params)
+        .then(r => r.text())
+        .then(html => {
+            wrapper.innerHTML = html;
+            wrapper.style.display = 'block';
+            spinner.style.display = 'none';
+            _dirtyRows.clear();
+            _orderDirty = false;
+            updateDirtyBar();
+            attachListeners();
+            testsCurrentPage = 1;
+            updateTestsPagination();
+            fitTestsListHeight();
+            restoreOpenAccordions();
+        })
+        .catch(() => {
+            wrapper.style.display = 'block';
+            spinner.style.display = 'none';
+        });
+}
+
+// ── Add several test names to a level in one submission ──
+function addRow(containerId, inputName, placeholder) {
+    const container = document.getElementById(containerId);
+    const row = document.createElement('div');
+    row.className = 'add-row';
+    const input = document.createElement('input');
+    input.name = inputName;
+    input.placeholder = placeholder;
+    input.required = true;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'add-row-btn add-row-remove';
+    btn.title = 'Buang baris';
+    btn.innerHTML = '&times;';
+    btn.onclick = () => removeAddRow(btn);
+    row.appendChild(input);
+    row.appendChild(btn);
+    container.appendChild(row);
+    input.focus();
+}
+
+function removeAddRow(btn) {
+    const container = btn.closest('[id^="addRows_"]');
+    const row = btn.closest('.add-row');
+    if (container && container.querySelectorAll('.add-row').length > 1) {
+        row.remove();
+    } else if (row) {
+        row.querySelector('input').value = '';
+    }
+}
+
+// ── Keep the accordion(s) the PIC had open across a save/add/delete
+// redirect instead of snapping everything back to collapsed. ──
+const PM_OPEN_KEY = 'pm_tests_open_accordions';
+
+function rememberOpenAccordions() {
+    const openIds = Array.from(document.querySelectorAll('.acc-body'))
+        .filter(el => el.style.display === 'block')
+        .map(el => el.id);
+    sessionStorage.setItem(PM_OPEN_KEY, JSON.stringify(openIds));
+}
+
+function restoreOpenAccordions() {
+    let openIds = [];
+    try { openIds = JSON.parse(sessionStorage.getItem(PM_OPEN_KEY) || '[]'); } catch (e) {}
+    sessionStorage.removeItem(PM_OPEN_KEY);
+    openIds.forEach(id => {
+        const bodyEl = document.getElementById(id);
+        if (!bodyEl) return;
+        bodyEl.style.display = 'block';
+        const iconEl = bodyEl.previousElementSibling?.querySelector('.acc-icon');
+        if (iconEl) iconEl.style.transform = 'rotate(90deg)';
+    });
+}
+
+// ── PAGINATION (client-side, 20 accordions per page) ──
+let testsCurrentPage = 1;
+const testsPerPage = 20;
+
+function updateTestsPagination() {
+    const cards = Array.from(document.querySelectorAll('#testList > .accordion-card'));
+    const container = document.getElementById('testsPaginationContainer');
+    const info = document.getElementById('testsPageInfo');
+    const btns = document.getElementById('testsPaginationButtons');
+
+    if (cards.length === 0) { container.style.display = 'none'; return; }
+
+    const total = cards.length;
+    const totalPages = Math.max(1, Math.ceil(total / testsPerPage));
+    if (testsCurrentPage > totalPages) testsCurrentPage = totalPages;
+    if (testsCurrentPage < 1) testsCurrentPage = 1;
+
+    container.style.display = totalPages <= 1 ? 'none' : 'flex';
+
+    const start = (testsCurrentPage - 1) * testsPerPage;
+    const end   = start + testsPerPage;
+    cards.forEach((c, i) => { c.style.display = (i >= start && i < end) ? '' : 'none'; });
+
+    const s = start + 1;
+    const e = Math.min(end, total);
+    info.innerHTML = `Memaparkan <b>${s}–${e}</b> daripada <b>${total}</b> peringkat`;
+
+    pmRenderPagination(btns, testsCurrentPage, totalPages, testsGoToPage);
+}
+
+function testsGoToPage(page) {
+    testsCurrentPage = page;
+    updateTestsPagination();
+}
+
+// ── Fit the tests list + pagination into the viewport, no page scroll ──
+function fitTestsListHeight() {
+    const scrollEl = document.getElementById('testList');
+    const pagination = document.getElementById('testsPaginationContainer');
+    if (!scrollEl || !pagination) return;
+    if (window.innerWidth <= 640) {
+        scrollEl.style.maxHeight = '';
+        return;
+    }
+    const top = scrollEl.getBoundingClientRect().top;
+    const paginationH = pagination.offsetHeight;
+    const available = window.innerHeight - top - paginationH - 24; // 24px bottom breathing room
+    scrollEl.style.maxHeight = Math.max(150, available) + 'px';
+}
+window.addEventListener('resize', fitTestsListHeight);
+
+function attachListeners() {
+    document.querySelectorAll('.test-input').forEach(el => {
+        if (el.dataset.listening) return;
+        el.dataset.listening = '1';
+        el.addEventListener('input', onInputChange);
+    });
+    attachDragListeners();
+}
+
+// ── Drag-and-drop reordering (per level tbody) ──
+let _dragRow = null;
+
+function attachDragListeners() {
+    document.querySelectorAll('.tests-table tbody tr[draggable="true"]').forEach(row => {
+        if (row.dataset.dragListening) return;
+        row.dataset.dragListening = '1';
+        row.addEventListener('dragstart', e => {
+            _dragRow = row;
+            row.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => {
+            row.classList.remove('dragging');
+            _dragRow = null;
+        });
+        row.addEventListener('dragover', e => {
+            e.preventDefault();
+            const tbody = row.parentElement;
+            if (!_dragRow || _dragRow.parentElement !== tbody || _dragRow === row) return;
+            const rect = row.getBoundingClientRect();
+            const before = (e.clientY - rect.top) < rect.height / 2;
+            tbody.insertBefore(_dragRow, before ? row : row.nextSibling);
+        });
+        row.addEventListener('drop', e => {
+            e.preventDefault();
+            renumberTable(row.closest('table'));
+            markOrderDirty(row.closest('.accordion-card'));
+        });
+    });
+}
+
+function renumberTable(table) {
+    table.querySelectorAll('tbody tr').forEach((row, i) => {
+        const cell = row.querySelector('.col-no');
+        if (cell) cell.textContent = i + 1;
+    });
+}
+
+function markOrderDirty(accCard) {
+    _orderDirty = true;
+    if (accCard) accCard.classList.add('has-changes');
+    updateDirtyBar();
+}
+
+function onInputChange(e) {
+    const row = e.target.closest('tr');
+    if (!row) return;
+    const id = row.dataset.id;
+    const orig = e.target.dataset.orig ?? '';
+    const accCard = e.target.closest('.accordion-card');
+
+    if (e.target.value !== orig) {
+        _dirtyRows.add(id);
+        row.classList.add('row-dirty');
+        if(accCard) accCard.classList.add('has-changes');
+    } else {
+        _dirtyRows.delete(id);
+        row.classList.remove('row-dirty');
+        if(accCard && accCard.querySelectorAll('.row-dirty').length === 0) {
+            accCard.classList.remove('has-changes');
+        }
+    }
+    updateDirtyBar();
+}
+
+function updateDirtyBar() {
+    const bar = document.getElementById('saveDirtyBar');
+    const msg = document.getElementById('saveMsg');
+    const total = _dirtyRows.size + (_orderDirty ? 1 : 0);
+    bar.classList.toggle('dirty', total > 0);
+    if (total === 0) {
+        msg.innerHTML = 'Tiada perubahan';
+    } else if (_dirtyRows.size > 0 && _orderDirty) {
+        msg.innerHTML = `Ada <strong>${_dirtyRows.size}</strong> perubahan &amp; <strong>susunan</strong> belum disimpan`;
+    } else if (_orderDirty) {
+        msg.innerHTML = `Ada <strong>susunan</strong> belum disimpan`;
+    } else {
+        msg.innerHTML = `Ada <strong>${_dirtyRows.size}</strong> perubahan belum disimpan`;
+    }
+}
+
+function submitSaveAll() {
+    rememberOpenAccordions();
+    const form = document.getElementById('saveAllForm');
+    form.querySelectorAll('.dyn-input').forEach(el => el.remove());
+    document.querySelectorAll('.test-input').forEach(el => {
+        const h = document.createElement('input');
+        h.type = 'hidden';
+        h.name = el.name;
+        h.value = el.value;
+        h.className = 'dyn-input';
+        form.appendChild(h);
+    });
+    if (_orderDirty) {
+        document.querySelectorAll('.tests-table').forEach(table => {
+            const lid = table.dataset.level;
+            table.querySelectorAll('tbody tr[draggable="true"]').forEach((row, i) => {
+                const h = document.createElement('input');
+                h.type = 'hidden';
+                h.name = `order[${lid}][${i}]`;
+                h.value = row.dataset.id;
+                h.className = 'dyn-input';
+                form.appendChild(h);
+            });
+        });
+    }
+    form.submit();
+}
+
+function discardAll() {
+    document.querySelectorAll('.test-input').forEach(el => {
+        if (el.dataset.orig !== undefined) el.value = el.dataset.orig;
+        el.closest('tr')?.classList.remove('row-dirty');
+    });
+    document.querySelectorAll('.accordion-card').forEach(acc => {
+        acc.classList.remove('has-changes');
+    });
+    _dirtyRows.clear();
+    _orderDirty = false;
+    updateDirtyBar();
+    _load();
+}
+
+function delRow(id) {
+    if (!confirm('Padam ujian ini? Amaran: Semua kriteria di dalam ujian ini akan terpadam.')) return;
+    rememberOpenAccordions();
+    document.getElementById('delFrm').querySelector('[name=test_id]').value = id;
+    document.getElementById('delFrm').submit();
+}
+
+function toggleAddCard() {
+    const el = document.getElementById('addTest');
+    el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+}
+
+function toggleBlock(id, headerEl) {
+    const bodyEl = document.getElementById(id);
+    const iconEl = headerEl.querySelector('.acc-icon');
+    if (bodyEl) {
+        if (bodyEl.style.display === 'none' || bodyEl.style.display === '') {
+            bodyEl.style.display = 'block';
+            if (iconEl) iconEl.style.transform = 'rotate(90deg)';
+            // Scroll the newly-opened body fully into view within the
+            // scrollable list wrapper — otherwise its bottom rows stay
+            // clipped by the fixed max-height until the user scrolls.
+            requestAnimationFrame(() => {
+                bodyEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            });
+        } else {
+            bodyEl.style.display = 'none';
+            if (iconEl) iconEl.style.transform = 'rotate(0deg)';
+        }
+    }
+}
+
+function ddToggle(name) {
+    const trigger = document.getElementById('ddTrigger_' + name);
+    if (trigger.classList.contains('dd-trigger-disabled')) return;
+    const panel = document.getElementById('ddPanel_' + name);
+    const isOpen = panel.classList.contains('open');
+    document.querySelectorAll('.dd-panel.open').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.dd-trigger.open').forEach(t => t.classList.remove('open'));
+    if (!isOpen) {
+        panel.classList.add('open'); trigger.classList.add('open');
+        setTimeout(() => panel.querySelector('.dd-search-box input')?.focus(), 50);
+    }
+}
+function ddFilter(name, val) {
+    const opts = document.querySelectorAll('#ddOpts_' + name + ' .dd-opt');
+    const empty = document.getElementById('ddEmpty_' + name);
+    let any = false;
+    opts.forEach(o => { const m = o.textContent.toLowerCase().includes(val.toLowerCase()); o.classList.toggle('hidden', !m); if(m) any=true; });
+    if(empty) empty.style.display = any ? 'none' : 'block';
+}
+function ddSelect(name, value, label) {
+    if (name === 'level' || name === 'siri' || name === 'session') document.getElementById('f_' + name).value = value;
+    const lbl = document.getElementById('ddLabel_' + name);
+    lbl.textContent = label;
+    lbl.style.color = value === '' ? 'var(--c-text-faint)' : '';
+    document.querySelectorAll('#ddOpts_' + name + ' .dd-opt').forEach(o => o.classList.toggle('selected', o.dataset.value === value));
+    document.getElementById('ddPanel_' + name).classList.remove('open');
+    document.getElementById('ddTrigger_' + name).classList.remove('open');
+
+    if (name === 'siri') {
+        loadSidangOptions(value);
+    }
+    ajaxFilter();
+}
+
+function loadSidangOptions(siriId) {
+    const sessTrigger = document.getElementById('ddTrigger_session');
+    const sessOpts = document.getElementById('ddOpts_session');
+    const sessLbl = document.getElementById('ddLabel_session');
+
+    document.getElementById('f_session').value = '';
+    sessLbl.style.color = 'var(--c-text-faint)';
+
+    if (!siriId) {
+        sessLbl.textContent = '-- Pilih Siri dahulu --';
+        sessOpts.innerHTML = "<div class='dd-opt selected' role='option' tabindex='0' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
+        sessTrigger.classList.add('dd-trigger-disabled');
+        return;
+    }
+    sessLbl.textContent = '-- Semua Sidang --';
+    sessOpts.innerHTML = "<div class='dd-opt selected' role='option' tabindex='0' data-value='' onclick=\"ddSelect('session','','-- Semua Sidang --')\">-- Semua Sidang --</div>";
+    sessTrigger.classList.remove('dd-trigger-disabled');
+
+    pmFetch('pic_tests.php?ajax_sessions=1&siri=' + encodeURIComponent(siriId))
+        .then(r => r.json())
+        .then(list => {
+            list.forEach(s => {
+                const opt = document.createElement('div');
+                opt.className = 'dd-opt';
+                opt.dataset.value = s.session_id;
+                opt.textContent = s.session_name;
+                opt.onclick = () => ddSelect('session', String(s.session_id), s.session_name);
+                sessOpts.appendChild(opt);
+            });
+        })
+        .catch(() => {});
+}
+function ddSearchInput(val) {
+    const lbl = document.getElementById('ddLabel_search');
+    lbl.textContent = val || '-- Semua Ujian --';
+    lbl.style.color = val ? '' : 'var(--c-text-faint)';
+    ajaxFilter();
+}
+document.addEventListener('click', e => {
+    if (!e.target.closest('.dd-wrap')) {
+        document.querySelectorAll('.dd-panel.open').forEach(p => p.classList.remove('open'));
+        document.querySelectorAll('.dd-trigger.open').forEach(t => t.classList.remove('open'));
+    }
+});
+
+document.addEventListener('DOMContentLoaded', _load);

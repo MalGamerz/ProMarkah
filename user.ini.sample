@@ -1,0 +1,20 @@
+; ─────────────────────────────────────────────────────────────────────────
+; user.ini.sample  —  OPTIONAL but recommended.
+;
+; Copy this to a file named exactly ".user.ini" INSIDE public_html to make
+; security_bootstrap.php run automatically before EVERY PHP request — so error
+; handling + Telegram alerts cover the whole app with no per-page edits, and
+; nothing can bypass them.
+;
+; IMPORTANT: auto_prepend_file needs an ABSOLUTE path. Set it to the real
+; location of security_bootstrap.php on the server. From your Hostinger File
+; Manager that is (adjust the u-number if different):
+;
+;     /home/u985209750/public_html/security_bootstrap.php
+;
+; After creating .user.ini, changes can take up to 5 minutes to apply
+; (PHP caches .user.ini per user_ini.cache_ttl). Do NOT put this on your local
+; Laragon machine with a Linux path — the path would be wrong there.
+; ─────────────────────────────────────────────────────────────────────────
+
+auto_prepend_file = /home/u985209750/public_html/security_bootstrap.php

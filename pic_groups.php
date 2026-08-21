@@ -264,7 +264,7 @@ if (isset($_GET['ajax'])) {
         $cur_school_id = $sc['school_id'];
         $found = true;
         echo "<div class='accordion-card'>
-                <div class='school-header' onclick=\"toggleBlock('school_grp_{$cur_school_id}')\">
+                <div class='school-header' onclick=\"toggleBlock('school_grp_{$cur_school_id}')\" role='button' tabindex='0'>
                     <span class='arrow'>▶</span><span>" . htmlspecialchars($sc['school_name']) . "</span>
                 </div>
                 <div id='school_grp_{$cur_school_id}' style='display:none;padding:12px;'>";
@@ -385,7 +385,7 @@ if (isset($_GET['ajax'])) {
             }
 
             echo "<div class='accordion-sub-card' id='card_$uid'>
-                    <div class='accordion-sub-header' onclick=\"toggleBlock('$uid')\">
+                    <div class='accordion-sub-header' onclick=\"toggleBlock('$uid')\" role='button' tabindex='0'>
                         <span class='arrow'>▶</span><span>" . htmlspecialchars($l['level_name']) . "</span>
                         <span class='siri-tag' title='Sidang / Siri'>{$sidangLabel} &middot; {$siriTagLabel}</span>
                     </div>
@@ -494,22 +494,22 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Siri</label>
             <div class="dd-wrap" id="ddWrap_siri">
-                <div class="dd-trigger" id="ddTrigger_siri" onclick="ddToggle('siri')">
+                <div class="dd-trigger" id="ddTrigger_siri" onclick="ddToggle('siri')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_siri" style="color:var(--c-text-faint);">Semua Siri</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_siri">
+                <div class="dd-panel" id="ddPanel_siri" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari siri..." oninput="ddFilter('siri',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_siri">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelectSiri('','Semua Siri')">Semua Siri</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelectSiri('','Semua Siri')">Semua Siri</div>
                         <?php
                         $siris = $conn->query("SELECT siri_id, siri_name, siri_year FROM siri ORDER BY siri_year DESC, siri_name ASC");
                         while ($si = $siris->fetch_assoc()) {
                             $sid_ = $si['siri_id'];
                             $slabel = htmlspecialchars($si['siri_name']) . " (" . htmlspecialchars($si['siri_year']) . ")";
-                            echo "<div class='dd-opt' data-value='{$sid_}' onclick=\"ddSelectSiri('{$sid_}','{$slabel}')\">{$slabel}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$sid_}' onclick=\"ddSelectSiri('{$sid_}','{$slabel}')\">{$slabel}</div>";
                         }
                         ?>
                     </div>
@@ -522,16 +522,16 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Kumpulan</label>
             <div class="dd-wrap" id="ddWrap_group">
-                <div class="dd-trigger" id="ddTrigger_group" onclick="ddToggle('group')">
+                <div class="dd-trigger" id="ddTrigger_group" onclick="ddToggle('group')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_group" style="color:var(--c-text-faint);">Semua Kumpulan</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_group">
+                <div class="dd-panel" id="ddPanel_group" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari kumpulan..." oninput="ddFilter('group',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_group">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('group','','Semua Kumpulan')">Semua Kumpulan</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('group','','Semua Kumpulan')">Semua Kumpulan</div>
                         <?php
                         // Tag each group with its sidang (and siri, when "Semua Siri" is
                         // active) since group names can repeat across sessions/siri. Also
@@ -548,7 +548,7 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
                             if ($ctx) $optLabel .= " — " . implode(' / ', $ctx);
                             $optLabel = htmlspecialchars($optLabel);
                             $glid_ = (int)$g['level_id'];
-                            echo "<div class='dd-opt' data-value='{$gid_}' data-level='{$glid_}' onclick=\"ddSelect('group','{$gid_}','{$optLabel}')\">{$optLabel}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-level='{$glid_}' onclick=\"ddSelect('group','{$gid_}','{$optLabel}')\">{$optLabel}</div>";
                         }
                         ?>
                     </div>
@@ -560,23 +560,23 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Sidang</label>
             <div class="dd-wrap" id="ddWrap_session">
-                <div class="dd-trigger" id="ddTrigger_session" onclick="ddToggle('session')">
+                <div class="dd-trigger" id="ddTrigger_session" onclick="ddToggle('session')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_session" style="color:var(--c-text-faint);">Semua Sidang</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_session">
+                <div class="dd-panel" id="ddPanel_session" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari sidang..." oninput="ddFilter('session',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_session">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('session','','Semua Sidang')">Semua Sidang</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('session','','Semua Sidang')">Semua Sidang</div>
                         <?php
                         $sessions = $conn->query("SELECT se.*, si.siri_name FROM sessions se LEFT JOIN siri si ON se.siri_id = si.siri_id ORDER BY se.session_name");
                         while ($s=$sessions->fetch_assoc()) {
                             $siriLbl = $s['siri_name'] ? $s['siri_name'] : 'Tiada Siri';
                             $sid2 = $s['session_id'];
                             $slabel2 = htmlspecialchars($s['session_name']) . " — " . htmlspecialchars($siriLbl);
-                            echo "<div class='dd-opt' data-value='{$sid2}' data-siri='{$s['siri_id']}' onclick=\"ddSelect('session','{$sid2}','{$slabel2}')\">{$slabel2}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$sid2}' data-siri='{$s['siri_id']}' onclick=\"ddSelect('session','{$sid2}','{$slabel2}')\">{$slabel2}</div>";
                         }
                         ?>
                     </div>
@@ -588,16 +588,16 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Peringkat</label>
             <div class="dd-wrap" id="ddWrap_level">
-                <div class="dd-trigger" id="ddTrigger_level" onclick="ddToggle('level')">
+                <div class="dd-trigger" id="ddTrigger_level" onclick="ddToggle('level')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_level" style="color:var(--c-text-faint);">Semua Peringkat</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_level">
+                <div class="dd-panel" id="ddPanel_level" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari peringkat..." oninput="ddFilter('level',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_level">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelectLevel('','Semua Peringkat')">Semua Peringkat</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelectLevel('','Semua Peringkat')">Semua Peringkat</div>
                         <?php
                         // A Peringkat with no Kumpulan under it is a dead end — nothing to
                         // narrow down to next, nothing to ever show in results — so it's
@@ -613,7 +613,7 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
                                 $optLabel2 .= " — " . $l['siri_name'];
                             }
                             $optLabel2 = htmlspecialchars($optLabel2);
-                            echo "<div class='dd-opt' data-value='{$lid_}' onclick=\"ddSelectLevel('{$lid_}','{$optLabel2}')\">{$optLabel2}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$lid_}' onclick=\"ddSelectLevel('{$lid_}','{$optLabel2}')\">{$optLabel2}</div>";
                         }
                         ?>
                     </div>
@@ -625,22 +625,22 @@ $pm_pg_css_v = @filemtime(__DIR__ . '/pic_groups.css') ?: time();
         <div>
             <label class='filter-label'>Cawangan</label>
             <div class="dd-wrap" id="ddWrap_school">
-                <div class="dd-trigger" id="ddTrigger_school" onclick="ddToggle('school')">
+                <div class="dd-trigger" id="ddTrigger_school" onclick="ddToggle('school')" role="button" tabindex="0" aria-haspopup="listbox">
                     <span id="ddLabel_school" style="color:var(--c-text-faint);">Semua Cawangan</span>
                     <span class="dd-arrow">▼</span>
                 </div>
-                <div class="dd-panel" id="ddPanel_school">
+                <div class="dd-panel" id="ddPanel_school" role="listbox">
                     <div class="dd-search-box">
                         <input type="text" placeholder="Cari cawangan..." oninput="ddFilter('school',this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="dd-options" id="ddOpts_school">
-                        <div class="dd-opt selected" data-value="" onclick="ddSelect('school','','Semua Cawangan')">Semua Cawangan</div>
+                        <div class="dd-opt selected" data-value="" role="option" tabindex="0" onclick="ddSelect('school','','Semua Cawangan')">Semua Cawangan</div>
                         <?php
                         $schools_f = $conn->query("SELECT school_id, school_name FROM schools ORDER BY school_name");
                         while ($sc_f = $schools_f->fetch_assoc()) {
                             $scid_ = $sc_f['school_id'];
                             $sclabel = htmlspecialchars($sc_f['school_name']);
-                            echo "<div class='dd-opt' data-value='{$scid_}' onclick=\"ddSelect('school','{$scid_}','{$sclabel}')\">{$sclabel}</div>";
+                            echo "<div class='dd-opt' role='option' tabindex='0' data-value='{$scid_}' onclick=\"ddSelect('school','{$scid_}','{$sclabel}')\">{$sclabel}</div>";
                         }
                         ?>
                     </div>

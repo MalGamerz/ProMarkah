@@ -1,0 +1,15 @@
+# This directory is upload/data storage only (CSV imports, etc.) — it should
+# never execute PHP. Some stale duplicate .php page copies ended up in here
+# by accident; rather than delete them (uncertain provenance) this blocks
+# them from ever being served/executed directly over HTTP.
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.php$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.php$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>

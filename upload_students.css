@@ -461,40 +461,15 @@ html.review-fullscreen .upload-page-wrapper {
 .tag-exists  { background:var(--c-surface-2); color:var(--c-text-muted); border:1px solid var(--c-border-strong); }
 .tag-new     { background:rgba(200,0,30,0.1); color:var(--c-red); border:1px solid rgba(200,0,30,0.3); }
 
-/* ── Status badges ── */
-.pm-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
-    padding: 4px 11px; border-radius: 20px; white-space: nowrap;
-}
-.pm-badge::before { content:''; width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-.pm-badge-green { background:rgba(34,197,94,0.12); color:#16a34a; border:1px solid rgba(34,197,94,0.3); }
-.pm-badge-green::before { background:#22c55e; }
-.pm-badge-amber { background:rgba(120,120,120,0.12); color:#666; border:1px solid rgba(120,120,120,0.25); }
-.pm-badge-amber::before { background:#999; }
-.pm-badge-gray  { background:rgba(100,100,100,0.1); color:#5a5a5a; border:1px solid rgba(100,100,100,0.22); }
-.pm-badge-gray::before  { background:#888; }
-.pm-badge-red   { background:rgba(239,68,68,0.1); color:#dc2626; border:1px solid rgba(239,68,68,0.28); }
-.pm-badge-red::before   { background:#ef4444; }
+/* ── Status badges: dashboard.css defines the canonical .pm-badge shape
+   and .pm-badge-green/amber/gray/red color variants (shared with every
+   other page's badges — e.g. upload_students.php's own .tag-* colors
+   above already use the muted palette, so this now matches). This page
+   used to carry its own drifted copy with saturated colors (vivid green/
+   red) instead of the shared muted tokens. ── */
 
-/* ── Pagination bar — uniform across all tabs ── */
-.pm-pagination {
-    flex-shrink: 0;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 18px;
-    background: var(--c-surface-2);
-    border-top: 1px solid var(--c-border-strong);
-    font-size: 0.78rem; color: var(--c-text-muted); font-weight: 600;
-}
-.pm-pagination-controls { display:flex; align-items:center; gap:6px; }
-.pm-page-btn {
-    background: var(--c-surface-1); border: 1px solid var(--c-border-strong);
-    color: var(--c-white); padding: 5px 13px; border-radius: 6px;
-    cursor: pointer; font-weight: 700; font-size: 0.8rem; transition: all 0.15s;
-}
-.pm-page-btn:hover:not(:disabled) { background:var(--c-red-dim); color:var(--c-red); border-color:rgba(200,0,30,0.35); }
-.pm-page-btn:disabled { opacity:0.3; cursor:not-allowed; }
-.pm-page-info { font-size:0.78rem; font-weight:700; color:var(--c-text); padding:0 8px; }
+/* ── Pagination: shared .vm-pagination styles now live once in
+   dashboard.css (loaded by layout.php), used by every paginated page. ── */
 
 /* ── Notice banner ── */
 .notice-banner { display:flex; align-items:center; gap:10px; background:rgba(161,161,170,0.07); border:1px solid var(--c-border-strong); border-radius:8px; padding:11px 16px; font-size:0.82rem; color:var(--c-text-muted); }
@@ -622,13 +597,6 @@ html.review-fullscreen .upload-page-wrapper {
     .wizard-footer > div:empty { 
         display: none; 
     }
-
-    /* Pagination: compact */
-    .pm-pagination { padding: 8px 12px; font-size: 0.72rem; }
-    .pm-page-btn { padding: 4px 10px; font-size: 0.76rem; }
-
-    /* Badges: smaller on mobile */
-    .pm-badge { padding: 3px 8px; font-size: 0.65rem; }
 
     /* Table: allow horizontal scroll */
     .pm-table-wrap { -webkit-overflow-scrolling: touch; }

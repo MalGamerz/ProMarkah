@@ -38,10 +38,11 @@ for what's kept out and why.
 ## Tech stack
 
 Plain PHP (mysqli, no framework) + vanilla JS + hand-written CSS. One
-Composer dependency, `firebase/php-jwt` (`^7.1`), used only to verify
-Google/Apple OAuth ID tokens (see `oauth_helpers.php`) — no autoloading
-config beyond Composer's default, no dev dependencies, no test framework.
-Deployed on Hostinger shared hosting (Apache + `mod_rewrite`/`.htaccess`,
+runtime Composer dependency, `firebase/php-jwt` (`^7.1`), used only to
+verify Google/Apple OAuth ID tokens (see `oauth_helpers.php`) — no
+autoloading config beyond Composer's default. `phpunit/phpunit` (`^10.5`)
+is the one dev dependency, backing the `tests/` suite — see
+[Testing & diagnostics](#testing--diagnostics). Deployed on Hostinger shared hosting (Apache + `mod_rewrite`/`.htaccess`,
 mysqli + curl + zip PHP extensions). Locally this just needs a standard
 Apache/PHP/MySQL stack (Laragon, XAMPP, etc.) — there's no Docker/Vagrant
 config, no `.env` file, and no build step; static assets are plain `.css`/
@@ -110,9 +111,17 @@ and its sidebar:
    under each Ujian (`pic_criteria.php`) — the rubric a judge actually
    scores against, each Kriteria carrying its own max mark.
 5. **Manage Cawangan** (`pic_schools.php`) and their **student rosters**
-   — one at a time (`pic_students.php`) or in bulk via the import wizard
-   (`upload_students.php`: Excel/PDF → upload → select sheet → review →
-   process). Students are scoped to a Cawangan + Peringkat.
+   — one at a time, pasted as a name list, or in bulk via the import
+   wizard. `pic_students.php`'s "Tambah Pelajar Baru" form takes one
+   Peringkat + one Cawangan per submission and accepts either a single
+   typed name or a pasted numbered list (a leading unnumbered line, e.g. a
+   copied "AWAN PUTIH CULA MERAH 2" header, is discarded automatically);
+   it also tries to auto-select the matching Peringkat from that pasted
+   header text and flags any name that looks like a duplicate of an
+   existing student in the same Peringkat/Cawangan before you submit.
+   `upload_students.php` is the heavier-weight wizard for a full roster
+   file (Excel/PDF → upload → select sheet → review → process). Students
+   are scoped to a Cawangan + Peringkat either way.
 6. **Build Kumpulan** (`pic_groups.php`) — drag ungrouped students from a
    Peringkat into groups; each group is assigned to exactly one judge and
    member order is preserved for the marking-table UI.
@@ -217,10 +226,10 @@ check style.
 
 | Role | Typical area |
 |---|---|
-| `pic` | Every `pic_*.php` configuration/report page, `manage_attendance.php`, `leaderboard.php` (shared with judge), `db_health_check.php` / `test_suite.php` / `page_smoke_test.php` (diagnostics, shared with admin) |
+| `pic` | Every `pic_*.php` configuration/report page, `manage_attendance.php`, `leaderboard.php` (shared with judge) |
 | `judge` | `judge.php` (the scoring workflow) and its AJAX/JS support files, `judge_view_marks.php`, `judge_settings.php`, `silibus.php` / `silibus_baru.php`, `reset_system.php`, `save_scores.php` / `save_draft_score.php`, `leaderboard.php` (shared with pic) |
 | `recorder` | The attendance-management area (`attendance.php`'s internal, logged-in side) |
-| `admin` | `admin.php`, `admin_data.php`, `admin_logs.php`, plus the diagnostic pages shared with pic |
+| `admin` | `admin.php`, `admin_data.php`, `admin_logs.php` |
 
 Public, no-login pages are the QR attendance flow — see the constraint
 below.
@@ -390,13 +399,16 @@ maintainer should still know, at the level that's safe to write down:
   because they're designed to be hit by a cron job or a developer without
   a session. Treat any file whose own comments say "delete this when
   done" as exactly that.
-- **Housekeeping flag for the incoming maintainer**: `test_suite.php` and
-  (to a lesser extent) `telegram_test.php` are diagnostic tools that were
-  left in place with real, hardcoded access tokens after initial setup —
-  both explicitly say "delete when done" in their own header comments.
-  Confirm they're either removed from production or that their tokens
-  have been rotated before treating the site as fully locked down; this
-  README does not reproduce those tokens.
+- **Housekeeping flag for the incoming maintainer**: `telegram_test.php` is
+  a diagnostic tool that was left in place with a real, hardcoded access
+  token after initial setup — it explicitly says "delete when done" in its
+  own header comment. Confirm it's either removed from production or that
+  its token has been rotated before treating the site as fully locked
+  down; this README does not reproduce that token. (`test_suite.php`, its
+  sibling with the same problem, has since been replaced entirely by the
+  PHPUnit suite — see [Testing & diagnostics](#testing--diagnostics) —
+  which needs no hardcoded token because it authenticates with real
+  per-role test credentials supplied only via a gitignored local env file.)
 - `reset_system.php` is judge-role-gated and requires an explicit
   confirmation query parameter before it does anything. It does **not**
   delete data — it soft-archives existing scoring records (flips an
@@ -411,6 +423,13 @@ maintainer should still know, at the level that's safe to write down:
   all before returning data — they only leak dropdown option lists
   (names/IDs), not scores or credentials, but they're worth bringing in
   line with the rest of the app's per-file role checks.
+- `file/`, `img/`, and `sijil/` each hold stray, uncertain-provenance `.php`
+  copies alongside real assets (`file/` holds live uploaded CSVs; `img/`
+  and `sijil/` hold real images/webp pairs) — rather than delete them, each
+  directory has its own `.htaccess` (`Require all denied` on `\.php$`,
+  with the Apache-2.2 `Order/Deny` fallback for older setups) so none of
+  them can ever be served or executed directly over HTTP, no matter what's
+  in them.
 
 ## Database schema overview
 
@@ -444,34 +463,68 @@ exact columns before writing a query against one):
 
 A prior cleanup deliberately removed a couple of denormalized columns
 (e.g. a redundant session reference on `groups`) in favor of deriving
-that value via joins through `levels`/`criteria` — `db_health_check.php`
-documents the reasoning if you're ever tempted to re-add a shortcut
-column like that.
+that value via joins through `levels`/`criteria` — the Database test
+suite's `tests/Database/SchemaAndIntegrityTest.php` documents the
+reasoning if you're ever tempted to re-add a shortcut column like that.
+
+**No foreign-key constraints exist anywhere in this schema** — deletes
+must clean up dependent rows by hand, in application code, or they're
+silently orphaned rather than rejected/cascaded by the database. Every
+`DELETE` handler needs to be audited for this individually; as one
+example, `pic_students.php`'s student-delete action now explicitly wraps
+`scores` (both submitted marks and unsubmitted drafts), `group_students`
+(kumpulan membership), and `attendance` in a transaction before deleting
+the `students` row itself — it used to only delete the `students` row,
+leaving the other three behind.
 
 ## Testing & diagnostics
 
-There's no automated test suite (no PHPUnit/Pest, no CI config) — QA is
-manual, via three purpose-built diagnostic pages that each cover a
-different layer:
+QA is an automated PHPUnit suite (`tests/`), split into two independent
+suites that each self-skip rather than fail hard when their prerequisites
+aren't available — `composer test` is always safe to run with zero setup:
 
-- **`db_health_check.php`** — re-runs the actual query *shapes* the app
-  depends on (the joins/inserts/updates each page performs) to catch
-  broken joins or orphaned rows after a schema change. Has a write-path
-  section that performs real `INSERT`/`UPDATE`/`DELETE` but always inside
-  a transaction that gets rolled back. Usable from a browser (pic/admin
-  gated) or the CLI (no gate — safe to wire into a cron/CI job later).
-- **`page_smoke_test.php`** — has your *current logged-in browser session*
-  fetch every page relevant to your role and checks for HTTP 200 plus a
-  well-formed closing `</main></body></html>`, which catches a PHP fatal
-  error mid-render (but not silent logic bugs — those only surface in the
-  error log). Has an opt-in, admin-only deeper check that exercises the
-  real score-saving/locking/leaderboard-filtering logic against the DB,
-  again inside a rolled-back transaction.
-- **`test_suite.php`** — a self-contained HTTP integration tester: it
-  makes real requests against the site's own live URLs, grouped by role,
-  and checks status codes/content. See the housekeeping flag above — this
-  one carries a hardcoded access token and should be removed or re-gated
-  before considering the site production-hardened.
+- **`composer test:db`** (`tests/Database/`) — needs only a working local
+  DB connection (the same `secrets.php` every other page already needs;
+  see [Secrets & security posture](#secrets--security-posture)). Every
+  test runs inside one transaction that `tests/Support/DbTestCase.php`
+  always rolls back in `tearDown()`, pass or fail, so nothing here ever
+  persists:
+  - `SchemaAndIntegrityTest` — did the 3NF migration land as expected (no
+    duplicates, no orphaned FKs)?
+  - `QueryPatternsTest` — re-runs the actual join/subquery *shapes* the
+    app depends on (`pic_groups.php`, `judge.php`, `pic_view_marks.php`,
+    `pic_directory.php`, `pic.php`, `pic_master_list.php`,
+    `attendance_view_dashboard.php`, …) against real data, so a broken
+    join surfaces here instead of on the live page.
+  - `WritePathsTest` — the actual `INSERT`/`UPDATE`/`DELETE` statements
+    each page runs.
+  - `DraftScoreLifecycleTest` / `PicCrudLifecycleTest` — full sequential
+    lifecycles (draft save → lock → final submit → leaderboard
+    aggregation; and Create/Read/Update/Delete across every PIC-managed
+    entity) built on self-contained fixtures.
+- **`composer test:http`** (`tests/Http/`) — needs a running instance of
+  the app plus disposable per-role test accounts, supplied via
+  `tests/.env.testing` (gitignored — copy `tests/.env.testing.sample` and
+  fill it in; **never point it at production or use real staff
+  credentials**). Skips itself entirely when that file/those env vars
+  aren't present:
+  - `PublicAttendanceTest` — the anonymous QR flow stays reachable
+    without login, and `manage_attendance.php` stays blocked.
+  - `AuthFlowTest` — per-role login redirects, the judge two-step flow,
+    bad credentials are rejected, and role isolation (a judge-only or
+    admin-only page redirects the wrong role to login).
+  - `PageAvailabilityTest` — every page reachable by each role actually
+    renders to a well-formed close, for a real logged-in session of that
+    role (not a SQL mimic — this catches a plain PHP bug a query-shape
+    test can't).
+  - `EndpointGuardTest` — CSRF/method guards on the state-changing
+    endpoints (`save_draft_score.php`, `save_scores.php`, the `pic_*.php`
+    POST actions, `admin_data.php`/`admin.php`/`admin_logs.php`) reject
+    bad input safely instead of crashing or silently writing.
+
+Run everything with `composer test` (or `vendor/bin/phpunit`); run one
+suite at a time with `composer test:db` / `composer test:http`. See
+`phpunit.xml` for the suite definitions.
 
 ## Map of the codebase
 
@@ -504,8 +557,9 @@ different layer:
     `auth_check.php` include at all, and a looser status whitelist (anything
     that isn't exactly `'Present'` silently becomes `'Absent'` instead of
     being rejected). Nothing in the front-end calls it — only
-    `test_suite.php` does. Left alone pending a decision on whether it's
-    still needed for something outside this repo.
+    `tests/Http/PublicAttendanceTest.php` still exercises it, mirroring the
+    old `test_suite.php`'s coverage. Left alone pending a decision on
+    whether it's still needed for something outside this repo.
   - `attendance_view_dashboard.php` interpolates `$active_siri_id` directly
     into a raw SQL string rather than a prepared statement, unlike every
     other file in this family. Low risk in practice (the value is cast
@@ -557,11 +611,27 @@ different layer:
   judge_dashboard.js/judge_marking.js)), `test_preview.php` (PIC-only
   cascading-dropdown preview of a test's level→test structure before
   assigning it),
-  data (`pic_students.php` (+ `pic_students.css/.js`, same plain-file-move
-  pattern — no PHP interpolation in either block; note left in that commit
-  that `loadSidangOptions()`'s `document.createElement()`-built dd-opt
-  rows never got `role="option"`/`tabindex`, unlike the PHP-echoed ones
-  the accessibility pass covered), `pic_directory.php` (+ `pic_directory.css/.js`,
+  data (`pic_students.php` (+ `pic_students.css/.js`) — originally a
+  plain-file-move split with no PHP interpolation in either block (note
+  left in that commit that `loadSidangOptions()`'s
+  `document.createElement()`-built dd-opt rows never got
+  `role="option"`/`tabindex`, unlike the PHP-echoed ones the accessibility
+  pass covered); the "Tambah Pelajar Baru" form later gained a
+  paste-a-name-list feature (single name or a numbered list, either way
+  scoped to one Peringkat + one Cawangan per submission — see
+  [End-to-end system flow](#1-pic-sets-up-the-competition-structure)),
+  which added two small read-only AJAX endpoints
+  (`ajax_levels_for_siri` — repopulates the Peringkat `<select>` when a
+  PIC with more than one Siri switches the form's Siri picker;
+  `ajax_existing_names` — same-Peringkat/Cawangan duplicate-name check
+  used to flag, not block, a likely-duplicate row before submit) and a
+  client-side Peringkat auto-match (`pic_students.js`'s
+  `tryAutoSelectPeringkatFromPastedHeader()`) that compares a pasted
+  block's leading header line against the Peringkat options after
+  normalizing away both a trailing `" — Siri Name"` suffix and a leading
+  `"Ujian "` word — the latter only because that's how this installation's
+  real `levels.level_name` values are actually stored, confirmed against
+  the live DB rather than assumed), `pic_directory.php` (+ `pic_directory.css/.js`,
   same plain-file-move pattern as `pic_medal_settings.php` below — no PHP
   interpolation in either block), `pic_master_list.php`,
   `pic_roster_check.php`, `load_levels_group.php`, `load_schools_for_session.php`,
@@ -601,8 +671,7 @@ different layer:
   `oauth_apple_callback.php`, `oauth_google_callback.php`, `logout.php`.
 - **Ops/diagnostics** (see [Testing & diagnostics](#testing--diagnostics)
   and the housekeeping flag above before relying on any of these in
-  production): `db_health_check.php`, `page_smoke_test.php`,
-  `test_suite.php`, `heartbeat.php` (daily cron "system OK" ping to
+  production): `heartbeat.php` (daily cron "system OK" ping to
   Telegram — DB connectivity + recent error-log count), `telegram_test.php`
   (one-off alert-credential check — delete after use, per its own
   comment), `fetch_options.php` (generic session-gated dropdown-option
@@ -668,4 +737,28 @@ logic. See the git log for the full list of completed phases and which
 file each one covers.
 
 *(This map will grow as later refactor phases document the remaining
-files in more depth.)*`
+files in more depth.)*
+
+A later batch (not yet numbered/committed individually in the git log the
+way Phases 1-16 were) applied this same mechanical split to the rest of
+the still-inline pages in one pass: `pic_levels.php`, `pic_sessions.php`,
+`pic_schools.php`, `pic_view_marks.php`, `pic_master_list.php`,
+`pic_siri.php`, `pic_cawangan_summary.php`, `judge_view_marks.php`,
+`judge_settings.php`, `manage_attendance.php`, `pic_roster_check.php`,
+`test_preview.php`, `pic.php`, `silibus.php`, `silibus_baru.php`,
+`login.php`, `admin.php`, `admin_data.php`, `admin_logs.php`,
+`error_page.php`, `attendance_view_all.php`,
+`attendance_view_dashboard.php`, `export_leaderboard.php`,
+`export_attendance_pdf.php`, `export_cawangan_summary_pdf.php`, and
+`export_cawangan_summary_word.php` — each gained its own `.css`/`.js`
+(or both). `judge.php` had a leftover 77-line `<style>` block from before
+its own Phase split; that got folded into the existing `judge.css`
+instead of a second stylesheet. Three pages (`silibus.php`,
+`export_leaderboard.php`, `pic_roster_check.php`) had their one
+PHP-interpolated line (`silibusExportData`, `leaderboardData`, and
+`RC_CSRF` respectively) peeled into a small inline bootstrap `<script>`
+ahead of the external file, same mechanism as `pic_groups.php`'s CSRF
+const. A few very small blocks (under ~15 lines, e.g. `login.php`'s
+Google Identity Services callback, `pic.php`'s inline toast script) were
+deliberately left inline rather than split — same judgment call as the
+existing `spawnPmToast(...)` exceptions noted throughout this section.

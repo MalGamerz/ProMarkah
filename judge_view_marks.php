@@ -239,210 +239,10 @@ $main_stmt->close();
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-<style>
-/* ── SELECT2 appearance now comes from the shared filter_bar.css, loaded
-   via layout.php, pinned to the same 32px/0.8rem benchmark as
-   pic_view_marks.php / leaderboard.php / silibus.php — this page's local
-   copy had drifted to 42px before that got centralized. ── */
-
-/* ── FILTER GRID ──
-   Flexbox + wrap + justify-content:center instead of CSS Grid: with
-   auto-fit grid columns, a partial last row (e.g. 7 fields wrapping to
-   6+1) leaves the lone leftover item stuck in the first column with empty
-   space beside it — grid rows share column tracks, so they can't
-   individually recenter. Flexbox wraps line-by-line and centers each
-   line's items independently, so this reads as centered at any field
-   count and at every viewport width without separate breakpoints per
-   screen size. */
-.filter-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 14px;
-    margin-bottom: 22px;
-}
-.filter-col {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    flex: 1 1 0; /* Equal basis so every column grows to the same width, same as leaderboard.php's .filter-col — the old flex:1 1 180px + max-width:220px let some columns hit the cap while others kept growing, producing visibly uneven widths */
-    min-width: 110px; /* Prevents Select2 from getting completely crushed, matching the reference pattern */
-}
-.filter-col label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--c-text-faint);
-}
-
-/* ── MARKS TABLE ── */
-.view-marks-table {
-    min-width: 900px;
-    table-layout: auto;
-    border-collapse: collapse;
-    width: 100%;
-}
-.view-marks-table th {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: var(--c-surface-2) !important;
-    color: var(--c-text-muted);
-    padding: 8px 12px !important;
-    font-size: 0.75rem !important;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    text-align: left;
-    white-space: nowrap;
-    border-bottom: 2px solid var(--c-red);
-    border-right: 1px solid var(--c-border);
-}
-.view-marks-table td {
-    padding: 8px 12px !important;
-    vertical-align: middle !important;
-    border-bottom: 1px solid var(--c-border);
-    border-right: 1px solid var(--c-border);
-    color: var(--c-text);
-    font-size: 0.85rem;
-}
-
-/* ── COLUMN ROLES — use CSS vars so light/dark both work ── */
-.col-group {
-    font-weight: 700;
-    color: var(--c-red) !important;
-    background: var(--c-surface-2) !important;
-    border-right: 2px solid var(--c-border-strong) !important;
-}
-.col-group .col-siri-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--c-red);
-    display: block;
-    margin-bottom: 2px;
-    opacity: 0.85;
-}
-.col-group .col-session-label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--c-text-faint);
-    display: block;
-    margin-bottom: 3px;
-}
-.col-student {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--c-text) !important;
-    background: var(--vm-student-bg, var(--c-surface-1)) !important;
-    border-right: 1px solid var(--c-border-strong) !important;
-}
-.col-student .col-year-label {
-    font-size: 0.78rem;
-    color: var(--c-text-faint);
-    display: block;
-    margin-top: 3px;
-}
-.col-student .col-year-val {
-    color: var(--c-red);
-    font-weight: 700;
-}
-.col-criteria {
-    color: var(--c-text-muted) !important;
-    background: var(--c-surface-1) !important;
-    font-size: 0.85rem;
-    border-right: 1px solid var(--c-border) !important;
-}
-.col-test {
-    color: var(--c-text-faint) !important;
-    font-size: 0.85rem;
-}
-.col-mark {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.95rem !important;
-    font-weight: 700;
-    color: var(--c-text) !important;
-    text-align: center !important;
-    background: var(--c-surface-0) !important;
-    letter-spacing: 0.04em;
-}
-
-/* Row hover — consistent wash */
-.view-marks-table tbody tr:hover td { background: var(--c-red-dim) !important; }
-.view-marks-table tbody tr:hover td.col-group    { background: var(--c-surface-2) !important; }
-.view-marks-table tbody tr:hover td.col-student  { background: var(--c-surface-1) !important; }
-.view-marks-table tbody tr:hover td.col-criteria { background: var(--c-surface-1) !important; }
-.view-marks-table tbody tr:hover td.col-mark     { background: var(--c-red-dim)   !important; }
-
-/* Empty state row */
-.vm-empty-row td {
-    text-align: center;
-    padding: 48px !important;
-    color: var(--c-text-faint);
-    font-style: italic;
-}
-
-/* ── PAGINATION ── */
-.pagination-container {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    background: var(--c-surface-2);
-    border-top: 1px solid var(--c-border);
-    gap: 16px;
-}
-.pagination-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-.pagination-info {
-    font-size: 0.85rem;
-    color: var(--c-text-muted);
-    font-weight: 600;
-}
-.pagination-controls {
-    display: flex;
-    gap: 6px;
-}
-.page-btn {
-    padding: 4px 12px;
-    font-size: 0.85rem;
-    border: 1px solid var(--c-border-strong);
-    background: var(--c-surface-1);
-    color: var(--c-text);
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s ease;
-}
-.page-btn:hover:not(:disabled) {
-    background: var(--c-surface-3);
-    border-color: var(--c-text-muted);
-}
-.page-btn.active {
-    background: var(--c-red);
-    color: #fff;
-    border-color: var(--c-red);
-}
-.page-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-@media (max-width: 600px) {
-    .pagination-container { flex-direction: column; justify-content: center; text-align: center; }
-    .pagination-left { justify-content: center; }
-    .pagination-controls { width: 100%; justify-content: center; flex-wrap: wrap; }
-    .jvm-table-scroll { max-height: none !important; overflow-y: visible !important; }
-}
-</style>
+<?php
+$pm_jvm_css_v = @filemtime(__DIR__ . '/judge_view_marks.css') ?: time();
+?>
+<link rel="stylesheet" href="judge_view_marks.css?v=<?= $pm_jvm_css_v ?>">
 
 <h2 class="pm-page-heading">📊 Senarai Markah Lengkap</h2>
 
@@ -632,7 +432,7 @@ $main_stmt->close();
     </div>
 
     <!-- Pagination Footer -->
-    <div class="pagination-container" id="paginationWrapper">
+    <div class="vm-pagination" id="paginationWrapper">
         <div class="pagination-left">
             <select id="rowsPerPageSelect" class="pm-select" style="padding: 4px 8px; height: auto; width: auto; font-size: 0.8rem;">
                 <option value="10">10 / mukasurat</option>
@@ -641,130 +441,17 @@ $main_stmt->close();
                 <option value="50">50 / mukasurat</option>
                 <option value="100">100 / mukasurat</option>
             </select>
-            <div class="pagination-info" id="pageInfo">Memaparkan 0 rekod</div>
+            <div class="vm-page-info" id="pageInfo">Memaparkan 0 rekod</div>
         </div>
-        <div class="pagination-controls" id="paginationButtons"></div>
+        <div class="vm-page-btns" id="paginationButtons"></div>
     </div>
 
 </div>
 
-<script>
-// ── Sort ─────────────────────────────────────────────────────
-function toggleSortNameJVM() {
-    const field = document.getElementById('jvmSortNameField');
-    if (field.value === '') field.value = 'ASC';
-    else if (field.value === 'ASC') field.value = 'DESC';
-    else field.value = '';
-    document.getElementById('jvmFilterForm').submit();
-}
-</script>
-<script>
-$(document).ready(function() {
-    $('.select-search').select2({ width: '100%' });
-
-    // ── PAGINATION (paginate by student-block, not by raw row) ──────────────
-    // Because the table uses rowspan, we group rows by their data-group index
-    // and paginate those groups — never splitting a student block across pages.
-
-    const rowsPerPageSelect = document.getElementById('rowsPerPageSelect');
-    const paginationButtons = document.getElementById('paginationButtons');
-    const pageInfo          = document.getElementById('pageInfo');
-
-    let rowsPerPage = parseInt(rowsPerPageSelect.value);
-    let currentPage = 1;
-
-    // Build a map: groupIndex → [tr elements]
-    function buildGroupMap() {
-        const map = {};
-        document.querySelectorAll('tr[data-group]').forEach(tr => {
-            const g = tr.getAttribute('data-group');
-            if (!map[g]) map[g] = [];
-            map[g].push(tr);
-        });
-        return map;
-    }
-
-    function renderTable() {
-        const groupMap   = buildGroupMap();
-        const groupKeys  = Object.keys(groupMap);
-        const totalGroups = groupKeys.length;
-        const totalPages  = Math.ceil(totalGroups / rowsPerPage) || 1;
-
-        if (currentPage > totalPages) currentPage = totalPages;
-        if (currentPage < 1)         currentPage = 1;
-
-        const start = (currentPage - 1) * rowsPerPage;
-        const end   = start + rowsPerPage;
-
-        // Hide/show all rows
-        groupKeys.forEach((key, idx) => {
-            const display = (idx >= start && idx < end) ? '' : 'none';
-            groupMap[key].forEach(tr => tr.style.display = display);
-        });
-
-        updatePaginationUI(totalPages, totalGroups, start, end);
-    }
-
-    function updatePaginationUI(totalPages, totalGroups, start, end) {
-        const startText = totalGroups === 0 ? 0 : start + 1;
-        const endText   = Math.min(end, totalGroups);
-        pageInfo.innerHTML = `Memaparkan <b>${startText} – ${endText}</b> daripada <b>${totalGroups}</b> pelajar`;
-
-        let html = '';
-        html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">«</button>`;
-
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage   = Math.min(totalPages, startPage + 4);
-        if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
-
-        if (startPage > 1) {
-            html += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
-            if (startPage > 2) html += `<span style="color:var(--c-text-faint);margin:0 2px;align-self:end;">…</span>`;
-        }
-        for (let i = startPage; i <= endPage; i++) {
-            html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-        }
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) html += `<span style="color:var(--c-text-faint);margin:0 2px;align-self:end;">…</span>`;
-            html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-        }
-        html += `<button class="page-btn" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">»</button>`;
-
-        paginationButtons.innerHTML = html;
-    }
-
-    window.goToPage = function(page) {
-        currentPage = page;
-        renderTable();
-        document.querySelector('.pm-table-wrap').scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    rowsPerPageSelect.addEventListener('change', function() {
-        rowsPerPage = parseInt(this.value);
-        currentPage = 1;
-        renderTable();
-    });
-
-    // ── Fit the marks table + pagination into the viewport, no page scroll ──
-    function fitJvmTableHeight() {
-        const scrollEl = document.querySelector('.jvm-table-scroll');
-        const pagination = document.getElementById('paginationWrapper');
-        if (!scrollEl || !pagination) return;
-        if (window.innerWidth <= 600) {
-            scrollEl.style.maxHeight = '';
-            return;
-        }
-        const top = scrollEl.getBoundingClientRect().top;
-        const paginationH = pagination.offsetHeight;
-        const available = window.innerHeight - top - paginationH - 24; // 24px bottom breathing room
-        scrollEl.style.maxHeight = Math.max(150, available) + 'px';
-    }
-    window.addEventListener('resize', fitJvmTableHeight);
-
-    renderTable();
-    fitJvmTableHeight();
-});
-</script>
+<?php
+$pm_jvm_js_v = @filemtime(__DIR__ . '/judge_view_marks.js') ?: time();
+?>
+<script src="judge_view_marks.js?v=<?= $pm_jvm_js_v ?>"></script>
 
 </main>
 </body>

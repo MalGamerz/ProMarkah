@@ -1,0 +1,792 @@
+/* pic_manual_marks.css — the PIC manual marks-entry page (pic_manual_marks.php).
+   Split out of that file's inline <style> block. No PHP interpolation,
+   so this is a plain file move. */
+
+/* ── Searchable dropdown — matches the pic_view_marks benchmark (.dd-) ── */
+.context-grid .dd-wrap {
+  position: relative;
+}
+
+.context-grid .dd-trigger {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  height:46px;
+  box-sizing:border-box;
+  width:100%;
+  padding:0 14px;
+  background:var(--c-surface-2);
+  border:1px solid var(--c-border-strong);
+  border-radius:8px;
+  color:var(--c-white);
+  font-size:.875rem;
+  cursor:pointer;
+  user-select:none;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+
+.context-grid .dd-trigger:hover {
+  border-color:var(--c-red);
+}
+
+.context-grid .dd-trigger.open {
+  border-color:var(--c-red);
+  box-shadow:0 0 0 3px var(--c-red-dim);
+}
+
+.context-grid .dd-trigger.dd-trigger-disabled {
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.context-grid .dd-trigger .dd-arrow {
+  color: var(--c-text-faint);
+  font-size:0.65rem;
+  transition: transform .2s;
+}
+
+.context-grid .dd-trigger.open .dd-arrow {
+  transform: rotate(180deg);
+}
+
+.context-grid .dd-panel {
+  display:none;
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  background:var(--c-surface-2);
+  border:1px solid var(--c-red);
+  border-radius:8px;
+  overflow:hidden;
+  z-index:999;
+  box-shadow:0 10px 30px rgba(0,0,0,.25);
+}
+
+.context-grid .dd-panel.open {
+  display:block;
+}
+
+.context-grid .dd-search-box {
+  padding:8px;
+  border-bottom:1px solid var(--c-border-strong);
+}
+
+.context-grid .dd-search-box input {
+  width:100%;
+  background:var(--c-surface-0);
+  border:1px solid var(--c-border-strong);
+  color:var(--c-white);
+  border-radius:4px;
+  padding:6px 8px;
+  font-size:0.8rem;
+  outline:none;
+  box-sizing:border-box;
+  transition:border-color .2s;
+}
+
+.context-grid .dd-search-box input:focus {
+  border-color:var(--c-red);
+}
+
+.context-grid .dd-search-box input::placeholder {
+  color:var(--c-text-faint);
+}
+
+.context-grid .dd-options {
+  max-height:220px;
+  overflow-y:auto;
+  scrollbar-width:thin;
+}
+
+.context-grid .dd-opt {
+  padding:9px 12px;
+  font-size:0.85rem;
+  color:var(--c-white);
+  cursor:pointer;
+  transition:background .1s;
+}
+
+.context-grid .dd-opt:hover {
+  background:var(--c-surface-3);
+}
+
+.context-grid .dd-opt.selected {
+  color:var(--c-red);
+  font-weight:600;
+}
+
+.context-grid .dd-opt.hidden {
+  display:none;
+}
+
+.context-grid .dd-empty {
+  padding:10px 12px;
+  color:var(--c-text-faint);
+  font-size:0.82rem;
+  display:none;
+  text-align:center;
+}
+
+html.pm-light .context-grid .dd-trigger {
+  background:#f9fafb;
+  border-color:#d1d5db;
+  color:#111;
+}
+
+html.pm-light .context-grid .dd-panel {
+  background:#fff;
+  box-shadow:0 6px 20px rgba(0,0,0,0.12);
+}
+
+html.pm-light .context-grid .dd-search-box {
+  border-bottom-color:#e5e7eb;
+}
+
+html.pm-light .context-grid .dd-search-box input {
+  background:#f9fafb;
+  border-color:#d1d5db;
+  color:#111;
+}
+
+html.pm-light .context-grid .dd-opt {
+  color:#111;
+}
+
+html.pm-light .context-grid .dd-opt:hover {
+  background:#f3f4f6;
+}
+
+/* ── LAYOUT TWEAKS ── */
+.pic-section-header {
+  margin-bottom: 24px;
+}
+
+.pic-section-header h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  color: var(--c-text);
+  letter-spacing: 0.05em;
+  margin: 0;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pic-section-sub {
+  color: var(--c-text-faint);
+  font-size: 0.85rem;
+  margin-top: 4px;
+  max-width: 600px;
+}
+
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.criteria-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 48px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* ── CUSTOM BUTTONS ── */
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--c-border-strong);
+  color: var(--c-text);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn-outline:hover {
+  background: var(--c-surface-2);
+  border-color: var(--c-text-muted);
+}
+
+.btn-delete-row {
+  background: transparent;
+  border: 1px solid #fca5a5;
+  /* Soft red border */
+  color: var(--c-red);
+  height: 42px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-delete-row:hover {
+  background: var(--c-red);
+  color: #fff;
+  border-color: var(--c-red);
+}
+
+.btn-add-row {
+  background: transparent;
+  border: 1px solid var(--c-border-strong);
+  color: var(--c-text-muted);
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.btn-add-row:hover {
+  background: var(--c-surface-2);
+  color: var(--c-text);
+}
+
+@media (max-width: 600px) {
+  .criteria-row {
+    grid-template-columns: 1fr 90px 42px;
+  }
+}
+
+/* ── 1. FIX TABLE SCROLLBAR CLIPPING BORDER ── */
+.mm-marks-table-wrap {
+    overflow: auto;
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: var(--radius);
+    /* Remove standard border so scrollbar doesn't overlap it */
+    border: none;
+    /* Use a sharp box-shadow to fake the border on the outside */
+    box-shadow: 0 0 0 1px var(--c-border-strong);
+}
+
+.mm-marks-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.mm-marks-table th, .mm-marks-table td {
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.mm-marks-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--c-surface-2);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--c-text-faint);
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--c-border-strong);
+}
+
+.mm-marks-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.mm-marks-table tbody tr:hover {
+  background: var(--c-surface-2);
+}
+
+.mm-marks-table th:first-child, .mm-marks-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--c-surface-1);
+  text-align: left;
+  white-space: nowrap;
+  box-shadow: 1px 0 0 var(--c-border);
+}
+
+.mm-marks-table thead th:first-child {
+  z-index: 3;
+}
+
+.mm-marks-table tbody tr:hover td:first-child {
+  background: var(--c-surface-2);
+}
+
+html.pm-light .mm-marks-table th:first-child, html.pm-light .mm-marks-table td:first-child {
+  background: #fff;
+}
+
+html.pm-light .mm-marks-table tbody tr:hover td:first-child {
+  background: var(--c-gray-100);
+}
+
+html.pm-light .mm-marks-table thead th {
+  background: var(--c-gray-100);
+}
+
+.mm-cell-name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.mm-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--c-red-dim);
+  color: var(--c-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Deterministic color rotation (by row order) purely for visual scannability in a long roster — carries no semantic meaning. */
+.mm-marks-table tbody tr:nth-child(6n+2) .mm-avatar {
+  background: rgba(59,130,246,.15);
+  color: #3b82f6;
+}
+
+.mm-marks-table tbody tr:nth-child(6n+3) .mm-avatar {
+  background: rgba(168,85,247,.15);
+  color: #a855f7;
+}
+
+.mm-marks-table tbody tr:nth-child(6n+4) .mm-avatar {
+  background: rgba(217,119,6,.18);
+  color: #d97706;
+}
+
+.mm-marks-table tbody tr:nth-child(6n+5) .mm-avatar {
+  background: rgba(5,150,105,.15);
+  color: #059669;
+}
+
+.mm-marks-table tbody tr:nth-child(6n+6) .mm-avatar {
+  background: rgba(219,39,119,.15);
+  color: #db2777;
+}
+
+.mm-mark-cell {
+  text-align: center;
+}
+
+/* ── 2. FIX FUSED INPUT AND BUTTON WIDTHS & GAPS ── */
+.mm-cell-inner {
+    display: inline-flex;
+    align-items: stretch; /* Forces all children to exact same height */
+    height: 42px;         /* Explicit height */
+    box-sizing: border-box;
+}
+
+.mm-mark-cell.has-mark .mm-cell-inner {
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--c-surface-1); /* Fills any micro-gaps */
+}
+
+/* Strip global .pm-input styles and force exact widths */
+.mm-mark-cell.has-mark .mm-mark-input {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.mm-mark-input {
+    width: 42px; /* EXACT same width as buttons */
+    height: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 0;
+    margin: 0;
+    outline: none;
+}
+
+.mm-mark-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--c-surface-3);
+    color: var(--c-text);
+}
+
+/* Remove default browser number arrows to keep text perfectly centered */
+.mm-mark-input::-webkit-outer-spin-button,
+.mm-mark-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.mm-mark-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.mm-mark-cell.mm-unlocked .mm-cell-inner {
+    border-color: var(--c-red);
+}
+
+.mm-mark-cell.mm-abaied .mm-mark-input {
+    opacity: 0.35;
+}
+
+/* A judge explicitly marked this criteria "Abai" (skipped) — distinct from
+   a plain empty/untouched cell so the PIC can tell the two apart at a
+   glance. Still a normal editable input: typing a mark here overrides the
+   judge's skip (pic_save_scores.php writes it back as status='scored'). */
+.mm-mark-cell.mm-judge-abaikan .mm-mark-input {
+    background: var(--c-amber-dim, rgba(217,119,6,0.08));
+    border-color: rgba(217,119,6,0.4);
+}
+.mm-mark-cell.mm-judge-abaikan .mm-mark-input::placeholder {
+    color: #d97706;
+    font-weight: 600;
+    opacity: 1;
+}
+.mm-judge-abaikan-badge {
+    width: 42px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    border-left: 1px solid rgba(217,119,6,0.4);
+    background: var(--c-amber-dim, rgba(217,119,6,0.08));
+    flex-shrink: 0;
+}
+
+.mm-cell-badges {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.mm-cell-badges button {
+    width: 42px; /* EXACT same width as input */
+    height: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+    font-size: 0.85rem;
+    border: none;
+    border-left: 1px solid var(--c-border-strong);
+    border-radius: 0;
+    background: var(--c-surface-2);
+    color: var(--c-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+}
+
+.mm-cell-badges .mm-unlock-btn:hover {
+    background: var(--c-red-dim);
+    color: var(--c-red);
+}
+
+.mm-cell-badges .mm-abai-btn:hover {
+    background: var(--c-red);
+    color: #fff;
+}
+
+.mm-cell-badges .mm-cancel-btn:hover {
+    background: var(--c-surface-3);
+    color: var(--c-text);
+}
+
+/* ── Mobile: table → stacked cards, one per student, kriteria as label/value rows (data-label supplies the row label via ::before) ── */
+@media (max-width: 720px) {
+  .mm-marks-table-wrap {
+    max-height: none;
+    overflow: visible;
+    border: none;
+  }
+
+  .mm-marks-table, .mm-marks-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .mm-marks-table thead {
+    display: none;
+  }
+
+  .mm-marks-table tr {
+    display: block;
+    background: var(--c-surface-1);
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--radius);
+    margin-bottom: var(--sp-3);
+    padding: var(--sp-1) var(--sp-4);
+  }
+
+  .mm-marks-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--c-border);
+    box-shadow: none;
+    position: static;
+    background: transparent !important;
+  }
+
+  .mm-marks-table tr:last-child td:last-child {
+    border-bottom: none;
+  }
+
+  .mm-marks-table td:first-child {
+    border-bottom: 1px solid var(--c-border-strong);
+    padding: var(--sp-3) 0;
+    /* Overrides the desktop th/td:first-child rule above (nowrap + the 1px sticky-column separator shadow) — on mobile there's no sticky column anymore, so a long name must wrap instead of clipping, and that leftover shadow would otherwise show up as a stray vertical line next to the name. */
+    white-space: normal;
+    align-items: flex-start;
+    box-shadow: none;
+  }
+
+  .mm-cell-name {
+    align-items: flex-start;
+    overflow-wrap: anywhere;
+  }
+
+  .mm-mark-cell {
+    text-align: left;
+  }
+
+  .mm-mark-cell::before {
+    content: attr(data-label);
+    font-size: 0.8rem;
+    color: var(--c-text-muted);
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Same fused pill as desktop, same input width/font sizes — only the control's height and button width grow for a real touch target, the text inside doesn't jump around between breakpoints. */
+  .mm-cell-inner {
+    height: 44px;
+  }
+
+  .mm-cell-badges button {
+    width: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mm-test-badges {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
+/* ── Per-Ujian dropdown (native <details>/<summary>) — one collapsible section per test under the selected Peringkat, each containing its own criteria + mark form for every student in the kumpulan. ── */
+.mm-test-accordion {
+  padding: 0;
+  margin-bottom: var(--sp-3);
+  overflow: hidden;
+}
+
+.mm-test-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: var(--sp-2);
+  column-gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.mm-test-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mm-test-summary:hover {
+  background: var(--c-surface-2);
+}
+
+/* Arrow + name are grouped together so they never wrap apart from each other — only the badge pills wrap to their own line when space is tight, via .mm-test-badges below. Same gap as .mm-cell-name above: both are an "icon/avatar + label" pattern and should match. */
+.mm-test-title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.mm-test-arrow {
+  color: var(--c-red);
+  font-size: 0.75rem;
+  display: inline-block;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mm-test-accordion[open] .mm-test-arrow {
+  transform: rotate(90deg);
+}
+
+.mm-test-name {
+  font-size: 0.95rem;
+}
+
+.mm-test-badges {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.mm-test-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-faint);
+  background: rgba(214, 40, 40, 0.08);
+  border: 1px solid var(--c-red-border);
+  padding: 2px 10px;
+  border-radius: var(--radius);
+  white-space: nowrap;
+}
+
+.mm-test-body {
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-top: 1px solid var(--c-border);
+}
+
+html.pm-light .mm-test-summary:hover {
+  background: var(--c-gray-100);
+}
+
+html.pm-light .mm-test-count {
+  background: #fdecec;
+  color: var(--c-red-700);
+  border-color: var(--c-red-300);
+}
+
+html.pm-light .mm-test-body {
+  border-top-color: var(--c-gray-200);
+}
+
+/* ── Per-test progress badge (marked cells / total cells) — same size and shape as .mm-test-count, they always appear side by side. ── */
+.mm-test-progress {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: var(--radius);
+  white-space: nowrap;
+  border: 1px solid var(--c-border-strong);
+  color: var(--c-text-faint);
+}
+
+.mm-test-progress.complete {
+  color: #16a34a;
+  border-color: rgba(34,197,94,0.4);
+  background: rgba(34,197,94,0.1);
+}
+
+/* ── Empty state — shown before a kumpulan is chosen ── */
+.mm-empty-state {
+  text-align: center;
+  padding: var(--sp-10) var(--sp-6);
+  color: var(--c-text-faint);
+}
+
+.mm-empty-icon {
+  font-size: 2.4rem;
+  margin-bottom: var(--sp-3);
+}
+
+.mm-empty-state h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.mm-empty-state p {
+  margin: 0;
+  font-size: 0.85rem;
+  max-width: 380px;
+  margin-inline: auto;
+}
+
+/* ── Sticky save bar — stays reachable while scrolling long test lists. Same padding/radius as .mm-test-summary/.pm-card so it reads as part of the same card system instead of a differently-proportioned bar bolted on the end (it previously referenced a --radius-md token that doesn't exist in dashboard.css, so it was silently rendering with square corners while every other container here is rounded). ── */
+.mm-save-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--c-surface-1);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 -6px 16px rgba(0,0,0,0.15);
+  z-index: 5;
+}
+
+html.pm-light .mm-save-footer {
+  box-shadow: 0 -6px 16px rgba(0,0,0,0.06);
+}
+
+.mm-save-hint {
+  font-size: 0.85rem;
+  color: var(--c-text-faint);
+  margin-right: auto;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  /* At narrow widths, sharing one row with the button squeezed the hint text into a sliver-thin column that wrapped one word per line — give each its own full-width row instead. */
+  .mm-save-footer {
+    justify-content: center;
+  }
+
+  .mm-save-hint {
+    flex-basis: 100%;
+    margin-right: 0;
+    text-align: left;
+  }
+
+  .mm-save-btn {
+    width: 100%;
+  }
+}

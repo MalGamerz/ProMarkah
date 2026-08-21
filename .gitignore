@@ -1,0 +1,52 @@
+# Database dumps — contain real user data / password hashes, never commit
+*.sql
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+
+# Secrets / credentials — real values, never the .sample templates
+secrets.php
+secrets.local.php
+.env
+.env.*
+!.env.example
+!tests/.env.testing.sample
+user.ini
+!user.ini.sample
+oauth_config.local.php
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*service-account*.json
+
+# Full-site backup archives — these have historically bundled the DB dump,
+# user.ini, and filled-in oauth_config.php together. Never commit these.
+public_html*.zip
+public_html*.tar
+public_html*.tar.gz
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.rar
+
+# Debug output / logs — can contain real student/session data
+*.log
+debug_*.txt
+error_log
+
+# Local Claude Code session state
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# Editor/OS cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# PHPUnit cache (regenerated on every run — see phpunit.xml)
+.phpunit.cache/
