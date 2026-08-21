@@ -161,6 +161,7 @@
     .add-row-add {
         height: 36px;
         padding: 0 14px;
+        margin-top: 10px;
         background: transparent;
         border: 1px dashed var(--c-border-strong);
         color: var(--c-text-faint);
@@ -169,6 +170,50 @@
     .pic-add-form-actions { display: flex; justify-content: flex-end; }
     html.pm-light .add-row-remove { background: var(--c-gray-50); border-color: var(--c-gray-300); }
     html.pm-light .add-row-add { border-color: var(--c-gray-300); color: var(--c-gray-500); }
+
+    /* ── Paste-a-name-list box (bulk-fills the row list above) ── */
+    .pic-paste-list-wrap textarea {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-strong);
+        color: var(--c-white);
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        font-family: inherit;
+        line-height: 1.5;
+        outline: none;
+        width: 100%;
+        box-sizing: border-box;
+        resize: vertical;
+        transition: border-color .2s;
+    }
+    .pic-paste-list-wrap textarea:focus {
+        border-color: var(--c-red);
+        box-shadow: 0 0 0 3px var(--c-red-dim);
+    }
+    html.pm-light .pic-paste-list-wrap textarea {
+        background: #fff;
+        border-color: var(--c-gray-300);
+        color: var(--c-gray-900);
+    }
+    .paste-actions-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+    /* #pasteStatusBadge reuses dashboard.css's shared .pm-badge component
+       (already theme-aware — light mode is handled there, not here) so this
+       status reads the same as every other status pill in the app instead
+       of a one-off colored line. */
+    /* A generated row whose name matches an existing student (same
+       level+cawangan) or repeats within the pasted list itself — flagged
+       so the PIC can review before submitting, not a hard block. */
+    .add-row-student input.name-duplicate {
+        border-color: #facc15 !important;
+        background: rgba(250, 204, 21, 0.08) !important;
+    }
 
     /* Display student/peringkat/cawangan data in caps — the accordion
        titles (Cawangan), the editable Nama/Peringkat fields in the table,

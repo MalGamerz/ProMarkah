@@ -866,3 +866,80 @@
             margin-top: 4px;
         }
     }
+            .pm-modal-overlay {
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.65); backdrop-filter: blur(3px);
+                z-index: 9999; display: none; align-items: center; justify-content: center;
+                opacity: 0; transition: opacity 0.18s ease;
+            }
+            .pm-modal-overlay.show { opacity: 1; }
+            /* Background/border/radius/margin/box-shadow/transform all come
+               from dashboard.css's shared .pm-modal-box now. Only these two
+               are genuinely this page's own: padding is 0 because the
+               header/body/actions bars below manage their own spacing, and
+               overflow is clipped so .pm-modal-header's background respects
+               the box's rounded corners. Width is set via the
+               .pm-modal-box--lg modifier on modal-missing-marks below (md,
+               the shared default, is used for modal-parameter). */
+            .pm-modal-box { padding: 0; overflow: hidden; }
+            .pm-modal-overlay.show .pm-modal-box { transform: translateY(0); }
+            .pm-modal-header {
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 12px 16px 11px;
+                border-bottom: 1px solid var(--c-border-strong);
+                background: var(--c-surface-2);
+            }
+            .pm-modal-title {
+                font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem;
+                color: var(--c-white); letter-spacing: 0.06em;
+                border-left: 3px solid var(--c-red); padding-left: 8px;
+                line-height: 1.2;
+            }
+            .pm-modal-close-btn {
+                background: none; border: none; color: var(--c-text-muted);
+                font-size: 1.1rem; cursor: pointer; padding: 0 2px; line-height: 1;
+                transition: color 0.15s;
+            }
+            .pm-modal-close-btn:hover { color: var(--c-red); }
+            .pm-modal-body { padding: 14px 16px; }
+            .pm-modal-grid {
+                display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            }
+            .pm-modal-field label {
+                display: block; font-size: 0.68rem; font-weight: 700;
+                text-transform: uppercase; letter-spacing: 0.08em;
+                color: var(--c-text-muted); margin-bottom: 5px;
+            }
+            .pm-modal-field select, .pm-modal-field input.pm-modal-new-input {
+                width: 100%; background: var(--c-surface-2);
+                border: 1px solid var(--c-border-strong);
+                border-radius: 6px; padding: 7px 10px;
+                color: var(--c-text); font-size: 0.82rem;
+                outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+                appearance: auto;
+                box-sizing: border-box;
+            }
+            .pm-modal-field select:focus, .pm-modal-field input.pm-modal-new-input:focus {
+                border-color: var(--c-red);
+                box-shadow: 0 0 0 2px var(--c-red-dim);
+            }
+            .pm-modal-field input.pm-modal-new-input {
+                margin-top: 6px;
+            }
+            .pm-modal-field select:disabled {
+                opacity: 0.45; cursor: not-allowed;
+            }
+            .pm-modal-hint {
+                margin-top: 10px; font-size: 0.75rem; color: var(--c-text-muted);
+                background: var(--c-surface-2); border-left: 2px solid #eab308;
+                padding: 7px 10px; border-radius: 0 5px 5px 0;
+            }
+            .pm-modal-actions {
+                display: flex; gap: 8px; justify-content: flex-end;
+                padding: 10px 16px 12px; border-top: 1px solid var(--c-border-strong);
+                background: var(--c-surface-2);
+            }
+            .pm-modal-actions .pm-btn {
+                font-size: 0.78rem; padding: 6px 14px; border-radius: 5px;
+            }
+

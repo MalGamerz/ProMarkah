@@ -291,6 +291,13 @@ html.pm-light .name-dropdown-box .dd-option { color: #111; }
     display: flex;
     align-items: center;
     gap: 5px;
+    /* .dir-group-name (flex:1) absorbs all leftover row width, so this and
+       the "N pelajar" badge after it effectively sit right-anchored — but a
+       longer judge name pushes that badge further left than a short one,
+       leaving the badge column ragged card to card. Fixed width keeps it
+       (and everything after it) starting at the same X regardless of the
+       judge's name length. */
+    min-width: 130px;
 }
 .dir-group-judge svg {
     width: 12px; height: 12px;
@@ -382,6 +389,12 @@ html.pm-light .name-dropdown-box .dd-option { color: #111; }
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 0.75rem;
+    text-align: center;
+    /* .dir-group-name (flex:1) fills whatever space these pills don't take,
+       so a card with a short Sidang/Peringkat name shifts this whole pill
+       group further right than one with a long name — fixed width keeps
+       each pill's column starting position consistent card to card. */
+    min-width: 84px;
 }
 
 /* ── Empty state ── */

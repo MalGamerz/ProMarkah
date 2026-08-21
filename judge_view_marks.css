@@ -1,0 +1,160 @@
+/* ── SELECT2 appearance now comes from the shared filter_bar.css, loaded
+   via layout.php, pinned to the same 32px/0.8rem benchmark as
+   pic_view_marks.php / leaderboard.php / silibus.php — this page's local
+   copy had drifted to 42px before that got centralized. ── */
+
+/* ── FILTER GRID ──
+   Flexbox + wrap + justify-content:center instead of CSS Grid: with
+   auto-fit grid columns, a partial last row (e.g. 7 fields wrapping to
+   6+1) leaves the lone leftover item stuck in the first column with empty
+   space beside it — grid rows share column tracks, so they can't
+   individually recenter. Flexbox wraps line-by-line and centers each
+   line's items independently, so this reads as centered at any field
+   count and at every viewport width without separate breakpoints per
+   screen size. */
+.filter-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+.filter-col {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1 1 0; /* Equal basis so every column grows to the same width, same as leaderboard.php's .filter-col — the old flex:1 1 180px + max-width:220px let some columns hit the cap while others kept growing, producing visibly uneven widths */
+    min-width: 110px; /* Prevents Select2 from getting completely crushed, matching the reference pattern */
+}
+.filter-col label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-text-faint);
+}
+
+/* ── MARKS TABLE ── */
+.view-marks-table {
+    min-width: 900px;
+    table-layout: auto;
+    border-collapse: collapse;
+    width: 100%;
+}
+.view-marks-table th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--c-surface-2) !important;
+    color: var(--c-text-muted);
+    padding: 8px 12px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--c-red);
+    border-right: 1px solid var(--c-border);
+}
+.view-marks-table td {
+    padding: 8px 12px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid var(--c-border);
+    border-right: 1px solid var(--c-border);
+    color: var(--c-text);
+    font-size: 0.85rem;
+}
+
+/* ── COLUMN ROLES — use CSS vars so light/dark both work ── */
+.col-group {
+    font-weight: 700;
+    color: var(--c-red) !important;
+    background: var(--c-surface-2) !important;
+    border-right: 2px solid var(--c-border-strong) !important;
+}
+.col-group .col-siri-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--c-red);
+    display: block;
+    margin-bottom: 2px;
+    opacity: 0.85;
+}
+.col-group .col-session-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-text-faint);
+    display: block;
+    margin-bottom: 3px;
+}
+.col-student {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--c-text) !important;
+    background: var(--vm-student-bg, var(--c-surface-1)) !important;
+    border-right: 1px solid var(--c-border-strong) !important;
+}
+.col-student .col-year-label {
+    font-size: 0.78rem;
+    color: var(--c-text-faint);
+    display: block;
+    margin-top: 3px;
+}
+.col-student .col-year-val {
+    color: var(--c-red);
+    font-weight: 700;
+}
+.col-criteria {
+    color: var(--c-text-muted) !important;
+    background: var(--c-surface-1) !important;
+    font-size: 0.85rem;
+    border-right: 1px solid var(--c-border) !important;
+}
+.col-test {
+    color: var(--c-text-faint) !important;
+    font-size: 0.85rem;
+}
+.col-mark {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.95rem !important;
+    font-weight: 700;
+    color: var(--c-text) !important;
+    text-align: center !important;
+    background: var(--c-surface-0) !important;
+    letter-spacing: 0.04em;
+}
+
+/* Row hover — consistent wash */
+.view-marks-table tbody tr:hover td { background: var(--c-red-dim) !important; }
+.view-marks-table tbody tr:hover td.col-group    { background: var(--c-surface-2) !important; }
+.view-marks-table tbody tr:hover td.col-student  { background: var(--c-surface-1) !important; }
+.view-marks-table tbody tr:hover td.col-criteria { background: var(--c-surface-1) !important; }
+.view-marks-table tbody tr:hover td.col-mark     { background: var(--c-red-dim)   !important; }
+
+/* Empty state row */
+.vm-empty-row td {
+    text-align: center;
+    padding: 48px !important;
+    color: var(--c-text-faint);
+    font-style: italic;
+}
+
+/* ── PAGINATION: shared .vm-pagination styles now live once in
+   dashboard.css (loaded by layout.php), used by every paginated page.
+   .pagination-left is page-specific: it groups this page's unique
+   rows-per-page picker together with the shared .vm-page-info label. ── */
+.pagination-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+@media (max-width: 600px) {
+    .pagination-left { justify-content: center; }
+    .jvm-table-scroll { max-height: none !important; overflow-y: visible !important; }
+}

@@ -140,8 +140,46 @@
        below it). It scrolls with the table now instead of staying pinned;
        less fancy, but it renders correctly, which the sticky version
        repeatedly did not. */
-    .level-divider-row {
+    .level-divider-row, .school-divider-row {
         pointer-events: none; /* row can never enter :hover state, so no hover rule anywhere can touch it */
+    }
+    /* Cawangan group header — sits above its Peringkat sub-headers, darker
+       and bolder so the two-level grouping (Cawangan > Peringkat) reads
+       clearly instead of the school name blending into the belt-tinted
+       level bands below it. */
+    tr.school-divider-row td {
+        box-sizing: border-box;
+        height: 42px;
+        background: var(--c-surface-2, #232323) !important;
+        border-top: 2px solid var(--c-border-strong);
+        border-bottom: 1px solid var(--c-border-strong);
+        white-space: normal !important;
+    }
+    .school-divider-row td:last-child {
+        text-align: left !important;
+    }
+    .school-divider-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 8px;
+        color: var(--c-text);
+        font-family: 'Bebas Neue', sans-serif;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+    .school-divider-icon {
+        width: 15px;
+        height: 15px;
+        flex: 0 0 auto;
+        color: var(--c-text-muted);
+    }
+    @media (max-width: 768px) {
+        tr.school-divider-row td { height: 34px; }
+        .school-divider-label { font-size: 0.85rem; letter-spacing: 0.05em; }
     }
     tr.level-divider-row td {
         box-sizing: border-box;
@@ -162,11 +200,16 @@
        matches the colour its own name names instead of always reading red. */
     tr.level-divider-row.tahap-hijau td  { background: rgba(34, 197, 94, 0.14) !important; }
     tr.level-divider-row.tahap-merah td  { background: rgba(248, 113, 113, 0.12) !important; }
-    tr.level-divider-row.tahap-kuning td { background: rgba(234, 179, 8, 0.14) !important; }
+    /* Kuning was rgba(234,179,8,...) — Tailwind's "yellow-500", but that
+       amber-leaning tone reads almost identically to the gold-row medal
+       tint (rgba(255,215,0,...)) once both sit at ~0.10-0.14 opacity on a
+       dark surface. Bumped to yellow-400 (250,204,21), a visibly brighter,
+       less orange yellow that stays distinct from gold at a glance. */
+    tr.level-divider-row.tahap-kuning td { background: rgba(250, 204, 21, 0.20) !important; }
     tr.level-divider-row.tahap-hitam td  { background: rgba(161, 161, 170, 0.12) !important; }
     html.pm-light tr.level-divider-row.tahap-hijau td  { background: rgba(22, 163, 74, 0.10) !important; }
     html.pm-light tr.level-divider-row.tahap-merah td  { background: rgba(220, 38, 38, 0.09) !important; }
-    html.pm-light tr.level-divider-row.tahap-kuning td { background: rgba(202, 138, 4, 0.12) !important; }
+    html.pm-light tr.level-divider-row.tahap-kuning td { background: rgba(202, 138, 4, 0.16) !important; }
     html.pm-light tr.level-divider-row.tahap-hitam td  { background: rgba(63, 63, 70, 0.08) !important; }
     /* NOT text-align:center — this table is wider than its viewport
        (.pm-table-wrap scrolls horizontally) and this cell spans
@@ -209,7 +252,7 @@
 
     .level-divider-row.tahap-hijau  .level-divider-icon { color: #16a34a; }
     .level-divider-row.tahap-merah  .level-divider-icon { color: #dc2626; }
-    .level-divider-row.tahap-kuning .level-divider-icon { color: #ca8a04; }
+    .level-divider-row.tahap-kuning .level-divider-icon { color: #facc15; }
     .level-divider-row.tahap-hitam  .level-divider-icon { color: #71717a; }
     @media (max-width: 768px) {
         tr.level-divider-row td { height: 30px; }

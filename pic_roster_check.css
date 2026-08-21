@@ -1,0 +1,123 @@
+    .rc-upload-card {
+        background: var(--c-surface-1);
+        border: 1px solid var(--c-border-strong);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin-bottom: 18px;
+        display: grid;
+        /* Cawangan and the file picker share the same 1fr, so they render
+           the same width — was minmax(200px,1fr) / minmax(220px,2fr) before,
+           which deliberately made the file picker twice as wide as the
+           Cawangan dropdown. Bandingkan stays auto-sized to its own text
+           since it's a button, not a field that needs to visually match. */
+        grid-template-columns: minmax(200px,1fr) minmax(200px,1fr) auto;
+        gap: 14px;
+        align-items: end;
+    }
+    .rc-upload-card label {
+        display: block; margin-bottom: 6px; font-size: .75rem; font-weight: 600;
+        text-transform: uppercase; letter-spacing: .08em; color: var(--c-text-faint);
+    }
+    /* dashboard.css's shared .dd-trigger ships at height:32px !important —
+       overridden here (via a more specific selector + !important of our own,
+       which wins the specificity tiebreak inside the !important tier) so
+       the Cawangan dropdown lines up with the file picker / Bandingkan
+       button, both 40px tall on this row. */
+    .rc-upload-card .dd-trigger {
+        height: 40px !important;
+        padding: 0 10px !important;
+        font-size: 0.85rem !important;
+    }
+    .rc-upload-card button.pm-btn {
+        height: 40px;
+        box-sizing: border-box;
+    }
+    /* Native <input type=file> ignores flex/height styling applied to the
+       input itself — its internal "Choose file" button + filename text is
+       browser-drawn and doesn't respect align-items on the input tag, which
+       is what made the button render pinned to the top instead of centered.
+       Hiding the real input (kept clickable via the <label for>, not
+       display:none, so it still opens the file picker) and building the
+       visible control from scratch is the only way to control its layout. */
+    .rc-file-wrap { position: relative; height: 40px; }
+    .rc-file-native {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        opacity: 0; cursor: pointer; margin: 0;
+    }
+    /* Specificity note: .rc-upload-card label (class+element, 0-1-1) would
+       otherwise beat a bare .rc-file-label (class only, 0-1-0) and force
+       this back to display:block regardless of source order, since this
+       control is itself a <label>. Qualifying with .rc-upload-card here
+       (0-2-0) keeps it winning without having to touch that other rule. */
+    .rc-upload-card .rc-file-label {
+        display: flex; align-items: center; gap: 10px; height: 40px; box-sizing: border-box;
+        background: var(--c-surface-2); border: 1px solid var(--c-border-strong); border-radius: 6px;
+        padding: 0 6px 0 10px; cursor: pointer; overflow: hidden;
+        margin-bottom: 0;
+        transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .rc-file-btn {
+        flex: 0 0 auto; background: var(--c-surface-3); border: 1px solid var(--c-border-strong);
+        border-radius: 4px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600;
+        color: var(--c-white); white-space: nowrap;
+    }
+    .rc-file-name {
+        flex: 1; min-width: 0; font-size: 0.85rem; color: var(--c-text-faint);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .rc-file-native:focus-visible + .rc-file-label { border-color: var(--c-red); box-shadow: 0 0 0 3px var(--c-red-dim); }
+    .rc-file-native:hover + .rc-file-label { border-color: var(--c-red); background: var(--c-surface-3); }
+    .rc-file-native:hover + .rc-file-label .rc-file-btn { border-color: var(--c-red); }
+    html.pm-light .rc-file-label { background: #f9fafb; border-color: #d1d5db; }
+    html.pm-light .rc-file-btn { background: #fff; border-color: #d1d5db; color: #111; }
+    html.pm-light .rc-file-native:hover + .rc-file-label { background: #f3f4f6; }
+    .rc-hint {
+        grid-column: 1 / -1; font-size: 0.8rem; color: var(--c-text-faint);
+    }
+    .rc-status { margin: 10px 0; font-size: 0.85rem; color: var(--c-text-faint); }
+    .rc-summary {
+        display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .rc-stat {
+        background: var(--c-surface-1); border: 1px solid var(--c-border-strong);
+        border-radius: 8px; padding: 10px 16px; min-width: 120px;
+    }
+    .rc-stat .n { font-size: 1.4rem; font-weight: 700; font-family: 'Bebas Neue', sans-serif; }
+    .rc-stat .l { font-size: 0.72rem; color: var(--c-text-faint); text-transform: uppercase; letter-spacing: .06em; }
+    .rc-stat.found .n { color: #4ade80; }
+    .rc-stat.close .n { color: #facc15; }
+    .rc-stat.missing .n { color: var(--c-red); }
+
+    .rc-peringkat { margin-bottom: 16px; }
+    .rc-peringkat-title {
+        font-family: 'Bebas Neue', sans-serif; font-size: 1.05rem; letter-spacing: .04em;
+        color: var(--c-white); margin-bottom: 8px;
+    }
+    .rc-kumpulan { margin-bottom: 10px; }
+    .rc-kumpulan-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--c-text-faint); margin-bottom: 4px; }
+    .rc-row {
+        display: flex; align-items: center; gap: 10px; padding: 7px 12px;
+        border-bottom: 1px solid var(--c-border); font-size: 0.85rem;
+    }
+    .rc-row:last-child { border-bottom: none; }
+    .rc-badge {
+        flex: 0 0 auto; font-size: 0.7rem; font-weight: 700; padding: 2px 8px;
+        border-radius: 99px; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .rc-badge.found   { background: rgba(74,222,128,.15); color: #4ade80; }
+    .rc-badge.close   { background: rgba(250,204,21,.15); color: #facc15; }
+    .rc-badge.missing { background: rgba(214,40,40,.15); color: var(--c-red); }
+    .rc-row .name { flex: 1; color: var(--c-white); }
+    .rc-row .matchnote { color: var(--c-text-faint); font-size: 0.78rem; }
+    .rc-unclaimed {
+        margin-top: 24px; padding-top: 16px; border-top: 1px dashed var(--c-border);
+    }
+    .rc-unclaimed-title { font-size: 0.85rem; font-weight: 700; color: var(--c-text-faint); margin-bottom: 8px; }
+    .rc-unclaimed ul { margin: 0; padding-left: 20px; color: var(--c-text-muted); font-size: 0.85rem; }
+    html.pm-light .rc-upload-card, html.pm-light .rc-stat { background: #fff; border-color: #e5e7eb; }
+    html.pm-light .rc-row { border-bottom-color: #e5e7eb; }
+    html.pm-light .rc-row .name { color: #111; }
+
+    @media (max-width: 640px) {
+        .rc-upload-card { grid-template-columns: 1fr; }
+    }

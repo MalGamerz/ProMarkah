@@ -279,11 +279,19 @@
         color: var(--c-text-muted);
         border: 1px solid var(--c-border);
         white-space: nowrap;
+        /* Fixed width so "12 Ujian" doesn't shift the whole badge group
+           (right-anchored via margin-left: auto below) further left than
+           "3 Ujian" — without this, every badge to its left drifts out of
+           column, card to card. Same fix as pic_criteria.css's identical
+           header-badges structure. */
+        min-width: 90px;
+        text-align: center;
     }
     .level-header .badge-siri,
     .level-header .badge-sidang {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 4px;
         padding: 2px 8px;
         border-radius: 12px;
@@ -292,6 +300,9 @@
         white-space: nowrap;
         background: var(--c-surface-0);
         border: 1px solid var(--c-border);
+        /* Same fixed-width reasoning as .count-badge above — a longer Siri/
+           Sidang name would otherwise shift every badge after it too. */
+        min-width: 92px;
     }
     /* Uniform stroke-icon sizing (both badges use the same icon set as the
        rest of the app — see pm_icon() in layout.php — so Siri/Sidang render

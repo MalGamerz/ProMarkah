@@ -1,0 +1,297 @@
+/* ── PAGINATION: shared .vm-pagination styles now live once in
+   dashboard.css (loaded by layout.php), used by every paginated page. ── */
+
+/* ── LAYOUT ── */
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--fg-cols, 5), 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.filter-grid > div {
+    min-width: 0;
+}
+select:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.filter-grid label {
+    font-size: 0.7rem !important;
+    margin-bottom: 3px !important;
+}
+.filter-grid .pm-select {
+    height: 32px;
+    font-size: 0.8rem;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+@media (max-width: 640px) {
+    .filter-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 400px) {
+    .filter-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Searchable dropdown (.dd-wrap/.dd-trigger/.dd-panel/etc.) is now
+   defined once in the shared filter_bar.css, loaded via layout.php — kept
+   local here only if a page needs to override it. ── */
+
+/* ── STUDENT LIST: scrollable so pagination is always visible.
+   Height set dynamically in JS (fitMarksListHeight) so it always leaves
+   room for the pagination bar below it instead of a static
+   calc(100vh - Npx) that goes stale whenever the filter grid above the
+   list changes height. ── */
+.marks-list {
+    overflow-y: auto;
+    min-height: 80px;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-border-strong) transparent;
+}
+@media (max-width: 640px) {
+    .marks-list { max-height: none !important; overflow-y: visible !important; }
+}
+.marks-list::-webkit-scrollbar { width: 4px; }
+.marks-list::-webkit-scrollbar-track { background: transparent; }
+.marks-list::-webkit-scrollbar-thumb { background: var(--c-border-strong); border-radius: 2px; }
+
+/* ── MODERN ACCORDION STYLES (COMPACT) ── */
+.group-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--c-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 10px 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.group-title svg {
+    stroke: var(--c-text-muted);
+    width: 14px;
+    height: 14px;
+}
+.group-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--c-border-strong);
+}
+
+.student-card {
+    background: var(--c-surface-2);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 6px;
+    margin-bottom: 4px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+.student-card:hover {
+    border-color: var(--c-red);
+}
+
+.student-header {
+    padding: 7px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: transparent;
+    gap: 8px;
+}
+@media (max-width: 640px) {
+    .student-header { flex-wrap: wrap; }
+    .student-header > div { flex-wrap: wrap; }
+}
+
+.student-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--c-text);
+    letter-spacing: 0.2px;
+}
+
+.chevron {
+    transition: transform 0.2s ease;
+    color: var(--c-text-muted);
+    font-size: 0.7rem;
+}
+.student-card.is-open .chevron {
+    transform: rotate(180deg);
+    color: var(--c-red);
+}
+
+/* ── COMPACT BADGES ── */
+.score-badge {
+    background: var(--c-surface-0);
+    border: 1px solid var(--c-border-strong);
+    color: var(--c-text);
+    padding: 3px 12px;
+    border-radius: 20px; 
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+.score-badge span {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--c-text-muted);
+}
+
+/* Unrated: Red tint (Still indicates action needed) */
+.status-badge {
+    background: rgba(214, 40, 40, 0.1);
+    color: #F87171;
+    border: 1px solid rgba(214, 40, 40, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Rated: High-contrast (Indicates completion) */
+.status-badge-success {
+    background: rgba(74, 222, 128, 0.12);
+    color: #16a34a;
+    border: 1px solid var(--c-border-strong);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.student-details {
+    display: none;
+    padding: 0 14px 14px 14px;
+    border-top: 1px solid var(--c-border-strong);
+    margin-top: 4px;
+}
+
+/* ── COMPACT INNER TABLE ── */
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 4px;
+}
+.modern-table th {
+    color: var(--c-text-muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 10px 6px 10px;
+    border-bottom: 1px solid var(--c-border);
+    text-align: left;
+}
+.modern-table td {
+    padding: 8px 10px;
+    background: var(--c-surface-2);
+    color: var(--c-text-muted);
+    font-size: 0.85rem;
+}
+.modern-table tr td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+.modern-table tr td:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--c-text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.95rem;
+}
+
+/* ── DRILLDOWN PICKER ── */
+.drilldown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.drilldown-grid label {
+    color: var(--pm-text-muted);
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+    display: block;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.drilldown-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--c-text-muted);
+    background: var(--c-surface-2);
+    border-radius: 8px;
+    border: 1px dashed var(--c-border-strong);
+    margin-top: 20px;
+}
+/* ── LIGHT MODE OVERRIDES ── */
+html.pm-light .group-title {
+    color: #6b7280;
+}
+html.pm-light .group-title svg {
+    stroke: #6b7280;
+}
+html.pm-light .group-title::after {
+    background: #e5e7eb;
+}
+html.pm-light .student-card {
+    background: #ffffff;
+    border-color: #d1d5db;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+html.pm-light .student-card:hover {
+    border-color: #e2581e;
+    box-shadow: 0 2px 8px rgba(226,88,30,0.12);
+}
+html.pm-light .student-name {
+    color: #111827;
+}
+html.pm-light .score-badge {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #111827;
+}
+html.pm-light .score-badge span {
+    color: #6b7280;
+}
+html.pm-light .chevron {
+    color: #9ca3af;
+}
+html.pm-light .student-details {
+    border-top-color: #e5e7eb;
+}
+html.pm-light .modern-table th {
+    color: #6b7280;
+    border-bottom-color: #e5e7eb;
+}
+html.pm-light .modern-table td {
+    background: #f9fafb;
+    color: #374151;
+}
+html.pm-light .modern-table tr td:last-child {
+    color: #111827;
+}
+html.pm-light .drilldown-empty {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #6b7280;
+}
+html.pm-light .status-badge-success {
+    box-shadow: none;
+    border-color: #86efac;
+}

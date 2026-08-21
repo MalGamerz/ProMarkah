@@ -106,8 +106,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = 'Sila+lengkapkan+semua+medan+pelajar+dengan+nilai+yang+sah.';
         }
     } elseif ($_POST['action'] === 'delete') {
-        $stmt = $conn->prepare("DELETE FROM students WHERE student_id=?");
-        $stmt->bind_param('i', $_POST['student_id']); $ok = $stmt->execute(); $stmt->close();
+        // No FK constraints in this schema — deleting only the `students`
+        // row left orphaned rows behind in every table keyed by
+        // student_id (scores: both submitted marks and unsubmitted
+        // drafts; group_students: kumpulan membership; attendance:
+        // per-session records). Wrapped in a transaction so a mid-way
+        // failure can't leave the student half-deleted.
+        $studentId = (int) $_POST['student_id'];
+        $conn->begin_transaction();
+        try {
+            foreach (['scores', 'group_students', 'attendance'] as $table) {
+                $del = $conn->prepare("DELETE FROM `$table` WHERE student_id=?");
+                $del->bind_param('i', $studentId);
+                $del->execute();
+                $del->close();
+            }
+            $stmt = $conn->prepare("DELETE FROM students WHERE student_id=?");
+            $stmt->bind_param('i', $studentId);
+            $stmt->execute();
+            $stmt->close();
+            $conn->commit();
+            $ok = true;
+        } catch (Throwable $e) {
+            $conn->rollback();
+            throw $e;
+        }
         $msg = $ok ? 'Pelajar+berjaya+dipadam.' : 'Ralat+memadam+pelajar.+Sila+cuba+lagi.';
     } elseif ($_POST['action'] === 'save_all' && isset($_POST['students']) && is_array($_POST['students'])) {
         // Existing school_id per student, fetched up front, so a Cawangan
@@ -190,6 +213,43 @@ if (isset($_GET['ajax_sessions'])) {
         $stmt->execute();
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) $out[] = $row;
+        $stmt->close();
+    }
+    echo json_encode($out);
+    exit();
+}
+
+// ── AJAX: Peringkat list scoped to one Siri (Tambah Pelajar's Siri picker,
+//    only rendered when more than one Siri exists) ─────────────────────────
+if (isset($_GET['ajax_levels_for_siri'])) {
+    header('Content-Type: application/json');
+    $siriId = (int)($_GET['siri'] ?? 0);
+    $out = [];
+    if ($siriId > 0) {
+        $stmt = $conn->prepare("SELECT l.level_id, l.level_name FROM levels l JOIN sessions s ON l.session_id = s.session_id WHERE s.siri_id = ? ORDER BY l.level_name");
+        $stmt->bind_param('i', $siriId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) $out[] = $row;
+        $stmt->close();
+    }
+    echo json_encode($out);
+    exit();
+}
+
+// ── AJAX: existing student names for a level+school (duplicate check used
+//    by the "paste a name list" generator on the Tambah Pelajar form) ──────
+if (isset($_GET['ajax_existing_names'])) {
+    header('Content-Type: application/json');
+    $level  = (int)($_GET['level_id']  ?? 0);
+    $school = (int)($_GET['school_id'] ?? 0);
+    $out = [];
+    if ($level > 0 && $school > 0) {
+        $stmt = $conn->prepare("SELECT student_name FROM students WHERE level_id = ? AND school_id = ?");
+        $stmt->bind_param('ii', $level, $school);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) $out[] = $row['student_name'];
         $stmt->close();
     }
     echo json_encode($out);
@@ -299,6 +359,7 @@ if (isset($_GET['ajax'])) {
                 <div class='table-responsive'><table class='students-table' data-school='{$st['school_id']}'><thead>
                 <tr>
                     <th style='width:40px;text-align:center;'>No</th>
+                    <th style='width:70px;text-align:center;'>ID</th>
                     $nameHeaderHtml
                     <th>Peringkat</th>
                     <th>Cawangan</th>
@@ -328,6 +389,7 @@ if (isset($_GET['ajax'])) {
         }
         echo "<tr data-id='{$st['student_id']}'>
                 <td style='text-align:center;color:var(--c-text-faint);'>$no</td>
+                <td style='text-align:center;color:var(--c-text-faint);font-family:monospace;'>{$st['student_id']}</td>
                 <td><input form='masterSaveForm' name='students[{$st['student_id']}][student_name]' id='studentName_{$st['student_id']}' value='" . htmlspecialchars($st['student_name']) . "' oninput=\"autoDetectGender(this.value, document.getElementById('studentGender_{$st['student_id']}'))\"></td>
                 <td><select form='masterSaveForm' name='students[{$st['student_id']}][level_id]'>$sel_opts</select></td>
                 <td><select form='masterSaveForm' name='students[{$st['student_id']}][school_id]' title='Menukar cawangan akan mengosongkan kumpulan semasa pelajar ini — agihkan semula di Kumpulan Juri.'>$sch_opts</select></td>
@@ -369,7 +431,25 @@ $pm_st_css_v = @filemtime(__DIR__ . '/pic_students.css') ?: time();
     <input type='hidden' name='csrf_token' value='<?= htmlspecialchars($csrf) ?>'>
 </form>
 
-<?php $active_siri_main = (int)($_SESSION['active_siri_id'] ?? 0); ?>
+<?php
+$active_siri_main = (int)($_SESSION['active_siri_id'] ?? 0);
+
+// Every Siri in the system, regardless of the sidebar's "Siri Aktif" —
+// used only to decide the Tambah Pelajar form's Peringkat scoping below.
+// With exactly one Siri there's nothing to pick, so the picker stays
+// hidden and that one Siri is used directly (no " — Siri Name" suffix
+// needed since there's nothing to disambiguate). With more than one, the
+// picker shows and the Peringkat list gets reloaded (ajax_levels_for_siri)
+// whenever it changes — this keeps the pasted-header auto-match in
+// pic_students.js always comparing against a plain, unsuffixed level_name.
+$all_siri_for_add = [];
+$siriRes_add = $conn->query("SELECT siri_id, siri_name FROM siri ORDER BY siri_year DESC, siri_name");
+while ($sr = $siriRes_add->fetch_assoc()) $all_siri_for_add[(int)$sr['siri_id']] = $sr['siri_name'];
+
+$default_add_siri_id = $active_siri_main > 0
+    ? $active_siri_main
+    : (!empty($all_siri_for_add) ? array_key_first($all_siri_for_add) : 0);
+?>
 
 <div class='pic-section-header'>
     <div>
@@ -523,16 +603,26 @@ $pm_st_css_v = @filemtime(__DIR__ . '/pic_students.css') ?: time();
         <input type='hidden' name='action' value='add'>
         <input type='hidden' name='csrf_token' value='<?= htmlspecialchars($csrf) ?>'>
         <div class='pic-add-form-row'>
+            <?php if (count($all_siri_for_add) > 1): ?>
+            <div>
+                <label>Siri</label>
+                <select id='addSiriSelect' onchange="reloadPeringkatOptionsForSiri(this.value)">
+                    <?php foreach ($all_siri_for_add as $sid => $sname): ?>
+                        <option value='<?= $sid ?>' <?= $sid === $default_add_siri_id ? 'selected' : '' ?>><?= htmlspecialchars($sname) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
             <div>
                 <label>Peringkat</label>
                 <select name='level_id' required>
                     <?php
-                    $lvls = $active_siri_main > 0
-                        ? $conn->query("SELECT l.* FROM levels l JOIN sessions s ON l.session_id = s.session_id WHERE s.siri_id = $active_siri_main ORDER BY l.level_name")
+                    $lvls = $default_add_siri_id > 0
+                        ? $conn->query("SELECT l.* FROM levels l JOIN sessions s ON l.session_id = s.session_id WHERE s.siri_id = {$default_add_siri_id} ORDER BY l.level_name")
                         : $conn->query("SELECT l.*, si.siri_name FROM levels l LEFT JOIN sessions s ON l.session_id = s.session_id LEFT JOIN siri si ON s.siri_id = si.siri_id ORDER BY l.level_name");
                     while ($l = $lvls->fetch_assoc()) {
                         $optLabel = htmlspecialchars($l['level_name']);
-                        if ($active_siri_main === 0 && !empty($l['siri_name'])) {
+                        if ($default_add_siri_id === 0 && !empty($l['siri_name'])) {
                             $optLabel .= " — " . htmlspecialchars($l['siri_name']);
                         }
                         echo "<option value='{$l['level_id']}'>$optLabel</option>";
@@ -551,22 +641,20 @@ $pm_st_css_v = @filemtime(__DIR__ . '/pic_students.css') ?: time();
                 <input type='number' name='year' placeholder='Tahun' value='<?= date('Y') ?>' required>
             </div>
         </div>
-        <div>
-            <label>Nama Pelajar <span style="text-transform:none; font-weight:400; letter-spacing:0;">(boleh tambah lebih daripada satu — semuanya masuk peringkat &amp; cawangan yang sama di atas)</span></label>
-            <div id='addRows_student'>
-                <div class='add-row add-row-student'>
-                    <input name='student_name[]' placeholder='Nama Penuh' required oninput="autoDetectGender(this.value, this.nextElementSibling)">
-                    <select name='gender[]' class='student-gender-select'>
-                        <option value='Male'>Lelaki</option>
-                        <option value='Female'>Perempuan</option>
-                    </select>
-                    <button type='button' class='add-row-btn add-row-remove' onclick="removeStudentRow(this)" title='Buang baris'>&times;</button>
-                </div>
+        <div class='pic-paste-list-wrap'>
+            <label>Nama Pelajar <span style="text-transform:none; font-weight:400; letter-spacing:0;">(satu nama, atau tampal senarai bernombor untuk ramai sekali gus — semuanya masuk peringkat &amp; cawangan yang sama di atas; baris tajuk di atas nombor diabaikan secara automatik)</span></label>
+            <textarea id='pasteNameList' rows='6' placeholder="AWAN PUTIH CULA MERAH 2&#10;1. MUHAMMAD HAEL MIKAEL BIN MOHD HAFIZI&#10;2. MUHAMMAD SYAWAL MIKAEL BIN MOHD HAFIZI&#10;3. CHE NUR DHIA KAMALIA BINTI CHE HANAFIAH&#10;&#10;— atau, untuk seorang sahaja: taip satu nama —" oninput="tryAutoSelectPeringkatFromPastedHeader()"></textarea>
+            <div class='paste-actions-row'>
+                <button type='button' class='pm-btn pm-btn-ghost btn-sm' onclick="generateRowsFromPastedList()">Jana Senarai Pelajar</button>
+                <span id='pasteStatusBadge'></span>
             </div>
-            <button type='button' class='add-row-btn add-row-add' onclick="addStudentRow()">+ Tambah Pelajar</button>
+        </div>
+        <div>
+            <div id='addRows_student'></div>
+            <button type='button' class='add-row-btn add-row-add' onclick="addStudentRow()">+ Tambah Baris Kosong</button>
         </div>
         <div class='pic-add-form-actions'>
-            <button class='pm-btn pm-btn-primary'>Tambah</button>
+            <button class='pm-btn pm-btn-primary' onclick="return pmValidateAddStudentSubmit()">Tambah</button>
         </div>
     </form>
 </div>

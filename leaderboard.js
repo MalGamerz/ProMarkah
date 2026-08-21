@@ -107,12 +107,25 @@ function applyFilters() {
     const fj    = document.getElementById('filter-judge').value.toLowerCase();
     const fm    = document.getElementById('filter-medal').value.toLowerCase();
 
-    // A specific Cawangan is selected — scope medal/nisbah to that
-    // school's own entrants per Peringkat instead of the cross-school
-    // ranking (medal_school/quota_source_school, computed server-side).
-    const scoped = fsch !== '';
-    const medalOf = d => scoped ? d.medal_school : d.medal;
-    const sourceOf = d => scoped ? d.quota_source_school : d.quota_source;
+    // Display is grouped by Cawangan first, so medal/nisbah is always the
+    // school-scoped ranking (medal_school/quota_source_school, computed
+    // server-side) — it's the one that actually matches what a Cawangan
+    // group's own rank numbers on screen mean.
+    const medalOf = d => d.medal_school;
+    const sourceOf = d => d.quota_source_school;
+
+    // A Peringkat's belt rank (Hijau < Merah < Kuning < Hitam, or whatever
+    // order PIC set via pic_levels.php's drag-to-reorder sort_order) is NOT
+    // alphabetical — "Cula Hitam" sorts before "Cula Kuning"/"Cula Merah"
+    // by plain string comparison, which put black-belt groups above yellow
+    // and red. leaderboardData itself already arrives in the correct order
+    // (leaderboard.php's build_leaderboard_data() sorts by session_name
+    // then l.sort_order before anything else reorders it), so capture each
+    // Peringkat's first-seen position there instead of comparing names.
+    const levelOrder = {};
+    leaderboardData.forEach((d, i) => {
+        if (!(d.level in levelOrder)) levelOrder[d.level] = i;
+    });
 
     const filtered = leaderboardData.filter(d =>
         (fy    === '' || String(d.year).toLowerCase() === fy) &&
@@ -124,17 +137,22 @@ function applyFilters() {
         (fm    === '' || medalOf(d).toLowerCase() === fm)
     );
 
-    // Group by Peringkat first (medals are assigned per-Peringkat), then sort
-    // by percentage within each Peringkat — so display order always matches
-    // the medal ranking instead of interleaving separate Peringkat competitions.
+    // Group by Cawangan first, then by Peringkat within each Cawangan
+    // (medals are assigned per-Cawangan-per-Peringkat), then sort by
+    // percentage within that group — so display order always matches the
+    // medal ranking instead of interleaving separate competitions.
     filtered.sort((a, b) => {
-        if (a.level !== b.level) return a.level.localeCompare(b.level);
+        if (a.school !== b.school) return a.school.localeCompare(b.school, undefined, { numeric: true });
+        if (a.level !== b.level) return (levelOrder[a.level] ?? Infinity) - (levelOrder[b.level] ?? Infinity);
         return b.percentage - a.percentage;
     });
 
-    // Group by level for showing quota source badge per level header
-    const levelSources = {};
-    filtered.forEach(d => { if (!levelSources[d.level]) levelSources[d.level] = sourceOf(d); });
+    // Group by school+level for showing the quota source badge per group header
+    const groupSources = {};
+    filtered.forEach(d => {
+        const key = d.school + '||' + d.level;
+        if (!(key in groupSources)) groupSources[key] = sourceOf(d);
+    });
 
     let html = `
     <div class="pm-card" style="padding:0; overflow:hidden;">
@@ -169,10 +187,29 @@ function applyFilters() {
             <p>Tiada rekod ditemui untuk tapisan ini.</p></div></td></tr>`;
     } else {
         let rankCounter = 0;
+        let prevSchool = null;
         let prevLevel = null;
         filtered.forEach((s, i) => {
-            const isNewLevel = s.level !== prevLevel;
+            const isNewSchool = s.school !== prevSchool;
+            const isNewLevel = isNewSchool || s.level !== prevLevel;
             rankCounter = isNewLevel ? 1 : rankCounter + 1;
+
+            if (isNewSchool) {
+                html += `
+                <tr class="school-divider-row">
+                        <td></td>
+                        <td colspan="10">
+                        <span class="school-divider-label">
+                            <svg class="school-divider-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 21h18"></path>
+                                <path d="M5 21V7l7-4 7 4v14"></path>
+                                <path d="M9 21v-6h6v6"></path>
+                            </svg>
+                            ${escapeHtml(s.school)}
+                        </span>
+                    </td>
+                </tr>`;
+            }
 
             if (isNewLevel) {
                 const tahapKey = levelTahapKey(s.level);
@@ -191,9 +228,11 @@ function applyFilters() {
                     </td>
                 </tr>`;
             }
+            prevSchool = s.school;
             prevLevel = s.level;
 
-            const src = levelSources[s.level] || 'auto';
+            const groupKey = s.school + '||' + s.level;
+            const src = groupSources[groupKey] || 'auto';
             const badge = quotaBadge[src] || '';
             const medal = medalOf(s);
             const rowClass = medal.includes('Emas') ? 'gold-row' : medal.includes('Perak') ? 'silver-row' : 'bronze-row';

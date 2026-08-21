@@ -25,10 +25,18 @@ if (isset($_GET["ajax_levels"])) {
     // or already theirs. Otherwise every group under it belongs to another
     // judge (ajax_groups below filters those out entirely), so picking this
     // peringkat would always land on an empty Kumpulan list.
+    // mine_total/mine_done = how many of the judge's own groups in this
+    // Peringkat exist vs. already have submitted marks — shown as a plain
+    // "(done/total)" fraction so partial progress is just as visible as a
+    // fully-marked Peringkat, no separate done/not-done state needed.
     $stmt = $conn->prepare(
-        "SELECT l.*, EXISTS(
-            SELECT 1 FROM `groups` g WHERE g.level_id = l.level_id AND g.judge_id = ?
-         ) AS is_mine
+        "SELECT l.*,
+            (SELECT COUNT(*) FROM `groups` g
+              WHERE g.level_id = l.level_id AND g.judge_id = ?) AS mine_total,
+            (SELECT COUNT(*) FROM `groups` g
+              WHERE g.level_id = l.level_id AND g.judge_id = ?
+                AND EXISTS(SELECT 1 FROM scores s WHERE s.group_id = g.group_id AND s.submitted = 1)
+            ) AS mine_done
          FROM levels l
          WHERE l.session_id = ?
            AND EXISTS (
@@ -36,15 +44,22 @@ if (isset($_GET["ajax_levels"])) {
                WHERE g2.level_id = l.level_id
                  AND (g2.judge_id IS NULL OR g2.judge_id = 0 OR g2.judge_id = ?)
            )
-         ORDER BY is_mine DESC, l.level_name ASC",
+         ORDER BY (mine_total > 0) DESC,
+                  (mine_total > 0 AND mine_done = mine_total) ASC,
+                  l.level_name ASC",
     );
     if ($stmt) {
-        $stmt->bind_param("iii", $judge_id, $session_id_param, $judge_id);
+        $stmt->bind_param("iiii", $judge_id, $judge_id, $session_id_param, $judge_id);
         $stmt->execute();
         $result = $stmt->get_result();
         while ($r = $result->fetch_assoc()) {
             $label = htmlspecialchars($r["level_name"]);
-            if ($r["is_mine"]) { $label = "★ " . $label; }
+            if ($r["mine_total"] > 0) {
+                $progress = ($r["mine_done"] == $r["mine_total"])
+                    ? "✅"
+                    : "{$r["mine_done"]}/{$r["mine_total"]}";
+                $label = "★ " . $label . " ({$progress})";
+            }
             echo "<option value='{$r["level_id"]}'>{$label}</option>";
         }
         $stmt->close();

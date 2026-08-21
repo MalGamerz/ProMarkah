@@ -111,9 +111,17 @@ and its sidebar:
    under each Ujian (`pic_criteria.php`) — the rubric a judge actually
    scores against, each Kriteria carrying its own max mark.
 5. **Manage Cawangan** (`pic_schools.php`) and their **student rosters**
-   — one at a time (`pic_students.php`) or in bulk via the import wizard
-   (`upload_students.php`: Excel/PDF → upload → select sheet → review →
-   process). Students are scoped to a Cawangan + Peringkat.
+   — one at a time, pasted as a name list, or in bulk via the import
+   wizard. `pic_students.php`'s "Tambah Pelajar Baru" form takes one
+   Peringkat + one Cawangan per submission and accepts either a single
+   typed name or a pasted numbered list (a leading unnumbered line, e.g. a
+   copied "AWAN PUTIH CULA MERAH 2" header, is discarded automatically);
+   it also tries to auto-select the matching Peringkat from that pasted
+   header text and flags any name that looks like a duplicate of an
+   existing student in the same Peringkat/Cawangan before you submit.
+   `upload_students.php` is the heavier-weight wizard for a full roster
+   file (Excel/PDF → upload → select sheet → review → process). Students
+   are scoped to a Cawangan + Peringkat either way.
 6. **Build Kumpulan** (`pic_groups.php`) — drag ungrouped students from a
    Peringkat into groups; each group is assigned to exactly one judge and
    member order is preserved for the marking-table UI.
@@ -415,6 +423,13 @@ maintainer should still know, at the level that's safe to write down:
   all before returning data — they only leak dropdown option lists
   (names/IDs), not scores or credentials, but they're worth bringing in
   line with the rest of the app's per-file role checks.
+- `file/`, `img/`, and `sijil/` each hold stray, uncertain-provenance `.php`
+  copies alongside real assets (`file/` holds live uploaded CSVs; `img/`
+  and `sijil/` hold real images/webp pairs) — rather than delete them, each
+  directory has its own `.htaccess` (`Require all denied` on `\.php$`,
+  with the Apache-2.2 `Order/Deny` fallback for older setups) so none of
+  them can ever be served or executed directly over HTTP, no matter what's
+  in them.
 
 ## Database schema overview
 
@@ -451,6 +466,16 @@ A prior cleanup deliberately removed a couple of denormalized columns
 that value via joins through `levels`/`criteria` — the Database test
 suite's `tests/Database/SchemaAndIntegrityTest.php` documents the
 reasoning if you're ever tempted to re-add a shortcut column like that.
+
+**No foreign-key constraints exist anywhere in this schema** — deletes
+must clean up dependent rows by hand, in application code, or they're
+silently orphaned rather than rejected/cascaded by the database. Every
+`DELETE` handler needs to be audited for this individually; as one
+example, `pic_students.php`'s student-delete action now explicitly wraps
+`scores` (both submitted marks and unsubmitted drafts), `group_students`
+(kumpulan membership), and `attendance` in a transaction before deleting
+the `students` row itself — it used to only delete the `students` row,
+leaving the other three behind.
 
 ## Testing & diagnostics
 
@@ -586,11 +611,27 @@ suite at a time with `composer test:db` / `composer test:http`. See
   judge_dashboard.js/judge_marking.js)), `test_preview.php` (PIC-only
   cascading-dropdown preview of a test's level→test structure before
   assigning it),
-  data (`pic_students.php` (+ `pic_students.css/.js`, same plain-file-move
-  pattern — no PHP interpolation in either block; note left in that commit
-  that `loadSidangOptions()`'s `document.createElement()`-built dd-opt
-  rows never got `role="option"`/`tabindex`, unlike the PHP-echoed ones
-  the accessibility pass covered), `pic_directory.php` (+ `pic_directory.css/.js`,
+  data (`pic_students.php` (+ `pic_students.css/.js`) — originally a
+  plain-file-move split with no PHP interpolation in either block (note
+  left in that commit that `loadSidangOptions()`'s
+  `document.createElement()`-built dd-opt rows never got
+  `role="option"`/`tabindex`, unlike the PHP-echoed ones the accessibility
+  pass covered); the "Tambah Pelajar Baru" form later gained a
+  paste-a-name-list feature (single name or a numbered list, either way
+  scoped to one Peringkat + one Cawangan per submission — see
+  [End-to-end system flow](#1-pic-sets-up-the-competition-structure)),
+  which added two small read-only AJAX endpoints
+  (`ajax_levels_for_siri` — repopulates the Peringkat `<select>` when a
+  PIC with more than one Siri switches the form's Siri picker;
+  `ajax_existing_names` — same-Peringkat/Cawangan duplicate-name check
+  used to flag, not block, a likely-duplicate row before submit) and a
+  client-side Peringkat auto-match (`pic_students.js`'s
+  `tryAutoSelectPeringkatFromPastedHeader()`) that compares a pasted
+  block's leading header line against the Peringkat options after
+  normalizing away both a trailing `" — Siri Name"` suffix and a leading
+  `"Ujian "` word — the latter only because that's how this installation's
+  real `levels.level_name` values are actually stored, confirmed against
+  the live DB rather than assumed), `pic_directory.php` (+ `pic_directory.css/.js`,
   same plain-file-move pattern as `pic_medal_settings.php` below — no PHP
   interpolation in either block), `pic_master_list.php`,
   `pic_roster_check.php`, `load_levels_group.php`, `load_schools_for_session.php`,
@@ -697,3 +738,27 @@ file each one covers.
 
 *(This map will grow as later refactor phases document the remaining
 files in more depth.)*
+
+A later batch (not yet numbered/committed individually in the git log the
+way Phases 1-16 were) applied this same mechanical split to the rest of
+the still-inline pages in one pass: `pic_levels.php`, `pic_sessions.php`,
+`pic_schools.php`, `pic_view_marks.php`, `pic_master_list.php`,
+`pic_siri.php`, `pic_cawangan_summary.php`, `judge_view_marks.php`,
+`judge_settings.php`, `manage_attendance.php`, `pic_roster_check.php`,
+`test_preview.php`, `pic.php`, `silibus.php`, `silibus_baru.php`,
+`login.php`, `admin.php`, `admin_data.php`, `admin_logs.php`,
+`error_page.php`, `attendance_view_all.php`,
+`attendance_view_dashboard.php`, `export_leaderboard.php`,
+`export_attendance_pdf.php`, `export_cawangan_summary_pdf.php`, and
+`export_cawangan_summary_word.php` — each gained its own `.css`/`.js`
+(or both). `judge.php` had a leftover 77-line `<style>` block from before
+its own Phase split; that got folded into the existing `judge.css`
+instead of a second stylesheet. Three pages (`silibus.php`,
+`export_leaderboard.php`, `pic_roster_check.php`) had their one
+PHP-interpolated line (`silibusExportData`, `leaderboardData`, and
+`RC_CSRF` respectively) peeled into a small inline bootstrap `<script>`
+ahead of the external file, same mechanism as `pic_groups.php`'s CSRF
+const. A few very small blocks (under ~15 lines, e.g. `login.php`'s
+Google Identity Services callback, `pic.php`'s inline toast script) were
+deliberately left inline rather than split — same judgment call as the
+existing `spawnPmToast(...)` exceptions noted throughout this section.

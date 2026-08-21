@@ -218,63 +218,7 @@ $total = $result ? $result->num_rows : 0;
     <?php endif; ?>
 </div>
 
-<style>
-.avf-field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 150px;
-    flex: 1;
-}
-.avf-label {
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--c-text-muted);
-}
-.avf-select {
-    height: 32px; /* match .dd- benchmark (pic_view_marks) */
-    background: var(--c-surface-2);
-    border: 1px solid var(--c-border-strong);
-    border-radius: 6px;
-    padding: 0 28px 0 10px;
-    color: var(--c-white);
-    font-size: 0.8rem;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    transition: border-color 0.15s;
-    width: 100%;
-    box-sizing: border-box;
-}
-.avf-select:focus {
-    outline: none;
-    border-color: var(--c-red);
-    box-shadow: 0 0 0 2px rgba(200,0,30,0.08);
-}
-.avf-select option { background: #181818; }
-.avf-clear {
-    display: inline-flex;
-    align-items: center;
-    height: 36px;
-    padding: 0 14px;
-    border-radius: 8px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--c-text-muted);
-    border: 1px solid var(--c-border-strong);
-    background: var(--c-surface-2);
-    text-decoration: none;
-    white-space: nowrap;
-    align-self: flex-end;
-    transition: color 0.15s, border-color 0.15s;
-}
-.avf-clear:hover { color: var(--c-red); border-color: var(--c-red); }
-@media (max-width: 600px) {
-    .avf-field { min-width: calc(50% - 5px); flex: 1 1 calc(50% - 5px); }
-}
-</style>
+<?php
+$pm_ava_css_v = @filemtime(__DIR__ . '/attendance_view_all.css') ?: time();
+?>
+<link rel="stylesheet" href="attendance_view_all.css?v=<?= $pm_ava_css_v ?>">

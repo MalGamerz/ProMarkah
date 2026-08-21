@@ -1,0 +1,160 @@
+        @keyframes fadeIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* This project's output.css is a stale, pre-built/purged Tailwind
+           file (no build pipeline exists to regenerate it) — several
+           classes used on this page (bg-[#111], lg:block, lg:w-[55%],
+           lg:w-[45%], max-w-[400px], and both shadow-[...] arbitrary
+           values) were confirmed MISSING from it and therefore do
+           nothing. Re-declared here as plain CSS so the hero/form split
+           and background are guaranteed correct regardless of what's
+           actually compiled. */
+        /* Tailwind's overflow-hidden class (still on <body> below) sets
+           overflow:hidden on BOTH axes. On mobile this page's stacked
+           content is taller than the viewport, so that clips the bottom
+           of the page (the KEHADIRAN button) with literally no way to
+           scroll down to it — not an image bleeding through, the page
+           itself refusing to scroll. Only the horizontal axis needs to
+           stay clipped (for the hero image's scale/animate transform not
+           to cause a horizontal scrollbar on desktop); vertical scroll
+           must always be allowed. */
+        body.pm-login-body {
+            background: #111 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .pm-login-hero { display: none !important; width: 0 !important; }
+        /* output.css (stale/purged Tailwind — see note above) was dropping
+           min-height/flex/justify-content on this panel, so on tall
+           viewports (tablets in portrait) the card hugged the top with a
+           dead white gap below instead of filling/centering in the
+           screen. Guarantee it here. */
+        .pm-login-form-panel {
+            width: 100% !important;
+            /* No height/max-height of its own — it stretches (flex default
+               align-self: stretch) to fill .pm-login-outer below, which is
+               the single source of truth for the viewport-height boundary.
+               overflow: hidden is still required though: transform: scale()
+               (fitLoginCard, further down) shrinks the card's visual
+               footprint but NOT its DOM layout box, so without this the
+               unscaled box would overflow/scroll before (or if) the script
+               runs. */
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+        .pm-login-form-inner { transform-origin: center center; }
+        /* Tailwind's min-h-screen on this outer wrapper is a plain 100vh —
+           on mobile that can be taller than the panel's 100dvh above,
+           leaving a thin empty strip below the panel that the body's
+           overflow-y:auto would then let you scroll to. Pin it to the same
+           real-visible-height value so the whole page is exactly one
+           screen, nothing more. */
+        .pm-login-outer {
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+            max-height: 100vh !important;
+            max-height: 100dvh !important;
+            overflow: hidden !important;
+        }
+        @media (min-width: 1024px) {
+            .pm-login-hero { display: block !important; width: 55% !important; }
+            .pm-login-form-panel { width: 45% !important; }
+            /* The actual bug: a FIXED px cap (400, then 560) can never fill
+               a panel whose own width is a VIEWPORT PERCENTAGE (45%) — on
+               any real monitor the panel is much wider than any reasonable
+               fixed cap, so the card is still a small island with huge dead
+               margins either side no matter how many more pixels you add to
+               a static number. Sizing the card itself as a percentage of
+               its panel (with a generous upper cap only to stop it getting
+               silly on an ultrawide) is what actually fills the container. */
+            .pm-login-form-inner { max-width: 640px !important; width: 88% !important; }
+            .pm-login-logo-img { height: 76px !important; }
+            .pm-login-arabic { font-size: 1.75rem !important; }
+            .pm-login-h1 { font-size: 1.75rem !important; }
+            .pm-login-h2 { font-size: 2.25rem !important; }
+            .pm-login-form input {
+                font-size: 1rem !important;
+                padding-top: 28px !important;
+                padding-bottom: 14px !important;
+            }
+            .pm-login-form label { font-size: 1rem !important; }
+            .pm-login-submit {
+                font-size: 1rem !important;
+                padding-top: 16px !important;
+                padding-bottom: 16px !important;
+            }
+        }
+        .pm-login-form-inner { max-width: 400px; }
+        /* Tablet portrait (e.g. iPad 768–1023px) was falling into the same
+           "compact for phones" rules below, which shrink fonts/padding and
+           cap the form at 400px — on a much wider tablet screen that reads
+           as a tiny card floating in empty space, like the page got zoomed
+           out. Give this range its own wider card so it actually fills the
+           screen instead. */
+        @media (min-width: 641px) and (max-width: 1023px) {
+            .pm-login-form-inner { max-width: 560px !important; }
+        }
+        .pm-login-hero img {
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8);
+        }
+        .pm-login-form-panel {
+            box-shadow: -15px 0 40px rgba(0,0,0,0.5);
+        }
+        /* Deliberately styled to NOT look like the text inputs above it
+           (previously identical white-fill + light-border recipe, which read
+           as another field to type into) — filled gray "secondary button"
+           look instead, so it clearly reads as a navigation action. */
+        .pm-login-attendance {
+            border: none !important;
+            border-radius: 0.75rem !important;
+            background: #e5e7eb !important;
+            font-weight: 700 !important;
+        }
+        .pm-login-attendance:hover {
+            background: #d1d5db !important;
+        }
+
+        /* ── Fit everything on one screen on mobile/tablet — no scrolling ──
+           Below 1024px the hero image is hidden and this becomes a single
+           tall column; the goal here is compacting every gap/size enough
+           that the whole form (logo through footer) fits within a typical
+           phone viewport height without needing to scroll to reach
+           KEHADIRAN. Uses !important throughout since these override
+           existing Tailwind utility classes already on each element. */
+        @media (max-width: 640px) {
+            .pm-login-form-panel { padding-top: 20px !important; padding-bottom: 20px !important; }
+            .pm-login-title-block { margin-bottom: 14px !important; }
+            .pm-login-logo-box { padding: 6px !important; margin-bottom: 8px !important; }
+            .pm-login-logo-img { height: 40px !important; }
+            .pm-login-arabic { font-size: 1rem !important; margin-bottom: 0 !important; }
+            .pm-login-h1 { font-size: 1rem !important; margin-bottom: 0 !important; }
+            .pm-login-h2 { font-size: 1.3rem !important; margin-bottom: 0 !important; padding-bottom: 0 !important; }
+            .pm-login-form.space-y-5 > * + * { margin-top: 10px !important; }
+            /* Was 14px/6px — that aggressive, lopsided shrink both made the
+               box look tiny and pushed the typed text visibly above center
+               (the floating-label layout needs headroom above the text, not
+               almost none below it). Closer to the desktop 24px/10px split
+               keeps the field a comfortable tap target and the text
+               actually centered, while still trimming some height. */
+            .pm-login-form input { padding-top: 20px !important; padding-bottom: 12px !important; }
+            .pm-login-submit { margin-top: 14px !important; padding-top: 10px !important; padding-bottom: 10px !important; }
+            .pm-login-divider { margin-top: 14px !important; margin-bottom: 14px !important; }
+            .pm-login-quick-label { margin-bottom: 8px !important; }
+            .pm-login-quick-buttons { gap: 8px !important; }
+            .pm-login-attendance-divider { margin-top: 12px !important; margin-bottom: 8px !important; }
+            .pm-login-footer { margin-top: 10px !important; }
+        }

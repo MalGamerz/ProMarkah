@@ -43,3 +43,21 @@
     AddOutputFilterByType DEFLATE application/json application/xml
     AddOutputFilterByType DEFLATE image/svg+xml
 </IfModule>
+
+# This directory is not part of the app — default.php is Hostinger's own
+# auto-generated parked-domain placeholder, and index.php is a stray copy
+# of the site's real index.php that requires a login.php that doesn't
+# exist here (would fatal-error if ever hit directly). Rather than delete
+# either (uncertain provenance, same reasoning as file/ and img/), this
+# blocks both from ever being served/executed directly over HTTP.
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.php$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.php$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>

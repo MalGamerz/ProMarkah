@@ -266,6 +266,237 @@ function addStudentRow() {
     input.focus();
 }
 
+// "Nama Pelajar" no longer starts with a pre-existing blank row (see
+// #addRows_student in pic_students.php) — it's populated only once the PIC
+// actually pastes/generates a list or clicks "+ Tambah Baris Kosong", so a
+// bare form submit could otherwise post zero student_name[] fields with no
+// browser-side "required" validation to catch it (nothing exists yet to be
+// required). This is that catch, wired to the "Tambah" button's onclick.
+function pmValidateAddStudentSubmit() {
+    const container = document.getElementById('addRows_student');
+    const hasAnyName = Array.from(container.querySelectorAll('.add-row-student input'))
+        .some(input => input.value.trim() !== '');
+    if (hasAnyName) return true;
+
+    pmSetStatusBadge('Sila taip atau tampal sekurang-kurangnya satu nama pelajar dahulu.', 'amber');
+    document.getElementById('pasteNameList')?.focus();
+    return false;
+}
+
+// ── Turn one-or-many pasted names into rows in one go ───────────────────────
+// This is the same "Nama Pelajar" field for a single student or a whole
+// list — Peringkat/Cawangan are already single-select fields on this form
+// (one per submission), so this deliberately does NOT try to detect or
+// split multiple Peringkat out of the pasted text: paste one block (for the
+// Peringkat currently selected above), generate its rows, submit, then
+// repeat for the next block with a different Peringkat selected.
+//
+// Accepts "N. Name" / "N Name" numbered lines (the format student rosters
+// normally get pasted in) and strips the leading number. A single line with
+// no number is always treated as one plain name — never discarded — since
+// that's exactly the "just one student" case. Only with two or more lines
+// is a leading unnumbered line treated as a header/title that came along
+// with the copy-paste (e.g. "AWAN PUTIH CULA MERAH 2") and discarded;
+// every other unnumbered line is still accepted as a plain name, in case
+// the list has no numbering at all.
+function parsePastedNameList(text) {
+    const rawLines = (text || '').split(/\r\n|\r|\n/).map(l => l.trim()).filter(l => l !== '');
+    if (rawLines.length === 1) {
+        const m = rawLines[0].match(/^(\d{1,3})[.\s]+(.+)$/);
+        return [m ? m[2].trim() : rawLines[0]];
+    }
+    const names = [];
+    rawLines.forEach((line, i) => {
+        const m = line.match(/^(\d{1,3})[.\s]+(.+)$/);
+        if (m) {
+            names.push(m[2].trim());
+        } else if (i === 0) {
+            return; // discard a leading unnumbered header/title line
+        } else {
+            names.push(line);
+        }
+    });
+    return names;
+}
+
+// Reloads the Peringkat <select> to only the levels under the chosen Siri
+// (see #addSiriSelect, only rendered when more than one Siri exists) — this
+// is what keeps the pasted-header auto-match below unambiguous: once a
+// single Siri is picked, level_name is compared as plain text with no
+// " — Siri Name" suffix to strip.
+async function reloadPeringkatOptionsForSiri(siriId) {
+    const levelSelect = document.querySelector("#addStudent select[name='level_id']");
+    if (!levelSelect || !siriId) return;
+    try {
+        const res = await fetch(`pic_students.php?ajax_levels_for_siri=1&siri=${encodeURIComponent(siriId)}`, { credentials: 'same-origin' });
+        const levels = await res.json();
+        levelSelect.innerHTML = (Array.isArray(levels) ? levels : [])
+            .map(l => `<option value="${l.level_id}">${String(l.level_name).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</option>`)
+            .join('');
+        // A header may already be pasted (Siri switched after pasting) — re-run
+        // the match now that the Peringkat list has actually changed.
+        tryAutoSelectPeringkatFromPastedHeader();
+    } catch (e) {
+        // Best-effort — leaves the previous Peringkat list in place on failure.
+    }
+}
+
+// Strips a level <option>'s " — Siri Name" suffix — still relevant when no
+// Siri picker is shown at all (a fresh install with zero Siri records, so
+// pic_students.php falls back to its unscoped "every level, every siri"
+// query) — and a leading "Ujian " word, which turned out to be how this
+// installation's real level_name values are actually stored (e.g. "Ujian
+// Awan Putih Cula Merah 2"), even though a PIC's own roster text never
+// includes it (e.g. "AWAN PUTIH CULA MERAH 2") — confirmed against the
+// live DB rather than assumed, after the first two attempts at this
+// guessed wrong. Both strips make a pasted header match by Peringkat text
+// alone, regardless of which naming convention happens to be in the DB.
+function pmNormalizePeringkatText(s) {
+    return (s || '')
+        .replace(/\s+—\s+.*$/, '')
+        .replace(/^\s*ujian\s+/i, '')
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, ' ');
+}
+
+function pmSetStatusBadge(text, variant) {
+    const badgeEl = document.getElementById('pasteStatusBadge');
+    if (!badgeEl) return;
+    if (!text) { badgeEl.innerHTML = ''; return; }
+    badgeEl.innerHTML = `<span class="pm-badge pm-badge-${variant}">${text}</span>`;
+}
+
+// Runs on every keystroke/paste into the "Nama Pelajar" textarea — with two
+// or more lines pasted, the first is treated as a Peringkat header (see
+// parsePastedNameList's discard rule) and matched against the Peringkat
+// <select>'s options. A single exact match auto-selects it (dispatching
+// change, same as picking it manually) so the PIC doesn't have to pick
+// Peringkat AND paste separately; anything ambiguous or unmatched is left
+// for manual selection, never guessed. A lone single line is always just
+// one student's name (see parsePastedNameList) — never run through the
+// Peringkat matcher.
+function tryAutoSelectPeringkatFromPastedHeader() {
+    const textarea = document.getElementById('pasteNameList');
+    const levelSelect = document.querySelector("#addStudent select[name='level_id']");
+    if (!textarea || !levelSelect) return;
+
+    const lines = textarea.value.split(/\r\n|\r|\n/).map(l => l.trim()).filter(l => l !== '');
+    if (lines.length < 2) { pmSetStatusBadge('', null); return; }
+
+    const firstLine = lines[0];
+    if (/^\d{1,3}[.\s]+/.test(firstLine)) { pmSetStatusBadge('', null); return; } // already a numbered name, no header pasted
+
+    const target = pmNormalizePeringkatText(firstLine);
+    if (!target) return;
+
+    let matchedOption = null;
+    let ambiguous = false;
+    Array.from(levelSelect.options).forEach((opt) => {
+        if (pmNormalizePeringkatText(opt.textContent) === target) {
+            if (matchedOption && matchedOption !== opt) ambiguous = true;
+            matchedOption = opt;
+        }
+    });
+
+    if (matchedOption && !ambiguous) {
+        if (levelSelect.value !== matchedOption.value) {
+            levelSelect.value = matchedOption.value;
+            levelSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        pmSetStatusBadge(`Peringkat dipilih automatik: ${firstLine}`, 'green');
+    } else if (ambiguous) {
+        pmSetStatusBadge(`"${firstLine}" sepadan lebih daripada satu Peringkat — pilih secara manual`, 'amber');
+    } else {
+        pmSetStatusBadge(`Tiada Peringkat sepadan dengan "${firstLine}" — pilih secara manual`, 'amber');
+    }
+}
+
+// Fetches existing student names for the currently-selected Peringkat +
+// Cawangan (see ajax_existing_names in pic_students.php), so pasted names
+// that already exist can be flagged before submit — this is a WARNING only,
+// the backend still has no duplicate-name constraint, so a flagged row can
+// still be submitted deliberately (e.g. two students who really do share a
+// name).
+async function fetchExistingNamesForCurrentSelection() {
+    const levelSelect  = document.querySelector("#addStudent select[name='level_id']");
+    const schoolSelect = document.querySelector("#addStudent select[name='school_id']");
+    const levelId  = levelSelect  ? levelSelect.value  : '';
+    const schoolId = schoolSelect ? schoolSelect.value : '';
+    if (!levelId || !schoolId) return new Set();
+    try {
+        const res = await fetch(`pic_students.php?ajax_existing_names=1&level_id=${encodeURIComponent(levelId)}&school_id=${encodeURIComponent(schoolId)}`, { credentials: 'same-origin' });
+        const names = await res.json();
+        return new Set((Array.isArray(names) ? names : []).map(n => String(n).trim().toLowerCase()));
+    } catch (e) {
+        return new Set(); // duplicate check is best-effort — a network hiccup shouldn't block generating rows
+    }
+}
+
+async function generateRowsFromPastedList() {
+    const textarea = document.getElementById('pasteNameList');
+    const names = parsePastedNameList(textarea.value);
+    if (!names.length) {
+        textarea.focus();
+        return;
+    }
+
+    pmSetStatusBadge('Menyemak pertindihan nama…', 'gray');
+    const existingNames = await fetchExistingNamesForCurrentSelection();
+
+    const container = document.getElementById('addRows_student');
+    const existingRows = Array.from(container.querySelectorAll('.add-row-student'));
+
+    const seenInBatch = new Set();
+    let dbDupCount = 0;
+    let batchDupCount = 0;
+
+    names.forEach((name, i) => {
+        // Reuse a single still-empty row if one already exists (e.g. from a
+        // manual "+ Tambah Baris Kosong" click before pasting) instead of
+        // leaving it as a stray empty entry alongside the generated names.
+        let row = i === 0 && existingRows.length === 1 && existingRows[0].querySelector('input').value.trim() === ''
+            ? existingRows[0]
+            : null;
+        if (!row) {
+            addStudentRow();
+            row = container.lastElementChild;
+        }
+        const input = row.querySelector('input');
+        const select = row.querySelector('select');
+        input.value = name;
+        autoDetectGender(name, select);
+
+        const key = name.trim().toLowerCase();
+        const isDbDup    = existingNames.has(key);
+        const isBatchDup = seenInBatch.has(key);
+        seenInBatch.add(key);
+
+        if (isDbDup || isBatchDup) {
+            input.classList.add('name-duplicate');
+            input.title = isDbDup
+                ? 'Kemungkinan sudah wujud dalam Peringkat/Cawangan ini — semak sebelum hantar.'
+                : 'Nama ini berulang dalam senarai yang ditampal — semak sebelum hantar.';
+            if (isDbDup) dbDupCount++; else batchDupCount++;
+        } else {
+            input.classList.remove('name-duplicate');
+            input.removeAttribute('title');
+        }
+    });
+
+    const dupTotal = dbDupCount + batchDupCount;
+    if (dupTotal === 0) {
+        pmSetStatusBadge(`${names.length} pelajar dijana`, 'green');
+    } else {
+        const parts = [];
+        if (dbDupCount)    parts.push(`${dbDupCount} sepadan pelajar sedia ada`);
+        if (batchDupCount) parts.push(`${batchDupCount} berulang dalam senarai`);
+        pmSetStatusBadge(`${names.length} pelajar dijana — ${dupTotal} kemungkinan pertindihan (${parts.join(', ')})`, 'amber');
+    }
+
+    textarea.value = '';
+}
+
 function removeStudentRow(btn) {
     const container = document.getElementById('addRows_student');
     const row = btn.closest('.add-row-student');
@@ -321,8 +552,8 @@ function openGenericAddForm() {
 function autoDetectGender(name, selectEl) {
     if (!selectEl) return;
     let detected = null;
-    if (/\b(?:binti|bte|bt)(?:\.|(?=\s|$))/i.test(name)) detected = 'Female';
-    else if (/\b(?:bin|b)(?:\.|(?=\s|$))/i.test(name)) detected = 'Male';
+    if (/\b(?:binti|bte|bt|bnt)(?:\.|(?=\s|$))/i.test(name)) detected = 'Female';
+    else if (/\b(?:bin|b|bn)(?:\.|(?=\s|$))/i.test(name)) detected = 'Male';
     if (!detected || selectEl.value === detected) return;
     selectEl.value = detected;
     selectEl.dispatchEvent(new Event('change', { bubbles: true }));
